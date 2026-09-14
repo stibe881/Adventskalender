@@ -1,7 +1,7 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const db = require("../db");
-const { isDayUnlocked, unlockDateISO } = require("../utils/time");
+const { isDayUnlocked, unlockDateISO, getTodayParts } = require("../utils/time");
 
 const router = express.Router();
 
@@ -38,6 +38,7 @@ router.get("/:token", (req, res) => {
     ownerName: calendar.ownerName,
     theme: calendar.theme,
     year: calendar.year,
+    today: getTodayParts(),
     days: calendar.days.map((d) => publicDayView(calendar, d)),
   });
 });

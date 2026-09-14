@@ -42,8 +42,14 @@ Adventskalender/
 - Generiert einen sicheren, zufälligen Freigabe-Link pro Kalender
 
 **Empfänger-Ansicht** (`/c/<token>`, kein Login nötig)
-- 4 Themes: Partner*in (romantisch), Kind (verspielt, Schnee), Eltern (klassisch/elegant), Modern (minimalistisch) – inkl. eigener Farbpalette, Hintergrund und Ambient-Partikeln (Schnee/Herzen)
-- 3D-Flip-Animation beim Öffnen, Konfetti-/Herzen-Partikel-Burst bei Erfolg
+- 4 Themes, jedes als eigene Szene statt nur Farbpalette (`public/calendar/themes.css`, `js/scenes.js`):
+  - **Partner*in** – Sternenhimmel mit Mond, Bogenfenster in Weinrot/Gold mit Kerzenschein, Schreibschrift-Ziffern, schwebende Herzen
+  - **Kind** – verschneites Dorf: jedes Türchen ist ein buntes Häuschen mit Schneedach und leuchtenden Fenstern, Lichterkette, Tannen, Schneefall
+  - **Eltern** – alter Holzschrank mit Maserung, Messing-Nummernschildern und Knäufen, warmem Lampenschein und Lichterkette
+  - **Modern** – editorialer Poster-Look auf warmem Papier: große Typografie, harte Schatten, ein Akzentblau
+- Gemischte Nummernreihenfolge und unterschiedliche Türchengrößen wie bei einem echten Kalender, leichte Schiefstellung, Textur und Vignette
+- Scharnier-Öffnung in 3D: das Türblatt klappt auf und gibt einen beleuchteten Innenraum mit dem Überraschungs-Symbol frei; geöffnete Türchen bleiben offen
+- Konfetti-/Herzen-Partikel-Burst bei Erfolg, gestaffelte Einblend-Animation, flackerndes Licht und funkelnde Sterne im Stillstand
 - Klick auf ein gesperrtes Türchen löst ein Wackeln + charmante Fehlermeldung mit Freischalt-Datum aus
 - Server prüft bei **jedem** Öffnen-Versuch das Datum neu (`POST /api/calendar/:token/days/:day/open`) – Client-Manipulation ist wirkungslos
 

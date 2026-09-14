@@ -33,43 +33,53 @@ class ParticleField {
         kind: "snow",
         x: Math.random() * w,
         y: -10,
-        r: 2 + Math.random() * 3,
-        vy: 0.4 + Math.random() * 1,
-        drift: Math.random() * 2 - 1,
+        r: 1.5 + Math.random() * 3,
+        vy: 0.35 + Math.random() * 0.9,
         phase: Math.random() * Math.PI * 2,
-        opacity: 0.4 + Math.random() * 0.5,
+        opacity: 0.35 + Math.random() * 0.5,
       });
     } else if (this.ambientType === "hearts") {
       this.particles.push({
         kind: "heart",
         x: Math.random() * w,
         y: h + 10,
-        r: 8 + Math.random() * 10,
-        vy: -(0.3 + Math.random() * 0.6),
+        r: 6 + Math.random() * 9,
+        vy: -(0.25 + Math.random() * 0.45),
         drift: Math.random() * 1.2 - 0.6,
         phase: Math.random() * Math.PI * 2,
-        opacity: 0.25 + Math.random() * 0.4,
+        opacity: 0.18 + Math.random() * 0.32,
+        color: Math.random() < 0.6 ? "#e9c76c" : "#d4586f",
         life: 0,
+      });
+    } else if (this.ambientType === "sparkle") {
+      this.particles.push({
+        kind: "sparkle",
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 0.8 + Math.random() * 1.6,
+        life: 0,
+        maxLife: 120 + Math.random() * 140,
+        vy: -(0.05 + Math.random() * 0.15),
       });
     }
   }
 
-  burst(x, y, colors, count = 46) {
+  burst(x, y, colors, count = 52) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 5;
+      const speed = 2 + Math.random() * 5.5;
       this.particles.push({
         kind: "confetti",
         x,
         y,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2,
+        vy: Math.sin(angle) * speed - 2.5,
         size: 4 + Math.random() * 5,
         rotation: Math.random() * Math.PI,
         rotSpeed: (Math.random() - 0.5) * 0.3,
         color: colors[Math.floor(Math.random() * colors.length)],
         life: 0,
-        maxLife: 70 + Math.random() * 30,
+        maxLife: 75 + Math.random() * 35,
       });
     }
   }
@@ -80,7 +90,8 @@ class ParticleField {
     const h = this.canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    if (this.ambientType && t - this.lastSpawn > 90 && this.particles.length < 160) {
+    const spawnEvery = this.ambientType === "sparkle" ? 160 : 95;
+    if (this.ambientType && t - this.lastSpawn > spawnEvery && this.particles.length < 170) {
       this.spawnAmbient();
       this.lastSpawn = t;
     }
@@ -101,11 +112,23 @@ class ParticleField {
         p.life += 1;
         p.y += p.vy;
         p.x += Math.sin(p.phase + p.life * 0.03) * p.drift;
-        if (p.y < -20 || p.life > 900) return false;
+        if (p.y < -20 || p.life > 1100) return false;
         ctx.globalAlpha = p.opacity;
         ctx.font = `${p.r * 2}px serif`;
-        ctx.fillStyle = "#f2c94c";
+        ctx.fillStyle = p.color;
         ctx.fillText("♥", p.x, p.y);
+        return true;
+      }
+      if (p.kind === "sparkle") {
+        p.life += 1;
+        p.y += p.vy;
+        const ratio = p.life / p.maxLife;
+        if (ratio >= 1) return false;
+        ctx.globalAlpha = Math.sin(ratio * Math.PI) * 0.8;
+        ctx.fillStyle = "#f3d98b";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
         return true;
       }
       if (p.kind === "confetti") {

@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Admin-only stylesheet. The recipient calendar uses public/calendar/themes.css. */
+
 @layer base {
   html,
   body {
@@ -12,112 +14,6 @@
   }
 }
 
-/* ---------- Theme tokens ---------- */
-/* Each theme defines CSS custom properties consumed by admin + calendar views. */
-
-[data-theme="partner"] {
-  --theme-bg-from: #2b0a12;
-  --theme-bg-via: #4a0e1f;
-  --theme-bg-to: #1a0509;
-  --theme-accent: #d4af37;
-  --theme-accent-soft: #f2c94c;
-  --theme-primary: #8e1537;
-  --theme-primary-soft: #b81f45;
-  --theme-text: #fdf1e7;
-  --theme-door: #6e1130;
-  --theme-door-open: #d4af37;
-  --theme-font: "Playfair Display", serif;
-}
-
-[data-theme="kid"] {
-  --theme-bg-from: #1e3a8a;
-  --theme-bg-via: #6d28d9;
-  --theme-bg-to: #db2777;
-  --theme-accent: #fde047;
-  --theme-accent-soft: #fbbf24;
-  --theme-primary: #f472b6;
-  --theme-primary-soft: #38bdf8;
-  --theme-text: #ffffff;
-  --theme-door: #22d3ee;
-  --theme-door-open: #fde047;
-  --theme-font: "Baloo 2", "Inter", sans-serif;
-}
-
-[data-theme="parents"] {
-  --theme-bg-from: #0f2418;
-  --theme-bg-via: #16321f;
-  --theme-bg-to: #1d1109;
-  --theme-accent: #c9a15f;
-  --theme-accent-soft: #e0c087;
-  --theme-primary: #234d2f;
-  --theme-primary-soft: #2f6a3f;
-  --theme-text: #f4ecd8;
-  --theme-door: #3a2415;
-  --theme-door-open: #c9a15f;
-  --theme-font: "Playfair Display", serif;
-}
-
-[data-theme="modern"] {
-  --theme-bg-from: #0f172a;
-  --theme-bg-via: #1e293b;
-  --theme-bg-to: #0b1120;
-  --theme-accent: #38bdf8;
-  --theme-accent-soft: #7dd3fc;
-  --theme-primary: #334155;
-  --theme-primary-soft: #475569;
-  --theme-text: #e2e8f0;
-  --theme-door: #1e293b;
-  --theme-door-open: #38bdf8;
-  --theme-font: "Inter", sans-serif;
-}
-
-.theme-bg {
-  background: radial-gradient(
-    ellipse at top,
-    var(--theme-bg-via),
-    var(--theme-bg-to) 70%
-  ),
-  linear-gradient(160deg, var(--theme-bg-from), var(--theme-bg-to));
-}
-
-/* ---------- Door 3D flip ---------- */
-.door-scene {
-  perspective: 1200px;
-}
-
-.door-panel {
-  transform-style: preserve-3d;
-  transition: transform 0.9s cubic-bezier(0.4, 0.2, 0.2, 1);
-  transform-origin: left center;
-}
-
-.door-panel.is-open {
-  transform: rotateY(-140deg);
-}
-
-.door-face {
-  backface-visibility: hidden;
-}
-
-.door-back {
-  transform: rotateY(180deg);
-}
-
-/* ---------- Particle canvas ---------- */
-#particle-canvas {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-}
-
-/* ---------- Scratch card ---------- */
-.scratch-surface {
-  cursor: crosshair;
-  touch-action: none;
-}
-
-/* ---------- Scrollbar polish ---------- */
 ::-webkit-scrollbar {
   width: 10px;
 }

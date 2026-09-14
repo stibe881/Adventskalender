@@ -8,7 +8,7 @@ const { requireAdmin } = require("../middleware/auth");
 const { generateToken, generateId } = require("../utils/token");
 const { generateQrDataUrl } = require("../utils/qr");
 const { CONTENT_TYPES, THEMES } = require("../utils/contentTypes");
-const { isDayUnlocked, unlockDateISO } = require("../utils/time");
+const { unlockDateISO, getTodayParts } = require("../utils/time");
 
 const router = express.Router();
 router.use(requireAdmin);
@@ -111,6 +111,7 @@ router.get("/calendars/:id/preview", (req, res) => {
     ownerName: calendar.ownerName,
     theme: calendar.theme,
     year: calendar.year,
+    today: getTodayParts(),
     preview: true,
     days: calendar.days.map((d) => ({
       day: d.day,
