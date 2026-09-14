@@ -2,19 +2,6 @@ const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", 
 const isPreview = pathParts[1] === "preview";
 const routeId = isPreview ? pathParts[2] : pathParts[1];
 
-const CONTENT_ICONS = {
-  text: "💌",
-  voucher: "🎟️",
-  qrcode: "📱",
-  video: "🎬",
-  audio: "🎵",
-  gallery: "🖼️",
-  scratchcard: "🎰",
-  quiz: "❓",
-  countdown: "⏳",
-  empty: "🎄",
-};
-
 let calendarMeta = null;
 let days = []; // { day, unlockDate, unlocked, opened, filled, contentType, content }
 let themeKey = null;
@@ -61,8 +48,9 @@ async function init() {
   document.body.setAttribute("data-theme", themeKey);
   document.title = `${calendarMeta.recipientName}s Adventskalender`;
 
+  document.body.insertAdjacentHTML("afterbegin", ART_DEFS);
   document.getElementById("scene").innerHTML = buildScene(themeKey);
-  document.getElementById("garland").innerHTML = buildGarlandForTheme(themeKey);
+  renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
   if (isPreview) document.getElementById("preview-banner").classList.remove("hidden");
@@ -91,6 +79,37 @@ function renderFatalError(err) {
 
 // ---------- Grid ----------
 
+let garlandWidth = 0;
+function renderGarland() {
+  const el = document.getElementById("garland");
+  const width = el.clientWidth;
+  if (width === garlandWidth) return;
+  garlandWidth = width;
+  el.innerHTML = buildGarlandForTheme(themeKey, width);
+}
+
+function spanSize(span) {
+  if (span === "2x2") return [2, 2];
+  if (span === "2x1") return [2, 1];
+  if (span === "1x2") return [1, 2];
+  return [1, 1];
+}
+
+function leafFrontHtml(door, cols, rows, house) {
+  const number = `<span class="door-number">${door.day}</span>`;
+  const lock = `<span class="door-lock">${iconSvg("lock")}</span>`;
+  switch (themeKey) {
+    case "kid":
+      return `${houseSvg(cols, rows, house, door.day)}${number}${lock}`;
+    case "partner":
+      return `${windowFrameSvg()}<div class="candle">${candleSvg()}</div>${number}${lock}`;
+    case "parents":
+      return `${woodPanelSvg(door.day)}${number}${lock}`;
+    default:
+      return `${number}${lock}`;
+  }
+}
+
 function renderDoorGrid() {
   doorGrid.innerHTML = "";
   const order = theme.order || days.map((d) => d.day);
@@ -110,18 +129,18 @@ function renderDoorGrid() {
     const tilt = theme.tilt ? ((seeded(door.day) * 2 - 1) * theme.tilt).toFixed(2) : 0;
     scene.style.setProperty("--tilt", `${tilt}deg`);
 
+    let house = null;
     if (theme.palette) {
-      scene.style.setProperty("--house", theme.palette[(door.day * 5) % theme.palette.length]);
+      house = theme.palette[(door.day * 5) % theme.palette.length];
+      scene.style.setProperty("--house", house);
     }
+    const [cols, rows] = spanSize(span);
 
     scene.innerHTML = `
       <div class="door-body">
         <div class="door-interior"><span class="interior-icon"></span></div>
         <div class="door-leaf">
-          <div class="leaf-front">
-            <span class="door-number">${door.day}</span>
-            <span class="door-lock">🔒</span>
-          </div>
+          <div class="leaf-front">${leafFrontHtml(door, cols, rows, house)}</div>
           <div class="leaf-back"></div>
         </div>
       </div>
@@ -139,9 +158,7 @@ function applyDoorState(scene, door) {
   scene.classList.toggle("is-locked", !door.unlocked);
   scene.classList.toggle("is-ready", door.unlocked && !door.opened);
   scene.classList.toggle("is-open", Boolean(door.opened));
-  scene.querySelector(".interior-icon").textContent = door.opened
-    ? CONTENT_ICONS[door.contentType] || CONTENT_ICONS.empty
-    : theme.interiorIcon;
+  scene.querySelector(".interior-icon").innerHTML = iconSvg(door.opened ? door.contentType || "empty" : theme.interiorIcon);
   scene.setAttribute(
     "aria-label",
     door.unlocked ? `Türchen ${door.day}${door.opened ? " (geöffnet)" : ""}` : `Türchen ${door.day}, gesperrt bis ${formatDateDe(door.unlockDate)}`
@@ -157,6 +174,7 @@ function fitGridCells() {
   const width = doorGrid.clientWidth - padX;
   const cell = (width - gap * (cols - 1)) / cols;
   document.documentElement.style.setProperty("--cell", `${Math.max(40, cell)}px`);
+  if (themeKey) renderGarland();
 }
 new ResizeObserver(() => fitGridCells()).observe(doorGrid);
 
@@ -182,7 +200,7 @@ async function handleDoorClick(dayNum, sceneEl) {
 
   if (!door.unlocked) {
     shakeDoor(sceneEl);
-    showLockToast(`🔒 Noch nicht so weit! Türchen ${dayNum} öffnet sich am ${formatDateDe(door.unlockDate)}.`);
+    showLockToast(`Noch nicht so weit! Türchen ${dayNum} öffnet sich erst am ${formatDateDe(door.unlockDate)}.`);
     return;
   }
 
@@ -203,10 +221,10 @@ async function handleDoorClick(dayNum, sceneEl) {
       door.unlocked = false;
       applyDoorState(sceneEl, door);
       shakeDoor(sceneEl);
-      showLockToast(`🔒 ${err.data.error}`);
+      showLockToast(err.data.error);
       return;
     }
-    showLockToast(`⚠️ ${err.message}`);
+    showLockToast(err.message);
     return;
   }
 
@@ -269,10 +287,10 @@ function closeContentModal() {
   setTimeout(() => contentModal.classList.add("hidden"), 200);
 }
 
-function cardWrap(icon, title, innerHtml) {
+function cardWrap(iconKey, title, innerHtml) {
   return `
     <div class="modal-head">
-      <div class="modal-icon">${icon}</div>
+      <div class="modal-icon">${iconSvg(iconKey)}</div>
       ${title ? `<h3 class="modal-title">${escapeHtml(title)}</h3>` : ""}
     </div>
     ${innerHtml}
@@ -290,7 +308,7 @@ function renderContent(type, c, dayNum) {
   switch (type) {
     case "text":
       return cardWrap(
-        "💌",
+        "text",
         null,
         `<p class="modal-text">${escapeHtml(c.message)}</p>
          ${c.sender ? `<p class="modal-sender">– ${escapeHtml(c.sender)}</p>` : ""}`
@@ -298,7 +316,7 @@ function renderContent(type, c, dayNum) {
 
     case "voucher":
       return cardWrap(
-        "🎟️",
+        "voucher",
         c.title || "Gutschein",
         `<div class="voucher-box">
           ${c.code ? `<div class="voucher-code">${escapeHtml(c.code)}</div>` : ""}
@@ -308,14 +326,14 @@ function renderContent(type, c, dayNum) {
 
     case "qrcode":
       return cardWrap(
-        "📱",
+        "qrcode",
         c.label || "Scan mich",
         c.qrImage ? `<img src="${c.qrImage}" class="qr-img" alt="QR-Code" />` : `<p class="modal-muted">${escapeHtml(c.data)}</p>`
       );
 
     case "video":
       return cardWrap(
-        "🎬",
+        "video",
         c.caption,
         `<div class="media-frame">
           <iframe src="${toVideoEmbed(c.url)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -326,7 +344,7 @@ function renderContent(type, c, dayNum) {
       if (c.mode === "spotify") {
         const embed = toSpotifyEmbed(c.spotifyUrl);
         return cardWrap(
-          "🎵",
+          "audio",
           c.title,
           embed
             ? `<iframe src="${embed}" width="100%" height="152" style="border:0;border-radius:12px" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`
@@ -334,7 +352,7 @@ function renderContent(type, c, dayNum) {
         );
       }
       return cardWrap(
-        "🎵",
+        "audio",
         c.title,
         c.fileUrl ? `<audio controls autoplay class="audio-player"><source src="${c.fileUrl}" /></audio>` : `<p class="modal-muted">Keine Audiodatei hinterlegt.</p>`
       );
@@ -342,14 +360,14 @@ function renderContent(type, c, dayNum) {
 
     case "gallery":
       return cardWrap(
-        "🖼️",
+        "gallery",
         c.caption,
         `<div class="gallery-grid">${(c.images || []).map((url) => `<img src="${url}" class="gallery-img" alt="" />`).join("")}</div>`
       );
 
     case "scratchcard":
       return cardWrap(
-        "🎰",
+        "scratchcard",
         null,
         `<div class="scratch-wrap">
           <div class="scratch-under">${escapeHtml(c.message)}</div>
@@ -360,7 +378,7 @@ function renderContent(type, c, dayNum) {
 
     case "quiz":
       return cardWrap(
-        "❓",
+        "quiz",
         c.question,
         `<div id="quiz-options">
           ${(c.options || []).map((opt, i) => `<button data-idx="${i}" class="quiz-option">${escapeHtml(opt)}</button>`).join("")}
@@ -370,7 +388,7 @@ function renderContent(type, c, dayNum) {
 
     case "countdown":
       return cardWrap(
-        "⏳",
+        "countdown",
         c.eventTitle,
         `<p class="modal-muted" style="margin-bottom:12px">${escapeHtml(c.description)}</p>
          <div id="countdown-display" class="countdown-num">…</div>`
@@ -378,7 +396,7 @@ function renderContent(type, c, dayNum) {
 
     case "empty":
     default:
-      return cardWrap("🎄", null, `<p class="modal-muted">Für Türchen ${dayNum} wurde noch keine Überraschung hinterlegt.</p>`);
+      return cardWrap("empty", null, `<p class="modal-muted">Für Türchen ${dayNum} wurde noch keine Überraschung hinterlegt.</p>`);
   }
 }
 

@@ -9,30 +9,37 @@ function buildStars(count, seedOffset = 0) {
   let html = "";
   for (let i = 0; i < count; i++) {
     const left = (rand(i + seedOffset) * 100).toFixed(2);
-    const top = (rand(i + seedOffset + 100) * 70).toFixed(2);
+    const top = (rand(i + seedOffset + 100) * 65).toFixed(2);
     const size = (1 + rand(i + seedOffset + 200) * 2.2).toFixed(1);
     const delay = (rand(i + seedOffset + 300) * 6).toFixed(2);
     const dur = (2.5 + rand(i + seedOffset + 400) * 4).toFixed(2);
-    html += `<span class="star" style="left:${left}%;top:${top}%;--s:${size}px;--d:${delay}s;--t:${dur}s"></span>`;
+    const big = rand(i + seedOffset + 500) > 0.9;
+    html += `<span class="star ${big ? "star-big" : ""}" style="left:${left}%;top:${top}%;--s:${size}px;--d:${delay}s;--t:${dur}s"></span>`;
   }
   return html;
 }
 
-function buildHills() {
+function buildVillage() {
+  const palette = ["#e0526b", "#f2a541", "#5aa9e6", "#8e6bd6", "#3fb27f", "#f26b6b"];
+  const houses = [
+    { x: 4, w: 62, seed: 11 },
+    { x: 15, w: 48, seed: 12 },
+    { x: 78, w: 70, seed: 13 },
+    { x: 89, w: 46, seed: 14 },
+  ];
+  const trees = [
+    { x: 1, h: 92 }, { x: 10, h: 70 }, { x: 24, h: 84 }, { x: 70, h: 78 }, { x: 84, h: 96 }, { x: 95, h: 72 },
+  ];
   return `
-    <svg class="hills hills-back" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,224 C180,160 320,260 520,220 C720,180 860,120 1040,180 C1220,240 1340,200 1440,190 L1440,320 L0,320 Z"/>
-    </svg>
-    <svg class="hills hills-front" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0,270 C200,230 360,300 560,270 C760,240 900,290 1100,250 C1280,215 1380,260 1440,250 L1440,320 L0,320 Z"/>
-    </svg>
     <div class="village" aria-hidden="true">
-      ${[8, 22, 38, 61, 76, 90].map((x, i) => `<span class="tree" style="left:${x}%;--h:${(48 + rand(i) * 40).toFixed(0)}px"></span>`).join("")}
+      ${houses.map((h, i) => `<div class="bg-house" style="left:${h.x}%;width:${h.w}px">${houseSvg(1, 1, palette[i % palette.length], h.seed)}</div>`).join("")}
+      ${trees.map((t) => `<div class="bg-tree" style="left:${t.x}%;height:${t.h}px">${treeSvg()}</div>`).join("")}
+      <div class="bg-snowman">${snowmanSvg()}</div>
     </div>
   `;
 }
 
-function buildGarland(colors, count = 22) {
+function buildLightString(colors, count = 22) {
   const sag = 34;
   let bulbs = "";
   for (let i = 0; i <= count; i++) {
@@ -44,7 +51,7 @@ function buildGarland(colors, count = 22) {
     bulbs += `<span class="bulb" style="left:${left}%;top:${top}px;--c:${color};--d:${delay}s"></span>`;
   }
   return `
-    <div class="garland" aria-hidden="true">
+    <div class="lights" aria-hidden="true">
       <svg class="wire" viewBox="0 0 1000 60" preserveAspectRatio="none">
         <path d="M0,6 Q500,${sag * 2 + 6} 1000,6" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2.5"/>
       </svg>
@@ -57,15 +64,17 @@ function buildScene(themeKey) {
   switch (themeKey) {
     case "partner":
       return `
-        <div class="sky">${buildStars(90, 1)}</div>
-        <div class="moon"></div>
+        <div class="sky">${buildStars(110, 1)}</div>
+        <div class="moon">${moonSvg(true)}</div>
+        ${rooftopsSvg()}
         <div class="haze"></div>
       `;
     case "kid":
       return `
-        <div class="sky">${buildStars(70, 5)}</div>
-        <div class="moon moon-kid"></div>
-        ${buildHills()}
+        <div class="sky">${buildStars(80, 5)}</div>
+        <div class="moon moon-kid">${moonSvg(true)}</div>
+        ${hillsSvg()}
+        ${buildVillage()}
       `;
     case "parents":
       return `
@@ -82,9 +91,9 @@ function buildScene(themeKey) {
   }
 }
 
-function buildGarlandForTheme(themeKey) {
-  if (themeKey === "kid") return buildGarland(["#f43f5e", "#fde047", "#22c55e", "#3b82f6", "#f97316"]);
-  if (themeKey === "parents") return buildGarland(["#f6d98a", "#ffe9b3", "#f3c766"], 26);
+function buildGarlandForTheme(themeKey, width) {
+  if (themeKey === "kid") return buildLightString(["#f43f5e", "#fde047", "#22c55e", "#3b82f6", "#f97316"]);
+  if (themeKey === "parents") return pineGarlandSvg(Math.max(320, Math.round(width)), true);
   return "";
 }
 
@@ -93,7 +102,7 @@ function renderHeader(themeKey, theme, meta) {
   header.innerHTML = `
     <div class="hero-eyebrow">${escapeText(theme.eyebrow(meta))}</div>
     <h1 class="hero-title">${escapeText(theme.title(meta))}</h1>
-    ${theme.ornament ? `<div class="hero-ornament" aria-hidden="true">${theme.ornament}</div>` : ""}
+    ${theme.ornament ? `<div class="hero-ornament" aria-hidden="true">${ornamentSvg()}</div>` : ""}
     <p class="hero-tagline">${escapeText(theme.tagline(meta))}</p>
   `;
 }
@@ -110,7 +119,7 @@ function renderFooter(meta) {
     const left = 24 - day;
     text = left === 1 ? "Morgen ist Heiligabend." : `Noch ${left} Tage bis Heiligabend.`;
   } else if (year === meta.year && month === 12) {
-    text = "Frohe Weihnachten! 🎄";
+    text = "Frohe Weihnachten!";
   } else if (year < meta.year || (year === meta.year && month < 12)) {
     text = `Das erste Türchen öffnet sich am 1. Dezember ${meta.year}.`;
   } else {

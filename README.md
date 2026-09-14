@@ -42,11 +42,12 @@ Adventskalender/
 - Generiert einen sicheren, zufälligen Freigabe-Link pro Kalender
 
 **Empfänger-Ansicht** (`/c/<token>`, kein Login nötig)
-- 4 Themes, jedes als eigene Szene statt nur Farbpalette (`public/calendar/themes.css`, `js/scenes.js`):
-  - **Partner*in** – Sternenhimmel mit Mond, Bogenfenster in Weinrot/Gold mit Kerzenschein, Schreibschrift-Ziffern, schwebende Herzen
-  - **Kind** – verschneites Dorf: jedes Türchen ist ein buntes Häuschen mit Schneedach und leuchtenden Fenstern, Lichterkette, Tannen, Schneefall
-  - **Eltern** – alter Holzschrank mit Maserung, Messing-Nummernschildern und Knäufen, warmem Lampenschein und Lichterkette
+- 4 Themes, jedes als eigene Szene mit handgezeichneten Vektor-Illustrationen (`public/calendar/js/art.js`, `js/scenes.js`, `themes.css`):
+  - **Partner*in** – Sternenhimmel mit Mond, Dächer-Silhouette mit erleuchteten Fenstern, Bogenfenster in Weinrot/Gold mit flackernder Kerze hinter dem Glas, Schreibschrift-Ziffern, schwebende Herzen
+  - **Kind** – verschneites Dorf: jedes Türchen ist ein Häuschen mit Schneedach, rauchendem Schornstein, leuchtenden Sprossenfenstern und Kranz an der Tür; dazu Tannen, Schneemann, Dorf im Hintergrund, Lichterkette und Schneefall
+  - **Eltern** – alter Holzschrank mit Maserung und Astlöchern, Messing-Nummernschildern und Knäufen, Tannengirlande mit Beeren, Zapfen und warmen Lichtern
   - **Modern** – editorialer Poster-Look auf warmem Papier: große Typografie, harte Schatten, ein Akzentblau
+- Eigene Icon-Set (SVG) für alle Inhaltstypen statt Emojis – konsistent auf allen Geräten
 - Gemischte Nummernreihenfolge und unterschiedliche Türchengrößen wie bei einem echten Kalender, leichte Schiefstellung, Textur und Vignette
 - Scharnier-Öffnung in 3D: das Türblatt klappt auf und gibt einen beleuchteten Innenraum mit dem Überraschungs-Symbol frei; geöffnete Türchen bleiben offen
 - Konfetti-/Herzen-Partikel-Burst bei Erfolg, gestaffelte Einblend-Animation, flackerndes Licht und funkelnde Sterne im Stillstand
