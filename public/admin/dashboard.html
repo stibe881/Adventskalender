@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🎄</span>
+        <div>
+          <h1 class="font-display font-bold text-lg leading-none">Adventskalender</h1>
+          <p class="text-xs text-slate-400">Angemeldet als <span id="admin-name" class="font-medium text-emerald-400"></span></p>
+        </div>
+      </div>
+      <button id="logout-btn" class="text-sm text-slate-400 hover:text-white transition-colors">Abmelden</button>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-4">Neuen Kalender erstellen</h2>
+      <form id="create-form" class="grid sm:grid-cols-4 gap-4 items-end">
+        <div class="sm:col-span-2">
+          <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
+          <input name="recipientName" required placeholder="z. B. Bine"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Jahr</label>
+          <input name="year" type="number" required value="2026" min="2000" max="2200"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Theme</label>
+          <select name="theme" required
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="partner">💕 Partner*in – Romantisch</option>
+            <option value="kid">🎈 Kind – Verspielt &amp; bunt</option>
+            <option value="parents">🌲 Eltern – Klassisch &amp; elegant</option>
+            <option value="modern">✨ Modern – Minimalistisch</option>
+          </select>
+        </div>
+        <div class="sm:col-span-4">
+          <button type="submit"
+            class="rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold px-5 py-2.5">
+            + Kalender anlegen
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2 class="font-display text-xl font-semibold mb-4">Deine Kalender</h2>
+      <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <p id="empty-state" class="hidden text-slate-500 text-sm">Noch kein Kalender erstellt – leg oben deinen ersten an. 🎁</p>
+    </section>
+  </main>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/dashboard.js"></script>
+</body>
+</html>

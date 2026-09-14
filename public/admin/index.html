@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login – Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 px-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-2">🎄</div>
+      <h1 class="font-display text-2xl font-bold text-white">Adventskalender</h1>
+      <p class="text-slate-400 text-sm mt-1">Admin-Bereich für den Schenker</p>
+    </div>
+
+    <form id="login-form" class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+      <div>
+        <label class="block text-sm text-slate-300 mb-1" for="username">Benutzername</label>
+        <input id="username" name="username" type="text" autocomplete="username" required
+          class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Stibe" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-300 mb-1" for="password">Passwort</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required
+          class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="••••••••" />
+      </div>
+
+      <p id="error-msg" class="hidden text-sm text-rose-400 bg-rose-950/40 border border-rose-900 rounded-lg px-3 py-2"></p>
+
+      <button type="submit" id="submit-btn"
+        class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold py-2.5">
+        Anmelden
+      </button>
+    </form>
+
+    <p class="text-center text-xs text-slate-500 mt-6">Nur für den Schenker – Beschenkte nutzen ihren persönlichen Link.</p>
+  </div>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/login.js"></script>
+</body>
+</html>

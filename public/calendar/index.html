@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dein Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Baloo+2:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+  <style>
+    #content-modal { opacity: 0; transition: opacity 0.2s ease; }
+    #content-modal.modal-visible { opacity: 1; }
+    #content-modal.hidden { display: none; }
+  </style>
+</head>
+<body class="theme-bg min-h-screen overflow-x-hidden" style="color: var(--theme-text, #fff)">
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="app-root">
+    <div id="preview-banner" class="hidden text-center text-xs sm:text-sm bg-amber-500/90 text-amber-950 font-semibold py-2 relative z-50">
+      👁 Admin-Vorschau – Zeitsperre ist deaktiviert
+    </div>
+
+    <header class="relative z-10 text-center pt-10 pb-6 px-4">
+      <div id="theme-icon" class="text-4xl mb-2"></div>
+      <h1 class="font-display text-2xl sm:text-3xl font-bold" style="color: var(--theme-text)">
+        Für <span id="recipient-name">…</span>
+      </h1>
+      <p class="text-sm opacity-75 mt-1">Ein Adventskalender von <span id="owner-name">…</span></p>
+    </header>
+
+    <main class="relative z-10 max-w-3xl mx-auto px-4 pb-16">
+      <div id="door-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 sm:gap-4"></div>
+    </main>
+  </div>
+
+  <!-- Lock toast -->
+  <div id="lock-toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm text-center bg-slate-900/95 border border-white/10 text-white text-sm px-4 py-3 rounded-xl shadow-2xl transition-opacity duration-300"></div>
+
+  <!-- Content modal -->
+  <div id="content-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div id="modal-card" class="w-full max-w-md rounded-2xl p-6 shadow-2xl relative" style="background: color-mix(in srgb, var(--theme-bg-to) 92%, black); border: 1px solid rgba(255,255,255,0.12); color: var(--theme-text)">
+      <button id="modal-close" class="absolute top-3 right-3 text-xl opacity-70 hover:opacity-100">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/vendor/gsap/gsap.min.js"></script>
+  <script src="/calendar/js/themes.js"></script>
+  <script src="/calendar/js/particles.js"></script>
+  <script src="/calendar/js/calendar.js"></script>
+</body>
+</html>
