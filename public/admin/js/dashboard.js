@@ -3,6 +3,7 @@ const THEME_LABELS = {
   kid: "🎈 Kind",
   parents: "🌲 Eltern",
   modern: "✨ Modern",
+  firma: "🏢 Firma",
 };
 
 const listEl = document.getElementById("calendar-list");
@@ -54,7 +55,8 @@ function renderCard(cal) {
     <div class="flex flex-wrap gap-2 mt-1">
       <a href="/admin/editor.html?id=${cal.id}" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-3 py-1.5 transition-colors">Bearbeiten</a>
       <a href="/c/preview/${cal.id}" target="_blank" rel="noopener" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">Vorschau</a>
-      <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">🔗 Link kopieren</button>
+      <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">🔗 Link</button>
+      <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren">📑 Kopieren</button>
     </div>
   `;
 
@@ -70,6 +72,17 @@ function renderCard(cal) {
     const original = btn.textContent;
     btn.textContent = "✅ Kopiert!";
     setTimeout(() => (btn.textContent = original), 1500);
+  });
+
+  card.querySelector('[data-action="duplicate"]').addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    try {
+      await api.duplicateCalendar(cal.id);
+      await loadCalendars();
+    } catch (err) {
+      alert("Fehler beim Duplizieren: " + err.message);
+      e.currentTarget.disabled = false;
+    }
   });
 
   return card;
@@ -89,6 +102,7 @@ createForm.addEventListener("submit", async (e) => {
       recipientName: fd.get("recipientName"),
       theme: fd.get("theme"),
       year: fd.get("year"),
+      strictMode: document.getElementById("strictMode").checked,
     });
     createForm.reset();
     window.location.href = `/admin/editor.html?id=${cal.id}`;

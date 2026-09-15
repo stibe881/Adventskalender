@@ -1,108 +1,48 @@
-// Builds the decorative backdrop, header and garland for each theme.
-// Everything here is purely visual; state and interaction live in calendar.js.
+// Builds the physical/realistic backdrop layers for each theme.
+// Background images are now real high-res assets generated via AI.
 
-function rand(seed) {
-  return seeded(seed * 7.13 + 3);
-}
-
-function buildStars(count, seedOffset = 0) {
-  let html = "";
-  for (let i = 0; i < count; i++) {
-    const left = (rand(i + seedOffset) * 100).toFixed(2);
-    const top = (rand(i + seedOffset + 100) * 65).toFixed(2);
-    const size = (1 + rand(i + seedOffset + 200) * 2.2).toFixed(1);
-    const delay = (rand(i + seedOffset + 300) * 6).toFixed(2);
-    const dur = (2.5 + rand(i + seedOffset + 400) * 4).toFixed(2);
-    const big = rand(i + seedOffset + 500) > 0.9;
-    html += `<span class="star ${big ? "star-big" : ""}" style="left:${left}%;top:${top}%;--s:${size}px;--d:${delay}s;--t:${dur}s"></span>`;
-  }
-  return html;
-}
-
-function buildVillage() {
-  const palette = ["#e0526b", "#f2a541", "#5aa9e6", "#8e6bd6", "#3fb27f", "#f26b6b"];
-  const houses = [
-    { x: 4, w: 62, seed: 11 },
-    { x: 15, w: 48, seed: 12 },
-    { x: 78, w: 70, seed: 13 },
-    { x: 89, w: 46, seed: 14 },
-  ];
-  const trees = [
-    { x: 1, h: 92 }, { x: 10, h: 70 }, { x: 24, h: 84 }, { x: 70, h: 78 }, { x: 84, h: 96 }, { x: 95, h: 72 },
-  ];
-  return `
-    <div class="village" aria-hidden="true">
-      ${houses.map((h, i) => `<div class="bg-house" style="left:${h.x}%;width:${h.w}px">${houseSvg(1, 1, palette[i % palette.length], h.seed)}</div>`).join("")}
-      ${trees.map((t) => `<div class="bg-tree" style="left:${t.x}%;height:${t.h}px">${treeSvg()}</div>`).join("")}
-      <div class="bg-snowman">${snowmanSvg()}</div>
-    </div>
-  `;
-}
-
-function buildLightString(colors, count = 22) {
-  const sag = 34;
-  let bulbs = "";
-  for (let i = 0; i <= count; i++) {
-    const t = i / count;
-    const left = (t * 100).toFixed(2);
-    const top = (4 * sag * t * (1 - t) + 6).toFixed(1);
-    const color = colors[i % colors.length];
-    const delay = ((i * 0.37) % 2.4).toFixed(2);
-    bulbs += `<span class="bulb" style="left:${left}%;top:${top}px;--c:${color};--d:${delay}s"></span>`;
-  }
-  return `
-    <div class="lights" aria-hidden="true">
-      <svg class="wire" viewBox="0 0 1000 60" preserveAspectRatio="none">
-        <path d="M0,6 Q500,${sag * 2 + 6} 1000,6" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2.5"/>
-      </svg>
-      ${bulbs}
-    </div>
-  `;
-}
-
-function buildScene(themeKey) {
+function buildScene(themeKey, meta) {
   switch (themeKey) {
-    case "partner":
+    case "partner": // Romantisch (Sternenhimmel)
       return `
-        <div class="sky">${buildStars(110, 1)}</div>
-        <div class="moon">${moonSvg(true)}</div>
-        ${rooftopsSvg()}
-        <div class="haze"></div>
+        <div class="theme-bg" style="background-image: url('/calendar/img/romantic.png');"></div>
+        <div class="ambient-glow"></div>
       `;
-    case "kid":
+    case "kid": // Verspielt (Winterdorf)
       return `
-        <div class="sky">${buildStars(80, 5)}</div>
-        <div class="moon moon-kid">${moonSvg(true)}</div>
-        ${hillsSvg()}
-        ${buildVillage()}
+        <div class="theme-bg" style="background-image: url('/calendar/img/village.png');"></div>
       `;
-    case "parents":
+    case "parents": // Klassisch (Holz)
       return `
-        <div class="wallpaper"></div>
-        <div class="lamp-glow"></div>
+        <div class="theme-bg" style="background-image: url('/calendar/img/wood.png');"></div>
+        <div class="vignette-overlay"></div>
       `;
-    case "modern":
+    case "modern": // Apple-style Glassmorphism
       return `
-        <div class="paper-grain"></div>
-        <div class="watermark" aria-hidden="true">24</div>
+        <div class="theme-bg" style="background-image: url('/calendar/img/modern.png');"></div>
       `;
+    case "firma": // Corporate
+      const bg = meta?.customConfig?.bgUrl || "";
+      return bg ? `<div class="theme-bg" style="background-image: url('${escapeText(bg)}');"></div>` : `<div class="theme-bg" style="background-color: #f8fafc;"></div>`;
     default:
       return "";
   }
 }
 
 function buildGarlandForTheme(themeKey, width) {
-  if (themeKey === "kid") return buildLightString(["#f43f5e", "#fde047", "#22c55e", "#3b82f6", "#f97316"]);
-  if (themeKey === "parents") return pineGarlandSvg(Math.max(320, Math.round(width)), true);
+  // We removed the old SVG garlands in favor of the clean real-image look.
   return "";
 }
 
 function renderHeader(themeKey, theme, meta) {
   const header = document.getElementById("calendar-header");
+  const logo = meta?.customConfig?.logoUrl;
+  const logoHtml = logo && themeKey === "firma" ? `<img src="${escapeText(logo)}" alt="Firmenlogo" class="firma-logo mx-auto mb-4" style="max-height: 80px; max-width: 200px; object-fit: contain;" />` : "";
+
   header.innerHTML = `
+    ${logoHtml}
     <div class="hero-eyebrow">${escapeText(theme.eyebrow(meta))}</div>
     <h1 class="hero-title">${escapeText(theme.title(meta))}</h1>
-    ${theme.ornament ? `<div class="hero-ornament" aria-hidden="true">${ornamentSvg()}</div>` : ""}
     <p class="hero-tagline">${escapeText(theme.tagline(meta))}</p>
   `;
 }

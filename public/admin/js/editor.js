@@ -59,9 +59,16 @@ async function loadCalendar() {
   const settingsForm = document.getElementById("settings-form");
   settingsForm.recipientName.value = calendar.recipientName;
   settingsForm.year.value = calendar.year;
+  settingsForm.strictMode.checked = Boolean(calendar.strictMode);
   themeSelect.value = calendar.theme;
 
   document.getElementById("preview-link").href = `/c/preview/${calendarId}`;
+
+  const firmaSettings = document.getElementById("firma-settings");
+  firmaSettings.classList.toggle("hidden", calendar.theme !== "firma");
+
+  // Keep reference to customConfig
+  if (!calendar.customConfig) calendar.customConfig = {};
 
   renderDoorGrid();
 }
@@ -113,6 +120,34 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModal();
 });
 
+themeSelect.addEventListener("change", (e) => {
+  document.getElementById("firma-settings").classList.toggle("hidden", e.target.value !== "firma");
+});
+
+document.getElementById("firma-bg").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const { url } = await api.upload(file);
+    if (!calendar.customConfig) calendar.customConfig = {};
+    calendar.customConfig.bgUrl = url;
+  } catch (err) {
+    alert("Fehler beim Upload: " + err.message);
+  }
+});
+
+document.getElementById("firma-logo").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const { url } = await api.upload(file);
+    if (!calendar.customConfig) calendar.customConfig = {};
+    calendar.customConfig.logoUrl = url;
+  } catch (err) {
+    alert("Fehler beim Upload: " + err.message);
+  }
+});
+
 function fieldWrap(labelText, inputHtml) {
   return `<div><label class="block text-sm text-slate-300 mb-1">${labelText}</label>${inputHtml}</div>`;
 }
@@ -134,6 +169,8 @@ function renderTypeFields(type, content) {
     scratchcard: renderScratchcardFields,
     quiz: renderQuizFields,
     countdown: renderCountdownFields,
+    memory: renderMemoryFields,
+    challenge: renderChallengeFields,
   };
   (renderers[type] || (() => {}))(content);
 }
@@ -287,6 +324,37 @@ function renderCountdownFields(c) {
     fieldWrap("Beschreibung", `<textarea id="f-description" rows="3" class="${inputClass}">${escapeHtml(c.description)}</textarea>`);
 }
 
+function renderMemoryFields(c) {
+  currentContent.images = c.images || [];
+  typeFields.innerHTML =
+    fieldWrap("Gratulationstext (wenn gelöst)", `<textarea id="f-successMessage" rows="2" class="${inputClass}">${escapeHtml(c.successMessage)}</textarea>`) +
+    fieldWrap("Bilder hochladen (Lade 4 bis 8 Bilder hoch. Sie werden automatisch als Paare verwendet.)", `<input id="f-images" type="file" accept="image/*" multiple class="${inputClass}" />`) +
+    `<div id="f-gallery-preview" class="flex flex-wrap gap-2 mt-2"></div>`;
+
+  renderGalleryPreview(); // Reusing the same preview logic as gallery
+
+  document.getElementById("f-images").addEventListener("change", async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const file of files) {
+      try {
+        const { url } = await api.upload(file);
+        currentContent.images.push(url);
+        renderGalleryPreview();
+      } catch (err) {
+        alert(`Upload fehlgeschlagen (${file.name}): ${err.message}`);
+      }
+    }
+    e.target.value = "";
+  });
+}
+
+function renderChallengeFields(c) {
+  typeFields.innerHTML =
+    fieldWrap("Tages-Aufgabe", `<textarea id="f-task" rows="3" class="${inputClass}" placeholder="z. B. Umarme heute jemanden für 10 Sekunden.">${escapeHtml(c.task)}</textarea>`) +
+    fieldWrap("Button-Text", `<input id="f-btnText" value="${escapeHtml(c.btnText || "Erledigt!")}" class="${inputClass}" />`) +
+    fieldWrap("Erfolgsnachricht", `<textarea id="f-successMessage" rows="2" class="${inputClass}">${escapeHtml(c.successMessage)}</textarea>`);
+}
+
 // ---------- Collecting data per type on save ----------
 
 function collectFieldsData(type) {
@@ -324,6 +392,10 @@ function collectFieldsData(type) {
     }
     case "countdown":
       return { eventTitle: val("f-eventTitle"), eventDate: val("f-eventDate"), description: val("f-description") };
+    case "memory":
+      return { successMessage: val("f-successMessage"), images: currentContent.images || [] };
+    case "challenge":
+      return { task: val("f-task"), btnText: val("f-btnText"), successMessage: val("f-successMessage") };
     default:
       return {};
   }
@@ -350,6 +422,8 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     recipientName: fd.get("recipientName"),
     theme: fd.get("theme"),
     year: fd.get("year"),
+    strictMode: document.getElementById("strictMode").checked,
+    customConfig: calendar.customConfig,
   });
   await loadCalendar();
   const saved = document.getElementById("settings-saved");

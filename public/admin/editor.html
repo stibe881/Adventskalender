@@ -41,7 +41,23 @@
           <label class="block text-sm text-slate-300 mb-1">Theme</label>
           <select name="theme" id="theme-select" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
         </div>
-        <div class="sm:col-span-4">
+        <div class="sm:col-span-4 flex items-center gap-2 mt-2">
+          <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+          <label for="strictMode" class="text-sm text-slate-300">Strict Mode <span class="text-slate-500">(Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen)</span></label>
+        </div>
+        <div class="sm:col-span-4 hidden" id="firma-settings">
+          <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl">
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Corporate Hintergrundbild (optional)</label>
+              <input type="file" id="firma-bg" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-300 mb-1">Firmenlogo (optional)</label>
+              <input type="file" id="firma-logo" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+            </div>
+          </div>
+        </div>
+        <div class="sm:col-span-4 mt-2">
           <button type="submit" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 transition-colors">Speichern</button>
           <span id="settings-saved" class="hidden text-sm text-emerald-400 ml-2">Gespeichert ✓</span>
         </div>

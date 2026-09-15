@@ -12,8 +12,10 @@ const CONTENT_TYPES = [
   "scratchcard",
   "quiz",
   "countdown",
+  "memory",
+  "challenge",
 ];
 
-const THEMES = ["partner", "kid", "parents", "modern"];
+const THEMES = ["partner", "kid", "parents", "modern", "firma"];
 
 module.exports = { CONTENT_TYPES, THEMES };

@@ -36,6 +36,7 @@ async function request(method, url, body, isForm = false) {
 
 const api = {
   login: (username, password) => request("POST", "/auth/login", { username, password }),
+  register: (username, password) => request("POST", "/auth/register", { username, password }),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
 
@@ -44,6 +45,7 @@ const api = {
   getCalendar: (id) => request("GET", `/admin/calendars/${id}`),
   updateCalendar: (id, payload) => request("PUT", `/admin/calendars/${id}`, payload),
   deleteCalendar: (id) => request("DELETE", `/admin/calendars/${id}`),
+  duplicateCalendar: (id) => request("POST", `/admin/calendars/${id}/duplicate`),
   previewCalendar: (id) => request("GET", `/admin/calendars/${id}/preview`),
   saveDay: (id, day, payload) => request("PUT", `/admin/calendars/${id}/days/${day}`, payload),
   upload: (file) => {

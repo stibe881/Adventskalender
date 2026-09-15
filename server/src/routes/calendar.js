@@ -14,7 +14,7 @@ const tokenLimiter = rateLimit({
 router.use(tokenLimiter);
 
 function publicDayView(calendar, door) {
-  const unlocked = isDayUnlocked(calendar.year, door.day);
+  const unlocked = calendar.strictMode ? isDayUnlocked(calendar.year, door.day) : true;
   const base = {
     day: door.day,
     unlockDate: unlockDateISO(calendar.year, door.day),
@@ -37,6 +37,7 @@ router.get("/:token", (req, res) => {
     recipientName: calendar.recipientName,
     ownerName: calendar.ownerName,
     theme: calendar.theme,
+    customConfig: calendar.customConfig,
     year: calendar.year,
     today: getTodayParts(),
     days: calendar.days.map((d) => publicDayView(calendar, d)),
@@ -52,7 +53,7 @@ router.post("/:token/days/:day/open", (req, res) => {
   if (!door) return res.status(400).json({ error: "Ungültiges Türchen." });
 
   // Server-side-only truth: never trust any date the client might send.
-  const unlocked = isDayUnlocked(calendar.year, dayNum);
+  const unlocked = calendar.strictMode ? isDayUnlocked(calendar.year, dayNum) : true;
   if (!unlocked) {
     return res.status(403).json({
       error: "Noch nicht so weit! Dieses Türchen öffnet sich erst am " + unlockDateISO(calendar.year, dayNum) + ".",

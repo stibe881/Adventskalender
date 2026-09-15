@@ -8,6 +8,8 @@ const CONTENT_TYPE_META = {
   scratchcard: { label: "Rubbellos", icon: "🎰" },
   quiz: { label: "Quiz-Frage", icon: "❓" },
   countdown: { label: "Event-Countdown", icon: "⏳" },
+  memory: { label: "Memory-Spiel", icon: "🧠" },
+  challenge: { label: "Tages-Aufgabe", icon: "🎯" },
 };
 
 const THEME_META = {
@@ -15,4 +17,5 @@ const THEME_META = {
   kid: { label: "🎈 Kind – Verspielt & bunt" },
   parents: { label: "🌲 Eltern – Klassisch & elegant" },
   modern: { label: "✨ Modern – Minimalistisch" },
+  firma: { label: "🏢 Firma – Corporate Design" },
 };

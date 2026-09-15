@@ -3,8 +3,8 @@ const config = require("../config");
 
 const COOKIE_NAME = "advent_session";
 
-function signAdminToken() {
-  return jwt.sign({ role: "admin", username: config.admin.username }, config.jwtSecret, {
+function signUserToken(user) {
+  return jwt.sign({ role: "user", id: user.id, username: user.username }, config.jwtSecret, {
     expiresIn: "14d",
   });
 }
@@ -23,17 +23,17 @@ function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: "/" });
 }
 
-function requireAdmin(req, res, next) {
+function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) return res.status(401).json({ error: "Nicht angemeldet." });
   try {
     const payload = jwt.verify(token, config.jwtSecret);
-    if (payload.role !== "admin") throw new Error("invalid role");
-    req.admin = payload;
+    if (payload.role !== "user" && payload.role !== "admin") throw new Error("invalid role");
+    req.user = payload;
     next();
   } catch (err) {
     return res.status(401).json({ error: "Sitzung ungültig oder abgelaufen." });
   }
 }
 
-module.exports = { COOKIE_NAME, signAdminToken, setAuthCookie, clearAuthCookie, requireAdmin };
+module.exports = { COOKIE_NAME, signUserToken, setAuthCookie, clearAuthCookie, requireAuth };

@@ -18,6 +18,7 @@ function load() {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.calendars)) parsed.calendars = [];
+    if (!Array.isArray(parsed.users)) parsed.users = [];
     return parsed;
   } catch (err) {
     throw new Error(`db.json ist beschädigt oder ungültig: ${err.message}`);
@@ -68,11 +69,29 @@ function deleteCalendar(id) {
   return data.calendars.length < before;
 }
 
+function getCalendarsByOwner(ownerId) {
+  return load().calendars.filter((c) => c.ownerId === ownerId);
+}
+
+function getUserByUsername(username) {
+  return load().users.find((u) => u.username === username) || null;
+}
+
+function createUser(user) {
+  const data = load();
+  data.users.push(user);
+  save(data);
+  return user;
+}
+
 module.exports = {
   getAllCalendars,
+  getCalendarsByOwner,
   getCalendarById,
   getCalendarByToken,
   createCalendar,
   updateCalendar,
   deleteCalendar,
+  getUserByUsername,
+  createUser,
 };

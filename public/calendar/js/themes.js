@@ -42,9 +42,9 @@ const THEME_CONFIG = {
     tagline: (meta) => `in Dankbarkeit von ${meta.ownerName}`,
   },
   modern: {
-    name: "Minimalistisch",
+    name: "Modern (Vibrant Glass)",
     ambient: null,
-    burstColors: ["#1a2fd6", "#151515", "#f3efe6", "#8fa3ff"],
+    burstColors: ["#ffffff", "#fbcfe8", "#fbbf24", "#e879f9"],
     order: Array.from({ length: 24 }, (_, i) => i + 1),
     spans: { 24: "2x2", 1: "2x1", 12: "1x2" },
     tilt: 0,
@@ -53,6 +53,19 @@ const THEME_CONFIG = {
     title: (meta) => `Für ${meta.recipientName}`,
     ornament: false,
     tagline: (meta) => `von ${meta.ownerName}`,
+  },
+  firma: {
+    name: "Firma (Corporate Design)",
+    ambient: null,
+    burstColors: ["#ffffff", "#cccccc", "#444444"],
+    order: Array.from({ length: 24 }, (_, i) => i + 1),
+    spans: { 24: "2x2", 6: "2x1", 18: "1x2" },
+    tilt: 0,
+    interiorIcon: "dot",
+    eyebrow: (meta) => `Adventskalender ${meta.year}`,
+    title: (meta) => `Für ${meta.recipientName}`,
+    ornament: false,
+    tagline: (meta) => `präsentiert von ${meta.ownerName}`,
   },
 };
 

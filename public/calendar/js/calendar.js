@@ -48,8 +48,7 @@ async function init() {
   document.body.setAttribute("data-theme", themeKey);
   document.title = `${calendarMeta.recipientName}s Adventskalender`;
 
-  document.body.insertAdjacentHTML("afterbegin", ART_DEFS);
-  document.getElementById("scene").innerHTML = buildScene(themeKey);
+  document.getElementById("scene").innerHTML = buildScene(themeKey, calendarMeta);
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
@@ -98,16 +97,7 @@ function spanSize(span) {
 function leafFrontHtml(door, cols, rows, house) {
   const number = `<span class="door-number">${door.day}</span>`;
   const lock = `<span class="door-lock">${iconSvg("lock")}</span>`;
-  switch (themeKey) {
-    case "kid":
-      return `${houseSvg(cols, rows, house, door.day)}${number}${lock}`;
-    case "partner":
-      return `${windowFrameSvg()}<div class="candle">${candleSvg()}</div>${number}${lock}`;
-    case "parents":
-      return `${woodPanelSvg(door.day)}${number}${lock}`;
-    default:
-      return `${number}${lock}`;
-  }
+  return `${number}${lock}`;
 }
 
 function renderDoorGrid() {
@@ -199,12 +189,14 @@ async function handleDoorClick(dayNum, sceneEl) {
   const door = days.find((d) => d.day === dayNum);
 
   if (!door.unlocked) {
+    if (window.atmosphere) window.atmosphere.playErrorSound();
     shakeDoor(sceneEl);
     showLockToast(`Noch nicht so weit! Türchen ${dayNum} öffnet sich erst am ${formatDateDe(door.unlockDate)}.`);
     return;
   }
 
   if (door.opened) {
+    if (window.atmosphere) window.atmosphere.playClickSound();
     openContentModal(door);
     return;
   }
@@ -252,6 +244,7 @@ function showLockToast(message) {
 function openDoorAnimation(sceneEl, door) {
   const rect = sceneEl.getBoundingClientRect();
   applyDoorState(sceneEl, door);
+  if (window.atmosphere) window.atmosphere.playMagicChime();
   setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
   setTimeout(() => openContentModal(door), 780);
 }
@@ -394,6 +387,40 @@ function renderContent(type, c, dayNum) {
          <div id="countdown-display" class="countdown-num">…</div>`
       );
 
+    case "challenge":
+      return cardWrap(
+        "challenge",
+        "Tages-Aufgabe",
+        `<p class="modal-text" style="font-weight: 600; margin-bottom: 20px;">${escapeHtml(c.task)}</p>
+         <button id="challenge-btn" class="challenge-btn">${escapeHtml(c.btnText || "Erledigt!")}</button>
+         <p id="challenge-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+      );
+
+    case "memory": {
+      const allImages = [...(c.images || []), ...(c.images || [])];
+      // Shuffle
+      for (let i = allImages.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allImages[i], allImages[j]] = [allImages[j], allImages[i]];
+      }
+      return cardWrap(
+        "memory",
+        "Memory",
+        `<p class="modal-muted mb-4">Finde alle Pärchen!</p>
+         <div id="memory-grid" class="memory-grid">
+           ${allImages.map((src, idx) => `
+             <div class="memory-card" data-idx="${idx}" data-src="${src}">
+               <div class="memory-card-inner">
+                 <div class="memory-card-front">?</div>
+                 <div class="memory-card-back"><img src="${src}" alt="memory img"/></div>
+               </div>
+             </div>
+           `).join("")}
+         </div>
+         <p id="memory-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+      );
+    }
+
     case "empty":
     default:
       return cardWrap("empty", null, `<p class="modal-muted">Für Türchen ${dayNum} wurde noch keine Überraschung hinterlegt.</p>`);
@@ -410,6 +437,8 @@ function wireContentInteractions(door) {
   }
   if (door.contentType === "scratchcard") setupScratchcard();
   if (door.contentType === "quiz") setupQuiz(c);
+  if (door.contentType === "challenge") setupChallenge();
+  if (door.contentType === "memory") setupMemory();
 
   if (door.contentType === "countdown" && c.eventDate) {
     const target = new Date(`${c.eventDate}T00:00:00`).getTime();
@@ -521,6 +550,63 @@ function setupQuiz(c) {
       if (correct) {
         const rect = btn.getBoundingClientRect();
         field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+      }
+    });
+  });
+}
+
+function setupChallenge() {
+  const btn = document.getElementById("challenge-btn");
+  const success = document.getElementById("challenge-success");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    btn.disabled = true;
+    btn.classList.add("hidden");
+    success.classList.remove("hidden");
+    const rect = success.getBoundingClientRect();
+    field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+    if (window.atmosphere) window.atmosphere.playMagicChime();
+  });
+}
+
+function setupMemory() {
+  const cards = document.querySelectorAll(".memory-card");
+  const success = document.getElementById("memory-success");
+  let flipped = [];
+  let matchedCount = 0;
+
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      if (flipped.length === 2 || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+      
+      card.classList.add("flipped");
+      flipped.push(card);
+      if (window.atmosphere) window.atmosphere.playClickSound();
+
+      if (flipped.length === 2) {
+        const src1 = flipped[0].dataset.src;
+        const src2 = flipped[1].dataset.src;
+
+        if (src1 === src2) {
+          flipped.forEach(c => c.classList.add("matched"));
+          flipped = [];
+          matchedCount += 2;
+          
+          const rect = card.getBoundingClientRect();
+          field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+          if (window.atmosphere) window.atmosphere.playMagicChime();
+
+          if (matchedCount === cards.length) {
+            setTimeout(() => {
+              success.classList.remove("hidden");
+            }, 500);
+          }
+        } else {
+          setTimeout(() => {
+            flipped.forEach(c => c.classList.remove("flipped"));
+            flipped = [];
+          }, 1000);
+        }
       }
     });
   });

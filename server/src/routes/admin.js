@@ -4,14 +4,14 @@ const crypto = require("crypto");
 const multer = require("multer");
 const config = require("../config");
 const db = require("../db");
-const { requireAdmin } = require("../middleware/auth");
+const { requireAuth } = require("../middleware/auth");
 const { generateToken, generateId } = require("../utils/token");
 const { generateQrDataUrl } = require("../utils/qr");
 const { CONTENT_TYPES, THEMES } = require("../utils/contentTypes");
 const { unlockDateISO, getTodayParts } = require("../utils/time");
 
 const router = express.Router();
-router.use(requireAdmin);
+router.use(requireAuth);
 
 function makeEmptyDays() {
   return Array.from({ length: 24 }, (_, i) => ({
@@ -32,6 +32,7 @@ function toSummary(cal) {
     ownerName: cal.ownerName,
     theme: cal.theme,
     year: cal.year,
+    customConfig: cal.customConfig,
     token: cal.token,
     shareUrl: `${config.baseUrl}/c/${cal.token}`,
     createdAt: cal.createdAt,
@@ -43,12 +44,12 @@ function toSummary(cal) {
 // ---------- Calendars ----------
 
 router.get("/calendars", (req, res) => {
-  const calendars = db.getAllCalendars().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const calendars = db.getCalendarsByOwner(req.user.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json(calendars.map(toSummary));
 });
 
 router.post("/calendars", (req, res) => {
-  const { recipientName, theme, year } = req.body || {};
+  const { recipientName, theme, year, customConfig } = req.body || {};
   if (!recipientName || !String(recipientName).trim()) {
     return res.status(400).json({ error: "Name des Beschenkten ist erforderlich." });
   }
@@ -63,9 +64,12 @@ router.post("/calendars", (req, res) => {
   const calendar = {
     id: generateId(),
     token: generateToken(),
-    ownerName: config.admin.username,
+    ownerId: req.user.id,
+    ownerName: req.user.username,
     recipientName: String(recipientName).trim(),
     theme,
+    customConfig: customConfig || null,
+    strictMode: Boolean(req.body.strictMode),
     year: parsedYear,
     createdAt: new Date().toISOString(),
     days: makeEmptyDays(),
@@ -76,15 +80,20 @@ router.post("/calendars", (req, res) => {
 
 router.get("/calendars/:id", (req, res) => {
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json(calendar);
 });
 
 router.put("/calendars/:id", (req, res) => {
-  const { recipientName, theme, year } = req.body || {};
+  const { recipientName, theme, year, customConfig, strictMode } = req.body || {};
+  const calendar = db.getCalendarById(req.params.id);
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+
   const updated = db.updateCalendar(req.params.id, (cal) => {
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
     if (theme && THEMES.includes(theme)) cal.theme = theme;
+    if (customConfig !== undefined) cal.customConfig = customConfig;
+    if (strictMode !== undefined) cal.strictMode = Boolean(strictMode);
     if (year) {
       const parsedYear = parseInt(year, 10);
       if (Number.isInteger(parsedYear) && parsedYear >= 2000 && parsedYear <= 2200) cal.year = parsedYear;
@@ -96,20 +105,45 @@ router.put("/calendars/:id", (req, res) => {
 });
 
 router.delete("/calendars/:id", (req, res) => {
+  const calendar = db.getCalendarById(req.params.id);
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
   const ok = db.deleteCalendar(req.params.id);
   if (!ok) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({ ok: true });
+});
+
+router.post("/calendars/:id/duplicate", (req, res) => {
+  const source = db.getCalendarById(req.params.id);
+  if (!source || source.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+
+  const duplicate = {
+    ...source,
+    id: generateId(),
+    token: generateToken(),
+    recipientName: `${source.recipientName} (Kopie)`,
+    createdAt: new Date().toISOString(),
+  };
+  
+  // Create deep copy of days so they don't share objects
+  duplicate.days = source.days.map(d => ({
+    ...d,
+    content: d.content ? JSON.parse(JSON.stringify(d.content)) : null
+  }));
+
+  db.createCalendar(duplicate);
+  res.status(201).json(toSummary(duplicate));
 });
 
 // Admin-only preview: bypasses the date lock so Stibe can check the
 // experience before December. Never exposed on the public token route.
 router.get("/calendars/:id/preview", (req, res) => {
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({
     recipientName: calendar.recipientName,
     ownerName: calendar.ownerName,
     theme: calendar.theme,
+    customConfig: calendar.customConfig,
     year: calendar.year,
     today: getTodayParts(),
     preview: true,
@@ -142,7 +176,7 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
   }
 
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const updated = db.updateCalendar(req.params.id, (cal) => {
     const doorIdx = cal.days.findIndex((d) => d.day === dayNum);
