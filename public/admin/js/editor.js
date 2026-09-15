@@ -1109,7 +1109,31 @@ if (wBtn) {
   wBtn.addEventListener("click", async () => {
     try {
       const res = await api.generateWichtelLink(calendarId, currentDay);
-      prompt("Wichtel-Link generiert! Kopieren und an die Person schicken:", res.url);
+      
+      const modal = document.getElementById("wichtel-link-modal");
+      const urlInput = document.getElementById("wichtel-url");
+      const copyBtn = document.getElementById("wichtel-copy-btn");
+      const closeBtn = document.getElementById("wichtel-close");
+      
+      urlInput.value = res.url;
+      modal.classList.remove("hidden");
+      
+      const copyHandler = async () => {
+        await navigator.clipboard.writeText(res.url);
+        const span = copyBtn.querySelector("span");
+        span.textContent = "Kopiert! ✓";
+        setTimeout(() => span.textContent = "Kopieren", 2000);
+      };
+      
+      const closeHandler = () => {
+        modal.classList.add("hidden");
+        copyBtn.removeEventListener("click", copyHandler);
+        closeBtn.removeEventListener("click", closeHandler);
+      };
+      
+      copyBtn.addEventListener("click", copyHandler);
+      closeBtn.addEventListener("click", closeHandler);
+      
     } catch (err) {
       alert("Fehler beim Erstellen des Wichtel-Links: " + err.message);
     }

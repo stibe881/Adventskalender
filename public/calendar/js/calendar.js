@@ -60,6 +60,26 @@ function updateCoinDisplay() {
   if (sb) sb.textContent = userCoins;
 }
 
+function updateProgress() {
+  const progressContainer = document.getElementById("progress-container");
+  const progressText = document.getElementById("progress-text");
+  const progressBar = document.getElementById("progress-bar");
+  
+  if (!progressContainer || !days || days.length === 0) return;
+  
+  // Show it once we have data
+  progressContainer.classList.remove("hidden");
+  
+  const filledDays = days.filter(d => d.contentType && d.contentType !== "none").length;
+  if (filledDays === 0) return; // Don't show progress if calendar is empty
+  
+  const openedDays = days.filter(d => d.opened).length;
+  const percent = Math.round((openedDays / filledDays) * 100);
+  
+  progressText.textContent = `${openedDays}/${filledDays} Türchen geöffnet`;
+  progressBar.style.width = `${percent}%`;
+}
+
 async function init() {
   userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10);
   try { userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]"); } catch(e) {}
@@ -612,6 +632,7 @@ function renderDoorGrid() {
   });
 
   fitGridCells();
+  updateProgress();
 }
 
 function applyDoorState(scene, door) {
@@ -1367,7 +1388,13 @@ function renderContent(type, c, dayNum) {
         `<div id="quiz-options">
           ${(c.options || []).map((opt, i) => `<button data-idx="${i}" class="quiz-option">${escapeHtml(opt)}</button>`).join("")}
         </div>
-        <p id="quiz-result" class="quiz-result hidden"></p>`
+        <p id="quiz-result" class="quiz-result hidden"></p>
+        ${c.prizeText ? `
+        <div id="quiz-prize" class="quiz-prize hidden">
+          <div class="quiz-prize-icon">🏆</div>
+          <div class="quiz-prize-text">${escapeHtml(c.prizeText)}</div>
+          ${c.prizeCoins ? `<div class="quiz-prize-coins">+${c.prizeCoins} Münzen</div>` : ''}
+        </div>` : ''}`
       );
 
     case "countdown":
@@ -1628,7 +1655,7 @@ function wireContentInteractions(door) {
     });
   }
   if (door.contentType === "scratchcard") setupScratchcard();
-  if (door.contentType === "quiz") setupQuiz(c);
+  if (door.contentType === "quiz") setupQuiz(c, door);
   if (door.contentType === "challenge") setupChallenge(door);
   if (door.contentType === "memory") setupMemory();
   if (door.contentType === "giveaway") setupGiveaway(c, door.day);
@@ -1728,9 +1755,23 @@ function getComputedColor(varName) {
   return getComputedStyle(document.body).getPropertyValue(varName)?.trim();
 }
 
-function setupQuiz(c) {
+function setupQuiz(c, door) {
   const buttons = modalBody.querySelectorAll(".quiz-option");
   const resultEl = document.getElementById("quiz-result");
+  const prizeEl = document.getElementById("quiz-prize");
+  
+  // Check if coins were already awarded for this door
+  const prizeKey = door ? `quiz_prize_${routeId}_${door.day}` : null;
+  const alreadyAwarded = prizeKey && localStorage.getItem(prizeKey) === "true";
+
+  if (alreadyAwarded && prizeEl) {
+    buttons.forEach((b) => (b.disabled = true));
+    resultEl.textContent = "Bereits gelöst! 🌟";
+    resultEl.classList.remove("hidden");
+    prizeEl.classList.remove("hidden");
+    return;
+  }
+
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       buttons.forEach((b) => (b.disabled = true));
@@ -1740,11 +1781,25 @@ function setupQuiz(c) {
       if (!correct && c.correctIndex >= 0 && c.correctIndex < buttons.length) {
         buttons[c.correctIndex].classList.add("correct");
       }
-      resultEl.textContent = correct ? c.successMessage || "Richtig! 🎉" : c.failMessage || "Leider falsch – aber schön geraten!";
+      resultEl.textContent = correct ? c.successMessage || "Richtig! ✨" : c.failMessage || "Leider falsch 😢 aber schön geraten!";
       resultEl.classList.remove("hidden");
       if (correct) {
         const rect = btn.getBoundingClientRect();
         field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+        
+        if (prizeEl) {
+          prizeEl.classList.remove("hidden");
+        }
+        
+        if (c.prizeCoins && !alreadyAwarded) {
+          const coins = parseInt(c.prizeCoins, 10);
+          if (!isNaN(coins) && coins > 0) {
+            userCoins += coins;
+            saveUserCoins();
+            updateCoinDisplay();
+          }
+          if (prizeKey) localStorage.setItem(prizeKey, "true");
+        }
       }
     });
   });

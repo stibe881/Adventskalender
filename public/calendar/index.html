@@ -46,6 +46,16 @@
 
     <header id="calendar-header" class="hero"></header>
 
+    <div id="progress-container" class="w-full max-w-2xl mx-auto px-4 mt-2 mb-6 hidden">
+      <div class="text-white/80 text-sm mb-1 font-semibold flex justify-between">
+        <span id="progress-text">0/24 geöffnet</span>
+        <span>🎄</span>
+      </div>
+      <div class="w-full h-3 bg-black/30 rounded-full overflow-hidden border border-white/10 shadow-inner">
+        <div id="progress-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+      </div>
+    </div>
+
     <main id="calendar-frame">
       <div id="garland"></div>
       <div id="door-grid" class="door-grid" role="list"></div>
