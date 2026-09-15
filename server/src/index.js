@@ -49,20 +49,16 @@ app.use(express.static(config.paths.publicDir));
 app.use("/uploads", express.static(config.paths.uploadsDir));
 app.use("/vendor/gsap", express.static(path.join(config.paths.root, "node_modules", "gsap", "dist")));
 
-// ── Custom Domain Middleware ─────────────────────────────────────────────────
-// If a request arrives on a non-primary hostname (e.g. kalender.kunde.de),
-// look up the calendar whose customDomain matches, then transparently serve
-// the right calendar SPA.  API calls (/api/*) still pass through normally so
+// ── Custom Domain Middleware ─────────────────────────────────────────────────  // 🌟 Subdomain Middleware 🌟
+// If a request arrives on a subdomain (e.g. firma.adventskalender.de),
+// look up the calendar whose customConfig.subdomain matches, then transparently serve
+// the right calendar SPA. API calls (/api/*) still pass through normally so
 // that calendar.js works without any extra config.
 app.use((req, res, next) => {
-  const primaryHost = new URL(config.baseUrl).hostname;
   const host = (req.headers.host || "").split(":")[0]; // strip port
 
-  // Skip: it's the primary host, localhost, or an API/asset path
+  // Skip: API/asset path
   if (
-    host === primaryHost ||
-    host === "localhost" ||
-    host === "127.0.0.1" ||
     req.path.startsWith("/api/") ||
     req.path.startsWith("/uploads/") ||
     req.path.startsWith("/vendor/")
@@ -70,10 +66,24 @@ app.use((req, res, next) => {
     return next();
   }
 
-  const db = require("./db");
-  const calendar = db.getCalendarByCustomDomain(host);
+  // Determine subdomain
+  const baseDomain = config.baseDomain;
+  let subdomain = null;
+  
+  // Check if host ends with .baseDomain
+  if (baseDomain && baseDomain !== "localhost" && host.endsWith("." + baseDomain)) {
+    subdomain = host.substring(0, host.length - baseDomain.length - 1);
+  } else if (host !== baseDomain && host !== "localhost" && host !== "127.0.0.1") {
+    // Allow fallback if they use a full CNAME that isn't the baseDomain (legacy behavior)
+    subdomain = host; 
+  }
+  
+  if (!subdomain) return next();
 
-  if (!calendar) return next(); // unknown domain → fall through to 404
+  const db = require("./db");
+  const calendar = db.getCalendarBySubdomain(subdomain) || db.getCalendarBySubdomain(host); // Fallback to host for exact matches
+
+  if (!calendar) return next(); // unknown domain -> fall through to 404
 
   // Serve the calendar SPA for HTML requests (browser page loads)
   if (req.path === "/" || req.path === "") {
@@ -88,12 +98,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Inject calendar token for custom-domain requests so calendar.js
+// Inject calendar token for subdomain requests so calendar.js
 // knows which calendar to load without needing /c/:token in the URL.
 app.get("/api/calendar/by-domain", (req, res) => {
   const host = (req.headers.host || "").split(":")[0];
+  const baseDomain = config.baseDomain;
+  let subdomain = null;
+  if (baseDomain && baseDomain !== "localhost" && host.endsWith("." + baseDomain)) {
+    subdomain = host.substring(0, host.length - baseDomain.length - 1);
+  } else {
+    subdomain = host;
+  }
+
   const db = require("./db");
-  const calendar = db.getCalendarByCustomDomain(host);
+  const calendar = db.getCalendarBySubdomain(subdomain) || db.getCalendarBySubdomain(host);
   if (!calendar) return res.status(404).json({ error: "Kein Kalender für diese Domain gefunden." });
   res.json({ token: calendar.token });
 });

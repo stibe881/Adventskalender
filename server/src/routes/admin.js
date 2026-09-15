@@ -118,6 +118,20 @@ function applyTemplate(days, templateId) {
 function toSummary(cal) {
   const filled = cal.days.filter((d) => d.contentType).length;
   const opened = cal.days.filter((d) => d.opened).length;
+  
+  let shareUrl = `${config.baseUrl}/c/${cal.token}`;
+  if (cal.customConfig && cal.customConfig.subdomain) {
+    // Assuming https or using baseUrl scheme
+    const scheme = new URL(config.baseUrl).protocol;
+    const baseHost = config.baseDomain || new URL(config.baseUrl).host;
+    if (baseHost !== "localhost" && baseHost !== "127.0.0.1") {
+      shareUrl = `${scheme}//${cal.customConfig.subdomain}.${baseHost}`;
+    } else {
+      // Fallback for local development or when baseDomain is not set
+      shareUrl = `http://${cal.customConfig.subdomain}.localhost:${config.port}`;
+    }
+  }
+
   return {
     id: cal.id,
     recipientName: cal.recipientName,
@@ -127,7 +141,7 @@ function toSummary(cal) {
     year: cal.year,
     customConfig: cal.customConfig,
     token: cal.token,
-    shareUrl: `${config.baseUrl}/c/${cal.token}`,
+    shareUrl: shareUrl,
     createdAt: cal.createdAt,
     filledDoors: filled,
     openedDoors: opened,

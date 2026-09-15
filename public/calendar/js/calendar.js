@@ -36,7 +36,12 @@ const lockToast = document.getElementById("lock-toast");
 const contentModal = document.getElementById("content-modal");
 const modalBody = document.getElementById("modal-body");
 
-async function fetchJson(url, opts) {
+async function fetchJson(url, opts = {}) {
+  const pwd = sessionStorage.getItem(`calendar_pwd_${routeId}`);
+  if (pwd) {
+    opts.headers = { ...opts.headers, "X-Calendar-Password": pwd };
+  }
+  
   const res = await fetch(url, { credentials: "include", ...opts });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -103,6 +108,28 @@ async function init() {
       days = data.days;
     }
   } catch (err) {
+    if (err.data && err.data.requirePassword) {
+      document.body.setAttribute("data-theme", "modern");
+      document.getElementById("app-root").innerHTML = `
+        <div class="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
+          <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl p-6 text-center border border-white/10">
+            <div class="text-5xl mb-4">🔒</div>
+            <h1 class="text-xl font-bold mb-2">Passwort erforderlich</h1>
+            <p class="text-sm text-slate-400 mb-6">Dieser Kalender ist durch ein Passwort geschützt.</p>
+            <form id="pwd-form" class="flex flex-col gap-3">
+              <input type="password" id="pwd-input" class="rounded-lg bg-slate-900 border border-white/10 px-4 py-3 text-center text-lg focus:outline-none focus:border-emerald-500" placeholder="Passwort eingeben..." required />
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg">Entsperren</button>
+            </form>
+          </div>
+        </div>
+      `;
+      document.getElementById("pwd-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        sessionStorage.setItem(`calendar_pwd_${routeId}`, document.getElementById("pwd-input").value);
+        window.location.reload();
+      });
+      return;
+    }
     renderFatalError(err);
     return;
   }

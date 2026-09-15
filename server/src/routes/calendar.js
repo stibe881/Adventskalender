@@ -57,6 +57,13 @@ router.get("/:token", (req, res) => {
   const calendar = db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Dieser Kalender existiert nicht." });
 
+  if (calendar.customConfig && calendar.customConfig.password) {
+    const providedPwd = req.headers["x-calendar-password"];
+    if (providedPwd !== calendar.customConfig.password) {
+      return res.status(401).json({ error: "Passwort erforderlich.", requirePassword: true });
+    }
+  }
+
   // Calculate streak based on openedAt
   let streak = 0;
   const todayNum = getTodayParts().day;

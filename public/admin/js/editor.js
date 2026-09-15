@@ -99,8 +99,11 @@ async function loadCalendar() {
     metaConfig.classList.toggle("hidden", !e.target.checked);
   });
   
-  if (calendar.customConfig && calendar.customConfig.customDomain) {
-    document.getElementById("customDomain").value = calendar.customConfig.customDomain;
+  if (calendar.customConfig && calendar.customConfig.subdomain) {
+    document.getElementById("subdomain").value = calendar.customConfig.subdomain;
+  }
+  if (calendar.customConfig && calendar.customConfig.password) {
+    document.getElementById("calendarPassword").value = calendar.customConfig.password;
   }
 
   // Daily push reminder settings
@@ -127,8 +130,31 @@ async function loadCalendar() {
   renderDoorGrid();
 }
 
+function getPreviewText(c, type) {
+  if (!c) return "Leer";
+  switch(type) {
+    case "text": return c.message || "Text";
+    case "video": return c.url || "Video";
+    case "audio": return c.url || "Audio";
+    case "gallery": return c.caption || (c.images ? `${c.images.length} Bilder` : "Bilder");
+    case "link": return c.url || "Link";
+    case "quiz": return c.question || "Quiz";
+    case "challenge": return c.task || "Aufgabe";
+    case "countdown": return c.eventTitle || "Countdown";
+    case "quote": return c.quote || "Zitat";
+    case "voucher": return c.title || "Gutschein";
+    case "recipe": return c.title || "Rezept";
+    default: return "";
+  }
+}
+
 function renderDoorGrid() {
   doorGrid.innerHTML = "";
+  
+  const tooltip = document.getElementById("door-tooltip");
+  const tooltipTitle = document.getElementById("tooltip-title");
+  const tooltipBody = document.getElementById("tooltip-body");
+  
   calendar.days.forEach((door) => {
     const meta = door.contentType ? CONTENT_TYPE_META[door.contentType] : null;
     const btn = document.createElement("button");
@@ -141,17 +167,46 @@ function renderDoorGrid() {
     btn.draggable = true;
     btn.dataset.day = door.day;
     btn.innerHTML = `
-      <span class="text-lg">${meta ? meta.icon : "—"}</span>
+      <span class="text-lg">${meta ? meta.icon : "🚪"}</span>
       <span class="text-xs font-semibold">${door.day}</span>
-      ${door.opened ? '<span class="absolute top-1 right-1 text-[10px]" title="Bereits geöffnet">✓</span>' : ""}
-      ${door.openedAt ? `<span class="absolute bottom-1 right-1 text-[8px] text-slate-400" title="Geöffnet am">👁 ${new Date(door.openedAt).toLocaleDateString()}</span>` : ""}
+      ${door.opened ? '<span class="absolute top-1 right-1 text-[10px]" title="Bereits geöffnet">👁️</span>' : ""}
+      ${door.openedAt ? `<span class="absolute bottom-1 right-1 text-[8px] text-slate-400" title="Geöffnet am">🕒 ${new Date(door.openedAt).toLocaleDateString()}</span>` : ""}
     `;
-    btn.addEventListener("click", () => openModal(door.day));
+    
+    // Hover Preview Logic
+    btn.addEventListener("mouseenter", (e) => {
+      if (meta) {
+        tooltipTitle.innerHTML = `${meta.icon} ${meta.label}`;
+        tooltipBody.textContent = getPreviewText(door.content, door.contentType);
+        tooltip.classList.remove("hidden");
+        // small delay for opacity transition
+        requestAnimationFrame(() => tooltip.classList.remove("opacity-0"));
+        
+        // Position it below the button
+        const rect = btn.getBoundingClientRect();
+        const gridRect = doorGrid.getBoundingClientRect();
+        tooltip.style.left = `${rect.left - gridRect.left + (rect.width/2) - (tooltip.offsetWidth/2)}px`;
+        tooltip.style.top = `${rect.bottom - gridRect.top + 8}px`;
+      }
+    });
+    
+    btn.addEventListener("mouseleave", () => {
+      tooltip.classList.add("opacity-0");
+      setTimeout(() => {
+        if (tooltip.classList.contains("opacity-0")) tooltip.classList.add("hidden");
+      }, 200);
+    });
+    
+    btn.addEventListener("click", () => {
+      tooltip.classList.add("hidden", "opacity-0");
+      openModal(door.day);
+    });
     
     // Drag & Drop
     btn.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", door.day);
       btn.classList.add("opacity-50");
+      tooltip.classList.add("hidden", "opacity-0");
     });
     btn.addEventListener("dragend", () => {
       btn.classList.remove("opacity-50");
@@ -1149,10 +1204,20 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     calendar.customConfig.firmaColor = document.getElementById("firma-color").value;
   }
   
-  const cd = fd.get("customDomain");
+  const cd = fd.get("subdomain");
   if (cd) {
     if (!calendar.customConfig) calendar.customConfig = {};
-    calendar.customConfig.customDomain = cd;
+    calendar.customConfig.subdomain = cd;
+  } else if (calendar.customConfig) {
+    delete calendar.customConfig.subdomain;
+  }
+  
+  const pwd = fd.get("calendarPassword");
+  if (pwd) {
+    if (!calendar.customConfig) calendar.customConfig = {};
+    calendar.customConfig.password = pwd;
+  } else if (calendar.customConfig) {
+    delete calendar.customConfig.password;
   }
 
   // Save daily push reminder settings

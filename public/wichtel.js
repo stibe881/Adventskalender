@@ -92,6 +92,44 @@ function renderFields(type) {
     typeFields.innerHTML =
       fieldWrap("YouTube-URL", `<input id="f-url" value="${escapeHtml(currentContent.url)}" class="${inputClass}" />`) +
       fieldWrap("Beschriftung", `<input id="f-caption" value="${escapeHtml(currentContent.caption)}" class="${inputClass}" />`);
+  } else if (type === "audio") {
+    typeFields.innerHTML =
+      fieldWrap("Spotify-Link", `<input id="f-url" value="${escapeHtml(currentContent.url)}" class="${inputClass}" />`) +
+      fieldWrap("Zusatztext", `<input id="f-message" value="${escapeHtml(currentContent.message)}" class="${inputClass}" />`);
+  } else if (type === "link") {
+    typeFields.innerHTML =
+      fieldWrap("Web-URL", `<input id="f-url" value="${escapeHtml(currentContent.url)}" class="${inputClass}" />`) +
+      fieldWrap("Button-Text", `<input id="f-label" value="${escapeHtml(currentContent.label || 'Hier klicken')}" class="${inputClass}" />`);
+  } else if (type === "joke") {
+    typeFields.innerHTML =
+      fieldWrap("Setup / Frage", `<textarea id="f-setup" rows="2" class="${inputClass}">${escapeHtml(currentContent.setup)}</textarea>`) +
+      fieldWrap("Punchline / Antwort", `<textarea id="f-punchline" rows="2" class="${inputClass}">${escapeHtml(currentContent.punchline)}</textarea>`);
+  } else if (type === "quote") {
+    typeFields.innerHTML =
+      fieldWrap("Zitat", `<textarea id="f-quote" rows="3" class="${inputClass}">${escapeHtml(currentContent.quote)}</textarea>`) +
+      fieldWrap("Autor", `<input id="f-author" value="${escapeHtml(currentContent.author)}" class="${inputClass}" />`);
+  } else if (type === "recipe") {
+    typeFields.innerHTML =
+      fieldWrap("Rezept-Name", `<input id="f-title" value="${escapeHtml(currentContent.title)}" class="${inputClass}" />`) +
+      fieldWrap("Zutaten & Anleitung", `<textarea id="f-recipe" rows="5" class="${inputClass}">${escapeHtml(currentContent.recipe)}</textarea>`);
+  } else if (type === "countdown") {
+    typeFields.innerHTML =
+      fieldWrap("Was wird gefeiert?", `<input id="f-eventTitle" value="${escapeHtml(currentContent.eventTitle)}" class="${inputClass}" />`) +
+      fieldWrap("Datum (YYYY-MM-DD)", `<input id="f-targetDate" type="date" value="${escapeHtml(currentContent.targetDate)}" class="${inputClass}" />`);
+  } else if (type === "challenge") {
+    typeFields.innerHTML =
+      fieldWrap("Aufgabe / Mutprobe", `<textarea id="f-task" rows="3" class="${inputClass}">${escapeHtml(currentContent.task)}</textarea>`);
+  } else if (type === "quiz") {
+    typeFields.innerHTML =
+      fieldWrap("Frage", `<textarea id="f-question" rows="2" class="${inputClass}">${escapeHtml(currentContent.question)}</textarea>`) +
+      fieldWrap("Richtige Antwort", `<input id="f-correct" value="${escapeHtml(currentContent.options ? currentContent.options[0] : '')}" class="${inputClass}" />`) +
+      fieldWrap("Falsche Antwort 1", `<input id="f-wrong1" value="${escapeHtml(currentContent.options ? currentContent.options[1] : '')}" class="${inputClass}" />`) +
+      fieldWrap("Falsche Antwort 2", `<input id="f-wrong2" value="${escapeHtml(currentContent.options ? currentContent.options[2] : '')}" class="${inputClass}" />`);
+  } else if (type === "voucher") {
+    typeFields.innerHTML =
+      fieldWrap("Gutschein für", `<input id="f-title" value="${escapeHtml(currentContent.title)}" class="${inputClass}" />`) +
+      fieldWrap("Code (optional)", `<input id="f-code" value="${escapeHtml(currentContent.code)}" class="${inputClass}" />`) +
+      fieldWrap("Beschreibung", `<textarea id="f-description" rows="2" class="${inputClass}">${escapeHtml(currentContent.description)}</textarea>`);
   }
 }
 
@@ -118,6 +156,31 @@ form.addEventListener("submit", async (e) => {
     content = { caption: document.getElementById("f-caption").value, images: currentContent.images };
   } else if (type === "video") {
     content = { url: document.getElementById("f-url").value, caption: document.getElementById("f-caption").value };
+  } else if (type === "audio") {
+    content = { url: document.getElementById("f-url").value, message: document.getElementById("f-message").value };
+  } else if (type === "link") {
+    content = { url: document.getElementById("f-url").value, label: document.getElementById("f-label").value };
+  } else if (type === "joke") {
+    content = { setup: document.getElementById("f-setup").value, punchline: document.getElementById("f-punchline").value };
+  } else if (type === "quote") {
+    content = { quote: document.getElementById("f-quote").value, author: document.getElementById("f-author").value };
+  } else if (type === "recipe") {
+    content = { title: document.getElementById("f-title").value, recipe: document.getElementById("f-recipe").value };
+  } else if (type === "countdown") {
+    content = { eventTitle: document.getElementById("f-eventTitle").value, targetDate: document.getElementById("f-targetDate").value };
+  } else if (type === "challenge") {
+    content = { task: document.getElementById("f-task").value };
+  } else if (type === "quiz") {
+    content = { 
+      question: document.getElementById("f-question").value, 
+      options: [
+        document.getElementById("f-correct").value,
+        document.getElementById("f-wrong1").value,
+        document.getElementById("f-wrong2").value
+      ].filter(Boolean)
+    };
+  } else if (type === "voucher") {
+    content = { title: document.getElementById("f-title").value, code: document.getElementById("f-code").value, description: document.getElementById("f-description").value };
   }
   
   document.getElementById("save-btn").disabled = true;

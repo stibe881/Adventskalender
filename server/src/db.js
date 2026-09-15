@@ -124,15 +124,15 @@ function createUser(user) {
   return user;
 }
 
-function getCalendarByCustomDomain(domain) {
-  if (!domain) return null;
-  const normalized = domain.toLowerCase().trim();
+function getCalendarBySubdomain(subdomain) {
+  if (!subdomain) return null;
+  const normalized = subdomain.toLowerCase().trim();
   return (
     load().calendars.find(
       (c) =>
         c.customConfig &&
-        c.customConfig.customDomain &&
-        c.customConfig.customDomain.toLowerCase().trim() === normalized
+        c.customConfig.subdomain &&
+        c.customConfig.subdomain.toLowerCase().trim() === normalized
     ) || null
   );
 }
@@ -142,7 +142,7 @@ module.exports = {
   getCalendarsByOwnerOrCollaborator,
   getCalendarById,
   getCalendarByToken,
-  getCalendarByCustomDomain,
+  getCalendarBySubdomain,
   createCalendar,
   updateCalendar,
   deleteCalendar,

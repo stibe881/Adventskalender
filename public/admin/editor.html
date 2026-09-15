@@ -48,8 +48,16 @@
           <select name="theme" id="theme-select" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
         </div>
         <div class="sm:col-span-2">
-          <label class="block text-sm text-slate-300 mb-1">Custom Domain (Pro)</label>
-          <input type="text" id="customDomain" name="customDomain" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="z. B. kalender.meinefirma.de" />
+          <label class="block text-sm text-slate-300 mb-1">Eigene Subdomain</label>
+          <div class="flex items-center">
+            <input type="text" id="subdomain" name="subdomain" class="flex-1 rounded-l-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="z. B. wagner" />
+            <span class="bg-slate-700 border border-l-0 border-white/10 px-3 py-2 text-sm text-slate-300 rounded-r-lg">.deine-domain.de</span>
+          </div>
+        </div>
+        
+        <div class="sm:col-span-2">
+          <label class="block text-sm text-slate-300 mb-1">Passwortschutz (Optional)</label>
+          <input type="text" id="calendarPassword" name="calendarPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Geheimwort..." />
         </div>
         
         <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
@@ -127,8 +135,14 @@
 
     <section>
       <h2 class="font-display text-lg font-semibold mb-3">24 Türchen</h2>
-      <div id="door-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3"></div>
+      <div id="door-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 relative"></div>
     </section>
+
+    <!-- Hover Tooltip -->
+    <div id="door-tooltip" class="hidden absolute z-50 bg-slate-800 border border-emerald-500/50 shadow-2xl rounded-xl p-3 text-sm text-white pointer-events-none w-56 opacity-0 transition-opacity duration-200">
+      <div id="tooltip-title" class="font-bold text-emerald-400 mb-1 border-b border-white/10 pb-1"></div>
+      <div id="tooltip-body" class="text-xs text-slate-300 line-clamp-3"></div>
+    </div>
   </main>
 
   <!-- Editing modal -->
