@@ -19,8 +19,14 @@
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
-        <a id="preview-link" href="#" target="_blank" rel="noopener" class="text-sm rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition-colors">👁 Vorschau</a>
-        <button id="copy-link-btn" class="text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 transition-colors">🔗 Link kopieren</button>
+        <a id="preview-link" href="#" target="_blank" rel="noopener" class="flex items-center gap-1 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          Vorschau
+        </a>
+        <button id="copy-link-btn" class="flex items-center gap-1 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Link kopieren
+        </button>
       </div>
     </div>
   </header>
@@ -41,19 +47,64 @@
           <label class="block text-sm text-slate-300 mb-1">Theme</label>
           <select name="theme" id="theme-select" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
         </div>
-        <div class="sm:col-span-4 flex items-center gap-2 mt-2">
+        <div class="sm:col-span-2">
+          <label class="block text-sm text-slate-300 mb-1">Custom Domain (Pro)</label>
+          <input type="text" id="customDomain" name="customDomain" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="z. B. kalender.meinefirma.de" />
+        </div>
+        
+        <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
           <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
           <label for="strictMode" class="text-sm text-slate-300">Strict Mode <span class="text-slate-500">(Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen)</span></label>
+        </div>
+        <div class="sm:col-span-2 mt-2">
+          <label class="block text-sm text-slate-300 mb-1">E-Mail (Erinnerungen)</label>
+          <input name="recipientEmail" type="email" placeholder="z. B. bine@beispiel.de" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div class="sm:col-span-2 flex items-center gap-2 mt-2">
+          <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+          <label for="randomLayout" class="text-sm text-slate-300">Zahlen mischen</label>
+        </div>
+        <div class="sm:col-span-4 mt-2">
+          <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+          <label for="syncOpen" class="text-sm text-slate-300">Multiplayer: Synchronisiertes Öffnen <span class="text-slate-500">(Zwei Personen müssen gleichzeitig auf das Türchen klicken)</span></label>
+        </div>
+        <div class="sm:col-span-4 mt-2">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+            <label for="metaPuzzle" class="text-sm text-slate-300">Meta-Rätsel aktivieren <span class="text-slate-500">(Master-Passwort für Tag 24)</span></label>
+          </div>
+          <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
+            <input type="text" id="metaPassword" name="metaPassword" placeholder="23-stelliges Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
+            <p class="text-xs text-slate-500 mt-1">Die 23 Zeichen werden automatisch auf Türchen 1-23 aufgeteilt und als Hinweis unten eingeblendet. Türchen 24 fragt dieses Passwort ab.</p>
+          </div>
         </div>
         <div class="sm:col-span-4 hidden" id="firma-settings">
           <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl">
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Corporate Hintergrundbild (optional)</label>
-              <input type="file" id="firma-bg" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+              <label class="block text-sm text-slate-300 mb-1">Corporate Farbe</label>
+              <input type="color" id="firma-color" value="#3b82f6" class="w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
             </div>
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Firmenlogo (optional)</label>
+              <label class="block text-sm text-slate-300 mb-1">Hintergrundbild</label>
+              <input type="file" id="firma-bg" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm text-slate-300 mb-1">Firmenlogo</label>
               <input type="file" id="firma-logo" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+            </div>
+          </div>
+        </div>
+        <div class="sm:col-span-4 mt-2">
+          <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl space-y-3">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="dailyReminderEnabled" name="dailyReminderEnabled" class="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-white/10 focus:ring-indigo-500 focus:ring-2">
+              <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300">🔔 Automatische tägliche Push-Erinnerung</label>
+            </div>
+            <p class="text-xs text-slate-400 ml-7">Der Empfänger bekommt jeden Tag im Dezember (1–24) eine Push-Benachrichtigung, wenn das Türchen noch nicht geöffnet wurde. Nur aktiv, wenn der Empfänger Push-Benachrichtigungen erlaubt hat.</p>
+            <div class="ml-7 flex items-center gap-3" id="reminderTimeRow">
+              <label class="text-sm text-slate-300 shrink-0">Uhrzeit der Erinnerung:</label>
+              <input type="time" id="dailyReminderTime" name="dailyReminderTime" value="08:00" class="rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+              <span class="text-xs text-slate-500">(Server-Zeitzone: Europe/Berlin)</span>
             </div>
           </div>
         </div>
@@ -62,6 +113,16 @@
           <span id="settings-saved" class="hidden text-sm text-emerald-400 ml-2">Gespeichert ✓</span>
         </div>
       </form>
+
+      <!-- Push Notification Panel -->
+      <div class="bg-indigo-900/30 border border-indigo-500/50 rounded-xl p-4 mt-8">
+        <h3 class="text-indigo-400 font-bold mb-2">Live Web-Push senden 🔔</h3>
+        <p class="text-xs text-slate-300 mb-3">Sende eine sofortige System-Benachrichtigung an alle Nutzer, die diesen Kalender gerade geöffnet haben (oder abonniert haben).</p>
+        <div class="flex gap-2">
+          <input type="text" id="push-msg" placeholder="Ho ho ho! Türchen 14 ist bereit!" class="flex-1 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button onclick="sendPushBroadcast()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg">Senden</button>
+        </div>
+      </div>
     </section>
 
     <section>
@@ -79,15 +140,116 @@
       </div>
 
       <label class="block text-sm text-slate-300 mb-1">Inhaltstyp</label>
-      <select id="content-type-select" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-        <option value="">– leer / nicht befüllt –</option>
-      </select>
+      <button type="button" id="open-type-selector-btn" class="w-full rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-3 text-white mb-4 flex items-center justify-between transition-colors text-left">
+        <span id="current-type-label" class="flex items-center gap-2">
+          <span class="text-slate-400">– leer / nicht befüllt –</span>
+        </span>
+        <span class="text-emerald-500 font-bold text-sm">Typ ändern</span>
+      </button>
 
       <div id="type-fields" class="space-y-3"></div>
 
-      <div class="flex justify-end gap-2 mt-6">
-        <button id="modal-cancel" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium px-4 py-2 transition-colors">Abbrechen</button>
-        <button id="modal-save" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold px-4 py-2 transition-colors">Speichern</button>
+      <div class="mt-6 pt-4 border-t border-white/10 space-y-3">
+        <h4 class="text-sm font-semibold text-slate-300">🔒 Escape Room (Passwortschutz)</h4>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Passwort-Schutz (optional)</label>
+          <input type="text" id="f-lockPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2" placeholder="Geheimes Lösungswort..." />
+          <input type="text" id="f-lockHint" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Hinweis, z.B. 'Name des ersten Haustiers'" />
+        </div>
+        
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Sensor-Schlösser (optional, erfordert https)</label>
+          <select id="f-sensorLock" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
+            <option value="">Kein Sensor-Schloss</option>
+            <option value="voice">Mikrofon (Pusten / Singen)</option>
+            <option value="camera-red">Kamera (Finde etwas Rotes)</option>
+            <option value="camera-green">Kamera (Finde etwas Grünes)</option>
+            <option value="geoAR">Geo-Caching AR (GPS + Gyro)</option>
+          </select>
+          <div id="geoAR-inputs" class="hidden flex gap-2 mb-2">
+            <input type="text" id="f-geoLat" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Breitengrad (Lat)" />
+            <input type="text" id="f-geoLon" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Längengrad (Lon)" />
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Bedingung: Interaktive Story (optional)</label>
+          <div class="flex gap-2">
+            <input type="number" id="f-reqChoiceDay" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Tag (z.B. 5)" />
+            <select id="f-reqChoiceOpt" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="">Option wählen</option>
+              <option value="A">Option A</option>
+              <option value="B">Option B</option>
+            </select>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Dieses Türchen ist nur sichtbar, wenn am angegebenen Tag die entsprechende Option gewählt wurde.</p>
+        </div>
+      </div>
+
+      <div id="feedback-section" class="hidden mt-6 pt-4 border-t border-white/10">
+        <h4 class="text-sm font-semibold text-slate-300 mb-2">Reaktionen & Antworten</h4>
+        <div id="feedback-reactions" class="flex gap-2 text-2xl mb-2"></div>
+        <div id="feedback-replies" class="space-y-2"></div>
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button type="button" id="modal-cancel" class="flex-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 transition-colors">Abbrechen</button>
+        <button type="button" id="modal-save" class="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 transition-colors shadow-lg shadow-emerald-500/20">Speichern</button>
+      </div>
+      
+      <div class="mt-4 pt-4 border-t border-white/10 text-center">
+        <button type="button" id="wichtel-link-btn" class="text-sm text-indigo-400 hover:text-indigo-300">Wichtel-Link für dieses Türchen generieren</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="type-selector-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-6">
+    <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl w-full max-w-6xl h-full sm:h-[85vh] flex flex-col sm:flex-row overflow-hidden shadow-2xl relative">
+      <!-- Left List (Always visible, full height on mobile) -->
+      <div class="w-full md:w-1/2 lg:w-5/12 bg-slate-900 border-r border-white/5 flex flex-col h-full">
+        <div class="p-4 sm:p-6 border-b border-white/10 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-white">Inhaltstyp wählen</h3>
+          <button id="type-selector-close" class="text-slate-400 hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div id="type-list-container" class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-2 lg:grid-cols-2 gap-3 custom-scrollbar">
+          <!-- JS fills this -->
+        </div>
+      </div>
+
+      <!-- Right Preview (Overlay on mobile, static on desktop) -->
+      <div id="preview-pane" class="absolute md:relative inset-0 md:inset-auto w-full md:w-1/2 lg:w-7/12 flex-col hidden md:flex z-20 bg-slate-900 shadow-2xl md:shadow-none transition-transform translate-y-0 duration-300">
+        
+        <!-- Mobile Header with "Zurück" Button -->
+        <div class="md:hidden p-4 border-b border-white/10 flex justify-between items-center bg-slate-950">
+          <button id="mobile-back-btn" class="text-slate-400 flex items-center gap-2 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Zurück
+          </button>
+          <h4 class="font-bold text-white">Vorschau</h4>
+          <div></div>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="hidden md:flex p-4 border-b border-white/10 justify-between items-center bg-slate-950">
+          <h4 class="font-semibold text-slate-300">Vorschau</h4>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex items-start sm:items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 to-slate-950 relative">
+          <!-- Scale down preview to fit -->
+          <div id="type-preview-container" class="w-full max-w-sm bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden pointer-events-none transform transition-all duration-300 scale-90 sm:scale-100 my-auto">
+            <!-- Populated by JS -->
+            <div class="p-8 text-center text-slate-400 font-medium">
+              Fahre mit der Maus über einen Typen oder tippe ihn an, um eine Vorschau zu sehen.
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Footer for Confirm Button -->
+        <div class="p-4 border-t border-white/10 bg-slate-950 flex justify-end">
+           <button id="type-selector-confirm" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 md:py-1.5 px-6 md:px-4 rounded-xl md:rounded-lg shadow-lg w-full md:w-auto transition-transform active:scale-95 text-lg md:text-base">Hinzufügen</button>
+        </div>
       </div>
     </div>
   </div>

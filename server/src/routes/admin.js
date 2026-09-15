@@ -23,12 +23,105 @@ function makeEmptyDays() {
   }));
 }
 
+function applyTemplate(days, templateId) {
+  const mindfulTasks = [
+    "Nimm dir 3 bewusste, tiefe Atemzüge.",
+    "Trinke eine Tasse Tee oder Kaffee ganz ohne Ablenkung.",
+    "Schreibe 3 Dinge auf, für die du heute dankbar bist.",
+    "Mache einen 10-minütigen Spaziergang an der frischen Luft.",
+    "Lege dein Handy für die nächste Stunde in einen anderen Raum.",
+    "Lächle dich selbst im Spiegel an und sage dir etwas Nettes.",
+    "Höre dein absolutes Lieblingslied und singe oder summe mit.",
+    "Räume einen kleinen Bereich auf (z.B. deinen Schreibtisch).",
+    "Schließe die Augen und achte 2 Minuten lang nur auf deinen Körper.",
+    "Schreibe einer Person, die du magst, eine nette Nachricht.",
+    "Lies ein Kapitel in einem Buch, das du schon lange lesen wolltest.",
+    "Dehne deinen Körper für 5 Minuten durch.",
+    "Genieße ein Stück Schokolade oder Obst ganz langsam und bewusst.",
+    "Mach heute bewusst ein Kompliment an jemand anderen.",
+    "Gönne dir heute Abend eine extra lange Dusche oder ein Bad.",
+    "Beobachte für ein paar Minuten die Wolken oder die Natur.",
+    "Notiere dir einen Erfolg, den du in letzter Zeit gefeiert hast.",
+    "Versuche heute, dich über nichts aufzuregen und gelassen zu bleiben.",
+    "Zünde eine Kerze an und betrachte die Flamme für eine Minute.",
+    "Höre einen beruhigenden Podcast oder entspannende Musik.",
+    "Gehe heute 15 Minuten früher ins Bett als sonst.",
+    "Mache dir ein schönes, gesundes Frühstück.",
+    "Denke an einen besonders schönen Moment aus diesem Jahr zurück.",
+    "Nimm dir Zeit für dich selbst und mache genau das, worauf du jetzt Lust hast."
+  ];
+
+  if (templateId === "romantic") {
+    days.forEach(d => {
+      d.contentType = "text";
+      d.content = { message: `Grund #${d.day}, warum ich dich liebe...`, sender: "Dein Schatz" };
+    });
+  } else if (templateId === "mindful") {
+    days.forEach(d => {
+      d.contentType = "challenge";
+      d.content = { task: `Achtsamkeitsübung: ${mindfulTasks[d.day - 1]}`, btnText: "Erledigt!", successMessage: "Gut gemacht!" };
+    });
+  } else if (templateId === "jokes") {
+    days.forEach(d => {
+      d.contentType = "text";
+      d.content = { message: `Witz des Tages #${d.day}:\n\n(Hier Witz einfügen)`, sender: "Spaßvogel" };
+    });
+  } else if (templateId === "quotes") {
+    days.forEach(d => {
+      d.contentType = "text";
+      d.content = { message: `"Zitat des Tages #${d.day}"\n\n- (Autor)`, sender: "Inspiration" };
+    });
+  } else if (templateId === "fitness") {
+    days.forEach(d => {
+      d.contentType = "challenge";
+      d.content = { task: `Fitness-Challenge #${d.day}:\nMach 10 Kniebeugen!`, btnText: "Erledigt!", successMessage: "Stark!" };
+    });
+  } else if (templateId === "trivia") {
+    days.forEach(d => {
+      d.contentType = "quiz";
+      d.content = { question: `Quizfrage #${d.day}: Was ist...?`, options: ["Antwort A", "Antwort B", "Antwort C", "Antwort D"], correctIndex: 0, successMessage: "Richtig!", failureMessage: "Leider falsch.", prizeText: "10 Punkte", prizeCoins: 10 };
+    });
+  } else if (templateId === "recipes") {
+    days.forEach(d => {
+      d.contentType = "text";
+      d.content = { message: `Rezept #${d.day}:\n\nZutaten:\n- ...\n\nZubereitung:\n...`, sender: "Bäckerei" };
+    });
+  } else if (templateId === "couples_activities") {
+    days.forEach(d => {
+      d.contentType = "challenge";
+      d.content = { task: `Aktivität #${d.day}:\nHeute kochen wir zusammen etwas Neues!`, btnText: "Erledigt!", successMessage: "Schön war's!" };
+    });
+  } else if (templateId === "kids_fun") {
+    days.forEach(d => {
+      d.contentType = "challenge";
+      d.content = { task: `Rätselspaß #${d.day}:\nFinde 3 rote Dinge im Raum!`, btnText: "Gefunden!", successMessage: "Toll gemacht!" };
+    });
+  } else if (templateId === "praise") {
+    days.forEach(d => {
+      d.contentType = "text";
+      d.content = { message: `Was ich an dir schätze #${d.day}:\n\nDu bist so wundervoll, weil...`, sender: "Dein Fan" };
+    });
+  } else if (templateId === "photo_memories") {
+    days.forEach(d => {
+      d.contentType = "gallery";
+      d.content = { images: [], desc: `Unsere schönste Erinnerung #${d.day} (Bitte Bild hochladen)` };
+    });
+  } else if (templateId === "escape_room") {
+    days.forEach(d => {
+      d.contentType = "quiz";
+      d.content = { question: `Rätsel #${d.day}:\nLöse den Code...`, options: ["123", "456", "789", "000"], correctIndex: 0, successMessage: "Tür entriegelt!", failureMessage: "Falscher Code.", prizeText: "Hinweis gefunden!", prizeCoins: 0 };
+    });
+  }
+  return days;
+}
+
 function toSummary(cal) {
   const filled = cal.days.filter((d) => d.contentType).length;
   const opened = cal.days.filter((d) => d.opened).length;
   return {
     id: cal.id,
     recipientName: cal.recipientName,
+    recipientEmail: cal.recipientEmail,
     ownerName: cal.ownerName,
     theme: cal.theme,
     year: cal.year,
@@ -38,18 +131,36 @@ function toSummary(cal) {
     createdAt: cal.createdAt,
     filledDoors: filled,
     openedDoors: opened,
+    randomLayout: Boolean(cal.randomLayout),
+    collaborators: cal.collaborators || [],
   };
+}
+
+// User Upgrade
+router.post("/upgrade", (req, res) => {
+  db.updateUser(req.user.id, (u) => {
+    u.isPro = true;
+    return u;
+  });
+  res.json({ ok: true, isPro: true });
+});
+
+function hasAccess(calendar, user) {
+  if (!calendar) return false;
+  if (calendar.ownerId === user.id) return true;
+  if (calendar.collaborators && calendar.collaborators.includes(user.email)) return true;
+  return false;
 }
 
 // ---------- Calendars ----------
 
 router.get("/calendars", (req, res) => {
-  const calendars = db.getCalendarsByOwner(req.user.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const calendars = db.getCalendarsByOwnerOrCollaborator(req.user.id, req.user.email).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json(calendars.map(toSummary));
 });
 
 router.post("/calendars", (req, res) => {
-  const { recipientName, theme, year, customConfig } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, template, randomLayout } = req.body || {};
   if (!recipientName || !String(recipientName).trim()) {
     return res.status(400).json({ error: "Name des Beschenkten ist erforderlich." });
   }
@@ -61,18 +172,26 @@ router.post("/calendars", (req, res) => {
     return res.status(400).json({ error: "Ungültiges Jahr." });
   }
 
+  let days = makeEmptyDays();
+  if (template) {
+    days = applyTemplate(days, template);
+  }
+
   const calendar = {
     id: generateId(),
     token: generateToken(),
     ownerId: req.user.id,
     ownerName: req.user.username,
     recipientName: String(recipientName).trim(),
+    recipientEmail: recipientEmail ? String(recipientEmail).trim() : null,
+    collaborators: [],
     theme,
     customConfig: customConfig || null,
     strictMode: Boolean(req.body.strictMode),
+    randomLayout: Boolean(randomLayout),
     year: parsedYear,
     createdAt: new Date().toISOString(),
-    days: makeEmptyDays(),
+    days,
   };
   db.createCalendar(calendar);
   res.status(201).json(toSummary(calendar));
@@ -80,20 +199,22 @@ router.post("/calendars", (req, res) => {
 
 router.get("/calendars/:id", (req, res) => {
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden oder kein Zugriff." });
   res.json(calendar);
 });
 
 router.put("/calendars/:id", (req, res) => {
-  const { recipientName, theme, year, customConfig, strictMode } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout } = req.body || {};
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const updated = db.updateCalendar(req.params.id, (cal) => {
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
+    if (recipientEmail !== undefined) cal.recipientEmail = recipientEmail ? String(recipientEmail).trim() : null;
     if (theme && THEMES.includes(theme)) cal.theme = theme;
     if (customConfig !== undefined) cal.customConfig = customConfig;
     if (strictMode !== undefined) cal.strictMode = Boolean(strictMode);
+    if (randomLayout !== undefined) cal.randomLayout = Boolean(randomLayout);
     if (year) {
       const parsedYear = parseInt(year, 10);
       if (Number.isInteger(parsedYear) && parsedYear >= 2000 && parsedYear <= 2200) cal.year = parsedYear;
@@ -104,29 +225,101 @@ router.put("/calendars/:id", (req, res) => {
   res.json(toSummary(updated));
 });
 
+router.post("/calendars/:id/collaborators", (req, res) => {
+  const { email } = req.body || {};
+  const calendar = db.getCalendarById(req.params.id);
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(403).json({ error: "Nur der Besitzer kann Mitbearbeiter einladen." });
+
+  const updated = db.updateCalendar(req.params.id, (cal) => {
+    if (!cal.collaborators) cal.collaborators = [];
+    if (email && !cal.collaborators.includes(email)) {
+      cal.collaborators.push(email);
+    }
+    return cal;
+  });
+  res.json(toSummary(updated));
+});
+
 router.delete("/calendars/:id", (req, res) => {
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  // Only owner can delete
+  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden oder keine Berechtigung." });
   const ok = db.deleteCalendar(req.params.id);
   if (!ok) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({ ok: true });
 });
 
+router.get("/calendars/:id/export-giveaway", (req, res) => {
+  const calendar = db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  
+  let csv = "Tag,Email\n";
+  calendar.days.forEach(d => {
+    if (d.giveawayEntries && d.giveawayEntries.length > 0) {
+      d.giveawayEntries.forEach(email => {
+        csv += `${d.day},${email}\n`;
+      });
+    }
+  });
+  
+  res.header('Content-Type', 'text/csv');
+  res.attachment('giveaway_teilnehmer.csv');
+  res.send(csv);
+});
+
+router.post("/calendars/:id/import", (req, res) => {
+  const calendar = db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  
+  // simple csv processing: Day,Type,ContentJSON
+  const csvText = req.body.csv;
+  if (!csvText) return res.status(400).json({ error: "Keine CSV Daten" });
+
+  const lines = csvText.split("\n");
+  const updated = db.updateCalendar(req.params.id, (cal) => {
+    lines.forEach(line => {
+      const parts = line.split(";");
+      if (parts.length >= 3) {
+        const day = parseInt(parts[0], 10);
+        const type = parts[1].trim();
+        let contentStr = parts.slice(2).join(";").trim();
+        if (day >= 1 && day <= 24 && CONTENT_TYPES.includes(type)) {
+          try {
+            const content = JSON.parse(contentStr);
+            const idx = cal.days.findIndex(d => d.day === day);
+            if (idx !== -1) {
+              cal.days[idx].contentType = type;
+              cal.days[idx].content = content;
+            }
+          } catch(e) {}
+        }
+      }
+    });
+    return cal;
+  });
+  res.json({ ok: true });
+});
+
 router.post("/calendars/:id/duplicate", (req, res) => {
   const source = db.getCalendarById(req.params.id);
-  if (!source || source.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  // Only owner can duplicate (or collaborator could, but let's say anyone with access)
+  if (!hasAccess(source, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const duplicate = {
     ...source,
     id: generateId(),
     token: generateToken(),
+    ownerId: req.user.id, // duplicator becomes new owner
+    ownerName: req.user.username,
+    collaborators: [], // don't copy collaborators
     recipientName: `${source.recipientName} (Kopie)`,
     createdAt: new Date().toISOString(),
   };
   
-  // Create deep copy of days so they don't share objects
   duplicate.days = source.days.map(d => ({
     ...d,
+    opened: false,
+    openedAt: null,
     content: d.content ? JSON.parse(JSON.stringify(d.content)) : null
   }));
 
@@ -134,16 +327,39 @@ router.post("/calendars/:id/duplicate", (req, res) => {
   res.status(201).json(toSummary(duplicate));
 });
 
-// Admin-only preview: bypasses the date lock so Stibe can check the
-// experience before December. Never exposed on the public token route.
+router.post("/calendars/:id/swap", (req, res) => {
+  const { dayA, dayB } = req.body || {};
+  const calendar = db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+
+  const updated = db.updateCalendar(req.params.id, (cal) => {
+    const idxA = cal.days.findIndex((d) => d.day === dayA);
+    const idxB = cal.days.findIndex((d) => d.day === dayB);
+    if (idxA !== -1 && idxB !== -1) {
+      const tempType = cal.days[idxA].contentType;
+      const tempContent = cal.days[idxA].content;
+      cal.days[idxA].contentType = cal.days[idxB].contentType;
+      cal.days[idxA].content = cal.days[idxB].content;
+      cal.days[idxB].contentType = tempType;
+      cal.days[idxB].content = tempContent;
+    }
+    return cal;
+  });
+  res.json({ ok: true });
+});
+
 router.get("/calendars/:id/preview", (req, res) => {
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({
     recipientName: calendar.recipientName,
     ownerName: calendar.ownerName,
     theme: calendar.theme,
     customConfig: calendar.customConfig,
+    randomLayout: calendar.randomLayout,
+    syncOpen: calendar.syncOpen,
+    metaPuzzle: calendar.metaPuzzle,
+    playlist: calendar.playlist || [],
     year: calendar.year,
     today: getTodayParts(),
     preview: true,
@@ -156,6 +372,19 @@ router.get("/calendars/:id/preview", (req, res) => {
       content: d.content,
     })),
   });
+});
+
+router.get("/calendars/:id/analytics", (req, res) => {
+  const calendar = db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  
+  const openings = calendar.days.map(d => ({
+    day: d.day,
+    opened: d.opened,
+    leads: d.giveawayEntries?.length || 0
+  }));
+  
+  res.json({ openings });
 });
 
 // ---------- Day content ----------
@@ -176,7 +405,7 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
   }
 
   const calendar = db.getCalendarById(req.params.id);
-  if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const updated = db.updateCalendar(req.params.id, (cal) => {
     const doorIdx = cal.days.findIndex((d) => d.day === dayNum);
@@ -191,6 +420,28 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
   res.json(updated.days.find((d) => d.day === dayNum));
 });
 
+router.post("/calendars/:id/days/:day/wichtel-link", (req, res) => {
+  const calendar = db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+
+  const dayNum = parseInt(req.params.day, 10);
+  let token = null;
+
+  db.updateCalendar(req.params.id, (cal) => {
+    const doorIdx = cal.days.findIndex((d) => d.day === dayNum);
+    if (doorIdx !== -1) {
+      if (!cal.days[doorIdx].wichtelToken) {
+        cal.days[doorIdx].wichtelToken = crypto.randomBytes(8).toString("hex");
+      }
+      token = cal.days[doorIdx].wichtelToken;
+    }
+    return cal;
+  });
+
+  if (!token) return res.status(400).json({ error: "Ungültiges Türchen." });
+  res.json({ token, url: `${config.baseUrl}/wichtel.html?token=${token}` });
+});
+
 // ---------- Uploads (gallery images / audio files) ----------
 
 const storage = multer.diskStorage({
@@ -202,14 +453,14 @@ const storage = multer.diskStorage({
   },
 });
 
-const ALLOWED_MIME = /^(image\/(png|jpe?g|gif|webp)|audio\/(mpeg|mp3|wav|ogg|x-m4a|mp4))$/;
+const ALLOWED_MIME = /^(image\/(png|jpe?g|gif|webp)|audio\/(mpeg|mp3|wav|ogg|x-m4a|mp4|webm|weba))$/;
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 }, // increased for voice notes
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_MIME.test(file.mimetype)) {
-      return cb(new Error("Dateityp nicht erlaubt. Erlaubt: Bilder (png/jpg/gif/webp) und Audio (mp3/wav/ogg/m4a)."));
+      return cb(new Error("Dateityp nicht erlaubt."));
     }
     cb(null, true);
   },
@@ -221,6 +472,29 @@ router.post("/upload", (req, res) => {
     if (!req.file) return res.status(400).json({ error: "Keine Datei erhalten." });
     res.json({ url: `/uploads/${req.file.filename}`, originalName: req.file.originalname });
   });
+});
+
+router.post("/calendars/:id/push", async (req, res) => {
+  const db = require("../db");
+  const { sendPushNotification } = require("../push");
+  
+  const calendar = db.getCalendarById(req.params.id);
+  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  
+  const subs = calendar.subscriptions || [];
+  let sent = 0;
+  
+  for (const sub of subs) {
+    try {
+      await sendPushNotification(sub, { title: "Kalender Update", body: req.body.message });
+      sent++;
+    } catch (e) {
+      console.error("Push Fehler:", e);
+      // Ideally remove stale subscriptions here if e.statusCode === 410 or 404
+    }
+  }
+  
+  res.json({ success: true, sent });
 });
 
 module.exports = router;

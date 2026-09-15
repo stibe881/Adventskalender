@@ -95,7 +95,7 @@ body {
   width: 100%; /* FIX: Ensures grid doesn't collapse */
   max-width: 960px;
   margin: 0 auto;
-  padding: var(--frame-pad, 20px);
+  padding-right: env(safe-area-inset-right);
 }
 #garland { display: none; }
 
@@ -106,12 +106,50 @@ body {
   grid-auto-flow: dense;
   gap: var(--gap);
 }
+/* Media queries */
 @media (max-width: 768px) {
   :root { --gap: 16px; --cell: 95px; }
   .door-grid { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 480px) {
-  :root { --gap: 12px; --cell: 80px; }
+  :root { --gap: 10px; --cell: 85px; }
+  .door-grid { grid-template-columns: repeat(3, 1fr); }
+  #calendar-frame { padding: 12px; }
+  .hero { padding: 25px 12px 15px; }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  #scene, #particle-canvas, #controls, #preview-banner, #garland, .calendar-footer {
+    display: none !important;
+  }
+  #app-root {
+    min-height: auto;
+  }
+  .door-scene {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #ccc !important;
+    background: #f9f9f9 !important;
+    transform: none !important;
+  }
+  .door-leaf, .leaf-front, .leaf-back, .door-interior {
+    background: transparent !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .leaf-front {
+    display: flex;
+    flex-direction: column;
+  }
+  .leaf-front::after {
+    content: " (Geöffnet)";
+    font-size: 10px;
+  }
 }
 
 .span-2x2 { grid-column: span 2; grid-row: span 2; }
@@ -235,6 +273,20 @@ body {
   50% { box-shadow: var(--ready-shadow-active, 0 0 30px rgba(255,255,255,0.8)); }
 }
 
+@keyframes floatToday {
+  0%, 100% { transform: rotate(var(--tilt, 0deg)) translateY(0); }
+  50% { transform: rotate(var(--tilt, 0deg)) translateY(-4px); }
+}
+
+.is-today .door-body {
+  animation: floatToday 2s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.4);
+  border-radius: var(--door-radius, 8px);
+}
+.is-today .leaf-front {
+  border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
 /* ---------- Footer, toast, modal ---------- */
 .calendar-footer {
   text-align: center;
@@ -306,6 +358,11 @@ body {
   transform: scale(0.95) translateY(20px);
   transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
 }
+@media (max-width: 480px) {
+  #modal-card {
+    padding: 24px 20px;
+  }
+}
 #content-modal.modal-visible #modal-card { transform: scale(1) translateY(0); }
 #modal-close {
   position: absolute;
@@ -327,6 +384,13 @@ body {
 .modal-text { font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; font-weight: 500; opacity: 0.9; }
 .modal-sender { text-align: right; margin-top: 25px; opacity: 0.6; font-size: 1rem; }
 .modal-muted { text-align: center; font-size: 0.95rem; opacity: 0.6; }
+
+@media (max-width: 480px) {
+  .modal-head { margin-bottom: 20px; }
+  .modal-title { font-size: 1.8rem; }
+  .modal-text { font-size: 1rem; }
+  .modal-icon .icon { width: 40px; height: 40px; }
+}
 .voucher-box { border: 2px dashed var(--modal-accent, var(--text)); border-radius: 12px; padding: 24px; text-align: center; background: rgba(128,128,128,0.05); }
 .voucher-code { font-family: monospace; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.15em; margin-bottom: 10px; }
 .qr-img { width: 200px; height: 200px; border-radius: 12px; background: #fff; padding: 10px; margin: 0 auto; display: block; }
@@ -384,6 +448,20 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 [data-theme="partner"] .is-ready .leaf-front { animation: pulseReady 3s infinite; border-color: rgba(254, 240, 138, 0.6); }
+
+/* ── Challenge: erledigt → grünes Türchen ──────────────────────────────────── */
+.door-scene.is-done .door-body {
+  --glow: rgba(52, 211, 153, 0.7);
+  filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.6));
+}
+.door-scene.is-done .leaf-back {
+  background: linear-gradient(135deg, #065f46 0%, #059669 60%, #34d399 100%) !important;
+}
+.door-scene.is-done .leaf-front {
+  background: linear-gradient(135deg, #065f46 0%, #059669 60%, #34d399 100%) !important;
+  border-color: #34d399 !important;
+}
+.door-scene.is-done .door-number { color: #fff; text-shadow: 0 0 8px rgba(52,211,153,0.8); }
 
 
 /* =========================================================
@@ -641,4 +719,65 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* =========================================================
+   Print-to-Paper PDF Mode
+   ========================================================= */
+
+@media print {
+  /* Reset colors to black and white for print */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  
+  /* Hide UI controls and backgrounds */
+  #controls, #calendar-header, #calendar-footer, .theme-bg, .ambient-glow, .vignette-overlay, #particle-canvas, #preview-banner {
+    display: none !important;
+  }
+  
+  /* Reset layout for A4 */
+  #app-root {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .door-grid {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 15px !important;
+    padding: 20px !important;
+  }
+
+  .door-scene {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 !important;
+    border: 2px solid #000 !important;
+    border-radius: 8px !important;
+    page-break-inside: avoid !important;
+    transform: none !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .door-body, .door-leaf, .leaf-front {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .door-number {
+    color: #000 !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    text-shadow: none !important;
+  }
+  
+  .door-lock, .interior-icon {
+    display: none !important;
+  }
 }

@@ -6,8 +6,15 @@ class ParticleField {
     this.ambientType = null;
     this.running = false;
     this.lastSpawn = 0;
+    this.wind = 0; // Gyroscope wind
     this.resize();
     window.addEventListener("resize", () => this.resize());
+    window.addEventListener("deviceorientation", (e) => {
+      // gamma is left-to-right tilt in degrees, where right is positive
+      if (e.gamma !== null) {
+        this.wind = e.gamma / 30; // Scale down
+      }
+    });
   }
 
   resize() {
@@ -99,8 +106,12 @@ class ParticleField {
     this.particles = this.particles.filter((p) => {
       if (p.kind === "snow") {
         p.y += p.vy;
-        p.x += Math.sin(p.phase + p.y * 0.01) * 0.6;
+        p.x += Math.sin(p.phase + p.y * 0.01) * 0.6 + this.wind;
         if (p.y > h + 10) return false;
+        // wrap around X
+        if (p.x > w) p.x = 0;
+        if (p.x < 0) p.x = w;
+        
         ctx.globalAlpha = p.opacity;
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();

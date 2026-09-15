@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adventskalender Wichtel-Modus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans antialiased min-h-screen">
+  <div class="max-w-2xl mx-auto pt-10 px-4 pb-20">
+    <div class="flex items-center gap-3 mb-8">
+      <div class="text-3xl">🎅</div>
+      <div>
+        <h1 class="text-2xl font-bold">Wichtel-Modus</h1>
+        <p class="text-slate-400">Du gestaltest ein Türchen als Überraschung!</p>
+      </div>
+    </div>
+    
+    <div id="loading" class="text-center py-10 text-slate-400">Lade Daten...</div>
+    <div id="error" class="hidden bg-rose-900/40 border border-rose-500/50 text-rose-200 p-4 rounded-lg mb-6 text-center"></div>
+    
+    <div id="editor-container" class="hidden">
+      <div class="bg-slate-800 rounded-xl border border-white/10 p-6 shadow-xl mb-6">
+        <h2 class="text-lg font-bold mb-4" id="door-title">Türchen # laden...</h2>
+        
+        <form id="wichtel-form">
+          <div class="mb-4">
+            <label class="block text-sm text-slate-300 mb-2">Inhaltstyp</label>
+            <select id="content-type-select" class="w-full rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="">(Leer)</option>
+              <option value="text">Nachricht (Text)</option>
+              <option value="gallery">Bilder-Galerie</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          
+          <div id="type-fields" class="space-y-4 mb-6"></div>
+          
+          <button type="submit" id="save-btn" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 transition-colors shadow-lg shadow-emerald-500/20">Türchen speichern</button>
+        </form>
+      </div>
+      <p id="success-msg" class="hidden text-emerald-400 font-bold text-center">Gespeichert! Du kannst diese Seite nun schließen.</p>
+    </div>
+  </div>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/wichtel.js"></script>
+</body>
+</html>

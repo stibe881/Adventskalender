@@ -36,6 +36,14 @@ function getAllCalendars() {
   return load().calendars;
 }
 
+function getCalendarsByOwnerOrCollaborator(userId, email) {
+  return load().calendars.filter((c) => {
+    if (c.ownerId === userId) return true;
+    if (c.collaborators && c.collaborators.includes(email)) return true;
+    return false;
+  });
+}
+
 function getCalendarById(id) {
   return load().calendars.find((c) => c.id === id) || null;
 }
@@ -69,29 +77,77 @@ function deleteCalendar(id) {
   return data.calendars.length < before;
 }
 
-function getCalendarsByOwner(ownerId) {
-  return load().calendars.filter((c) => c.ownerId === ownerId);
+function updateUser(id, updater) {
+  const data = load();
+  const idx = data.users.findIndex(u => u.id === id);
+  if (idx !== -1) {
+    data.users[idx] = updater(data.users[idx]);
+    save(data);
+    return data.users[idx];
+  }
+  return null;
 }
 
-function getUserByUsername(username) {
-  return load().users.find((u) => u.username === username) || null;
+function getCalendarsByOwnerOrCollaborator(ownerId, email) {
+  return load().calendars.filter((c) => {
+    if (c.ownerId === ownerId) return true;
+    if (c.collaborators && c.collaborators.includes(email)) return true;
+    return false;
+  });
+}
+
+function getUserByEmail(email) {
+  return load().users.find((u) => u.email === email) || null;
+}
+
+function getUserByVerificationToken(token) {
+  return load().users.find((u) => u.verificationToken === token) || null;
+}
+
+function updateUser(id, updaterFn) {
+  const data = load();
+  const idx = data.users.findIndex((u) => u.id === id);
+  if (idx === -1) return null;
+  const updated = updaterFn(data.users[idx]);
+  data.users[idx] = updated;
+  save(data);
+  return updated;
 }
 
 function createUser(user) {
   const data = load();
+  if (user.isPro === undefined) {
+    user.isPro = false;
+  }
   data.users.push(user);
   save(data);
   return user;
 }
 
+function getCalendarByCustomDomain(domain) {
+  if (!domain) return null;
+  const normalized = domain.toLowerCase().trim();
+  return (
+    load().calendars.find(
+      (c) =>
+        c.customConfig &&
+        c.customConfig.customDomain &&
+        c.customConfig.customDomain.toLowerCase().trim() === normalized
+    ) || null
+  );
+}
+
 module.exports = {
   getAllCalendars,
-  getCalendarsByOwner,
+  getCalendarsByOwnerOrCollaborator,
   getCalendarById,
   getCalendarByToken,
+  getCalendarByCustomDomain,
   createCalendar,
   updateCalendar,
   deleteCalendar,
-  getUserByUsername,
+  getUserByEmail,
+  getUserByVerificationToken,
   createUser,
+  updateUser,
 };

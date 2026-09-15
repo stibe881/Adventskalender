@@ -14,6 +14,20 @@ const CONTENT_TYPES = [
   "countdown",
   "memory",
   "challenge",
+  "location",
+  "giveaway",
+  "puzzle",
+  "ar",
+  "catcher",
+  "product",
+  "choice",
+  "coins",
+  "diary",
+  "duel",
+  "timecapsule",
+  "printplay",
+  "spotify-collab",
+  "iot-box"
 ];
 
 const THEMES = ["partner", "kid", "parents", "modern", "firma"];

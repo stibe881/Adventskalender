@@ -8,8 +8,12 @@ const config = require("./config");
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const calendarRoutes = require("./routes/calendar");
+const { startCron } = require("./cron");
+const { initWebPush } = require("./push");
 
 if (!fs.existsSync(config.paths.uploadsDir)) fs.mkdirSync(config.paths.uploadsDir, { recursive: true });
+
+initWebPush();
 
 const app = express();
 
@@ -24,10 +28,75 @@ app.use(
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
+// Start cron
+startCron();
+app.use("/api/wichtel", require("./routes/wichtel"));
+
+app.get("/api/global-stats", (req, res) => {
+  const db = require("./db");
+  const calendars = db.getAllCalendars();
+  let totalOpened = 0;
+  calendars.forEach(c => {
+    c.days.forEach(d => {
+      if (d.opened) totalOpened++;
+    });
+  });
+  res.json({ totalOpened });
+});
+
 // Static assets
 app.use(express.static(config.paths.publicDir));
 app.use("/uploads", express.static(config.paths.uploadsDir));
 app.use("/vendor/gsap", express.static(path.join(config.paths.root, "node_modules", "gsap", "dist")));
+
+// ── Custom Domain Middleware ─────────────────────────────────────────────────
+// If a request arrives on a non-primary hostname (e.g. kalender.kunde.de),
+// look up the calendar whose customDomain matches, then transparently serve
+// the right calendar SPA.  API calls (/api/*) still pass through normally so
+// that calendar.js works without any extra config.
+app.use((req, res, next) => {
+  const primaryHost = new URL(config.baseUrl).hostname;
+  const host = (req.headers.host || "").split(":")[0]; // strip port
+
+  // Skip: it's the primary host, localhost, or an API/asset path
+  if (
+    host === primaryHost ||
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    req.path.startsWith("/api/") ||
+    req.path.startsWith("/uploads/") ||
+    req.path.startsWith("/vendor/")
+  ) {
+    return next();
+  }
+
+  const db = require("./db");
+  const calendar = db.getCalendarByCustomDomain(host);
+
+  if (!calendar) return next(); // unknown domain → fall through to 404
+
+  // Serve the calendar SPA for HTML requests (browser page loads)
+  if (req.path === "/" || req.path === "") {
+    return res.sendFile(path.join(config.paths.publicDir, "calendar", "index.html"));
+  }
+
+  // Rewrite /c/:token style if someone navigates there
+  if (req.path.startsWith("/c/")) {
+    return res.sendFile(path.join(config.paths.publicDir, "calendar", "index.html"));
+  }
+
+  next();
+});
+
+// Inject calendar token for custom-domain requests so calendar.js
+// knows which calendar to load without needing /c/:token in the URL.
+app.get("/api/calendar/by-domain", (req, res) => {
+  const host = (req.headers.host || "").split(":")[0];
+  const db = require("./db");
+  const calendar = db.getCalendarByCustomDomain(host);
+  if (!calendar) return res.status(404).json({ error: "Kein Kalender für diese Domain gefunden." });
+  res.json({ token: calendar.token });
+});
 
 // API
 app.use("/api/auth", authRoutes);
@@ -49,12 +118,19 @@ app.use((req, res) => {
   res.status(404).json({ error: "Nicht gefunden." });
 });
 
+const http = require("http");
+const { initSocket } = require("./socket");
+
+// Create HTTP server instead of listening directly on app
+const server = http.createServer(app);
+initSocket(server);
+
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || "Interner Serverfehler." });
 });
 
-app.listen(config.port, () => {
+server.listen(config.port, () => {
   console.log(`🎄 Adventskalender läuft auf ${config.baseUrl} (Timezone: ${config.timezone})`);
 });

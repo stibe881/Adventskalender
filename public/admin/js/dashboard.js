@@ -1,24 +1,54 @@
 const THEME_LABELS = {
-  partner: "💕 Partner*in",
-  kid: "🎈 Kind",
-  parents: "🌲 Eltern",
-  modern: "✨ Modern",
-  firma: "🏢 Firma",
+  partner: "Partner*in",
+  kid: "Kind",
+  parents: "Eltern",
+  modern: "Modern",
+  firma: "Firma",
 };
 
 const listEl = document.getElementById("calendar-list");
 const emptyState = document.getElementById("empty-state");
 const createForm = document.getElementById("create-form");
 
+let isProUser = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const yearInput = document.querySelector('input[name="year"]');
+  if (yearInput) {
+    yearInput.value = new Date().getFullYear();
+  }
+});
+
 async function init() {
   try {
-    const me = await api.me();
-    document.getElementById("admin-name").textContent = me.username;
-  } catch (_) {
-    window.location.href = "/admin/";
-    return;
+    const user = await api.me();
+    document.getElementById("admin-name").textContent = user.email;
+    isProUser = !!user.isPro;
+    
+    if (isProUser) {
+      document.getElementById("pro-badge").classList.remove("hidden");
+      document.getElementById("upgrade-btn").classList.add("hidden");
+    } else {
+      document.getElementById("upgrade-btn").classList.remove("hidden");
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await api.logout();
+      window.location.href = "/admin/";
+    });
+    
+    document.getElementById("upgrade-btn").addEventListener("click", async () => {
+      try {
+        await fetch("/api/admin/upgrade", { method: "POST" });
+        window.location.reload();
+      } catch(e) { alert(e.message); }
+    });
+
+    await loadCalendars();
+  } catch (err) {
+    console.error("Dashboard Init Error:", err);
+    alert("Ein Fehler ist aufgetreten: " + err.message);
   }
-  await loadCalendars();
 }
 
 async function loadCalendars() {
@@ -27,6 +57,113 @@ async function loadCalendars() {
   emptyState.classList.toggle("hidden", calendars.length > 0);
   calendars.forEach((cal) => listEl.appendChild(renderCard(cal)));
 }
+
+window.toggleMenu = (id) => {
+  document.querySelectorAll('[id^="menu-"]').forEach((m) => {
+    if (m.id !== `menu-${id}`) m.classList.add("hidden");
+  });
+  const menu = document.getElementById(`menu-${id}`);
+  if (menu) menu.classList.toggle("hidden");
+};
+
+window.duplicateCalendar = async (id) => {
+  try {
+    await api.duplicateCalendar(id);
+    await loadCalendars();
+  } catch (err) {
+    alert("Fehler beim Duplizieren: " + err.message);
+  }
+};
+
+window.deleteCalendar = async (id) => {
+  if (!confirm("Kalender wirklich löschen?")) return;
+  try {
+    await api.deleteCalendar(id);
+    await loadCalendars();
+  } catch (err) {
+    alert("Fehler beim Löschen: " + err.message);
+  }
+};
+
+window.promptImport = async (id) => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".csv";
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    try {
+      const res = await fetch(`/api/admin/calendars/${id}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv: text }),
+      });
+      if (!res.ok) throw new Error("Import fehlgeschlagen");
+      alert("CSV erfolgreich importiert!");
+      await loadCalendars();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+  input.click();
+};
+
+let currentChart = null;
+
+window.showAnalytics = async (id) => {
+  if (!isProUser) {
+    alert("Diese Funktion ist nur für PRO-Nutzer verfügbar.");
+    return;
+  }
+  try {
+    const res = await fetch(`/api/admin/calendars/${id}/analytics`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    
+    document.getElementById("analytics-modal").classList.remove("hidden");
+    
+    const ctx = document.getElementById("analyticsChart").getContext("2d");
+    if (currentChart) currentChart.destroy();
+    
+    const labels = data.openings.map(d => `Tag ${d.day}`);
+    const openedData = data.openings.map(d => d.opened ? 1 : 0);
+    const leadsData = data.openings.map(d => d.leads);
+
+    currentChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Geöffnet",
+            data: openedData,
+            backgroundColor: "#10b981", // emerald-500
+          },
+          {
+            label: "Leads (Gewinnspiel)",
+            data: leadsData,
+            backgroundColor: "#6366f1", // indigo-500
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  } catch(e) {
+    alert(e.message);
+  }
+};
+
+window.addEventListener("click", (e) => {
+  if (!e.target.closest(".calendar-menu-btn") && !e.target.closest('[id^="menu-"]')) {
+    document.querySelectorAll('[id^="menu-"]').forEach((m) => m.classList.add("hidden"));
+  }
+});
 
 function renderCard(cal) {
   const card = document.createElement("div");
@@ -39,7 +176,18 @@ function renderCard(cal) {
         <h3 class="font-display font-semibold text-lg">${escapeHtml(cal.recipientName)}</h3>
         <p class="text-xs text-slate-400">${THEME_LABELS[cal.theme] || cal.theme} · Dezember ${cal.year}</p>
       </div>
-      <button data-action="delete" class="text-slate-500 hover:text-rose-400 text-sm" title="Löschen">🗑</button>
+      <div class="relative inline-block text-left">
+        <button class="calendar-menu-btn text-slate-400 hover:text-white p-2" onclick="toggleMenu('${cal.id}')">
+          ⋮
+        </button>
+        <div id="menu-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden">
+          <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white flex items-center gap-2">Kopieren</button>
+          <button onclick="showAnalytics('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>
+          <a href="/api/admin/calendars/${cal.id}/export-giveaway" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 flex items-center gap-2" download>Leads Exportieren</a>
+          <button onclick="promptImport('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-blue-400 flex items-center gap-2">CSV Import</button>
+          <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-500 flex items-center gap-2">Löschen</button>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -57,20 +205,15 @@ function renderCard(cal) {
       <a href="/c/preview/${cal.id}" target="_blank" rel="noopener" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">Vorschau</a>
       <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">🔗 Link</button>
       <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren">📑 Kopieren</button>
+      <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
     </div>
   `;
-
-  card.querySelector('[data-action="delete"]').addEventListener("click", async () => {
-    if (!confirm(`Kalender für "${cal.recipientName}" wirklich löschen?`)) return;
-    await api.deleteCalendar(cal.id);
-    await loadCalendars();
-  });
 
   card.querySelector('[data-action="copy"]').addEventListener("click", async (e) => {
     await navigator.clipboard.writeText(cal.shareUrl);
     const btn = e.currentTarget;
     const original = btn.textContent;
-    btn.textContent = "✅ Kopiert!";
+    btn.textContent = "Kopiert!";
     setTimeout(() => (btn.textContent = original), 1500);
   });
 
@@ -82,6 +225,17 @@ function renderCard(cal) {
     } catch (err) {
       alert("Fehler beim Duplizieren: " + err.message);
       e.currentTarget.disabled = false;
+    }
+  });
+
+  card.querySelector('[data-action="collab"]').addEventListener("click", async () => {
+    const email = prompt("E-Mail-Adresse des Mitbearbeiters:");
+    if (!email) return;
+    try {
+      await api.addCollaborator(cal.id, email);
+      alert(email + " wurde als Mitbearbeiter hinzugefügt!");
+    } catch (err) {
+      alert(err.message);
     }
   });
 
@@ -100,9 +254,12 @@ createForm.addEventListener("submit", async (e) => {
   try {
     const cal = await api.createCalendar({
       recipientName: fd.get("recipientName"),
+      recipientEmail: fd.get("recipientEmail"),
       theme: fd.get("theme"),
       year: fd.get("year"),
+      template: fd.get("template"),
       strictMode: document.getElementById("strictMode").checked,
+      randomLayout: document.getElementById("randomLayout").checked,
     });
     createForm.reset();
     window.location.href = `/admin/editor.html?id=${cal.id}`;

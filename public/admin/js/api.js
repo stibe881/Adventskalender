@@ -35,24 +35,28 @@ async function request(method, url, body, isForm = false) {
 }
 
 const api = {
-  login: (username, password) => request("POST", "/auth/login", { username, password }),
-  register: (username, password) => request("POST", "/auth/register", { username, password }),
+  login: (email, password) => request("POST", "/auth/login", { email, password }),
+  register: (email, password) => request("POST", "/auth/register", { email, password }),
+  devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
 
   listCalendars: () => request("GET", "/admin/calendars"),
-  createCalendar: (payload) => request("POST", "/admin/calendars", payload),
   getCalendar: (id) => request("GET", `/admin/calendars/${id}`),
-  updateCalendar: (id, payload) => request("PUT", `/admin/calendars/${id}`, payload),
+  createCalendar: (data) => request("POST", "/admin/calendars", data),
+  updateCalendar: (id, data) => request("PUT", `/admin/calendars/${id}`, data),
   deleteCalendar: (id) => request("DELETE", `/admin/calendars/${id}`),
   duplicateCalendar: (id) => request("POST", `/admin/calendars/${id}/duplicate`),
   previewCalendar: (id) => request("GET", `/admin/calendars/${id}/preview`),
+  addCollaborator: (id, email) => request("POST", `/admin/calendars/${id}/collaborators`, { email }),
+  swapDays: (id, dayA, dayB) => request("POST", `/admin/calendars/${id}/swap`, { dayA, dayB }),
   saveDay: (id, day, payload) => request("PUT", `/admin/calendars/${id}/days/${day}`, payload),
   upload: (file) => {
     const form = new FormData();
     form.append("file", file);
     return request("POST", "/admin/upload", form, true);
   },
+  generateWichtelLink: (id, day) => request("POST", `/admin/calendars/${id}/days/${day}/wichtel-link`),
 };
 
 async function requireAdminOrRedirect() {

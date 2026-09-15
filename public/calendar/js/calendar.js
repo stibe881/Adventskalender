@@ -1,6 +1,24 @@
 const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", "TOKEN"] or ["c","preview","ID"]
 const isPreview = pathParts[1] === "preview";
-const routeId = isPreview ? pathParts[2] : pathParts[1];
+// routeId is resolved either from the URL (/c/:token) or,
+// for custom-domain deployments, fetched from the server by Host header.
+let routeId = isPreview ? pathParts[2] : pathParts[1];
+// Will be replaced before init() runs if we're on a custom domain (no token in URL).
+async function resolveRouteId() {
+  if (routeId) return; // already have a token from the URL
+  try {
+    const data = await fetch("/api/calendar/by-domain", { credentials: "include" }).then(r => r.json());
+    if (data.token) {
+      routeId = data.token;
+    } else {
+      document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0a1a;color:#fff;font-family:sans-serif;text-align:center;padding:2rem;"><div><h1 style="font-size:2rem;margin-bottom:1rem">🎄 Kalender nicht gefunden</h1><p style="color:#94a3b8;">Diese Domain ist keinem Adventskalender zugeordnet.</p></div></div>`;
+    }
+  } catch (e) {
+    console.error("Custom domain resolution failed:", e);
+  }
+}
+const params = new URLSearchParams(window.location.search);
+const isRef = params.get("ref") === "1";
 
 let calendarMeta = null;
 let days = []; // { day, unlockDate, unlocked, opened, filled, contentType, content }
@@ -8,6 +26,9 @@ let themeKey = null;
 let theme = null;
 let field = null;
 let countdownInterval = null;
+let socket = null;
+let partnerReady = {}; // Track which days partner is ready to open
+let pendingBody = {}; // Track request bodies for doors waiting to open
 
 const doorGrid = document.getElementById("door-grid");
 const canvas = document.getElementById("particle-canvas");
@@ -27,13 +48,36 @@ async function fetchJson(url, opts) {
   return data;
 }
 
+let effectsEnabled = true;
+
+let userCoins = 0;
+let userInventory = [];
+
+function updateCoinDisplay() {
+  const cd = document.getElementById("coin-display");
+  if (cd) cd.textContent = userCoins;
+  const sb = document.getElementById("shop-balance");
+  if (sb) sb.textContent = userCoins;
+}
+
 async function init() {
+  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10);
+  try { userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]"); } catch(e) {}
+  updateCoinDisplay();
   try {
     if (isPreview) {
       const data = await fetchJson(`/api/admin/calendars/${routeId}/preview`);
       calendarMeta = data;
       days = data.days.map((d) => ({ ...d, unlocked: true }));
     } else {
+      if (isRef) {
+        // Increment referral logic silently
+        fetchJson(`/api/calendar/${routeId}/refer`, { method: "POST" }).catch(console.error);
+        
+        // Remove ?ref=1 from URL so they can share their own clean link
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      
       const data = await fetchJson(`/api/calendar/${routeId}`);
       calendarMeta = data;
       days = data.days;
@@ -41,6 +85,17 @@ async function init() {
   } catch (err) {
     renderFatalError(err);
     return;
+  }
+  
+  if (calendarMeta.referrals >= 3 && !days.find(d => d.day === 25)) {
+    days.push({
+      day: 25,
+      unlocked: true,
+      opened: false,
+      filled: true,
+      contentType: "text",
+      content: { message: "Wahnsinn! Du hast 3 Freunde eingeladen! Als Dankeschön: Hier ist dein geheimes 25. Türchen 🎄✨", sender: "Team Adventskalender" }
+    });
   }
 
   themeKey = calendarMeta.theme;
@@ -52,14 +107,403 @@ async function init() {
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
-  if (isPreview) document.getElementById("preview-banner").classList.remove("hidden");
+  if (isPreview) {
+    document.getElementById("preview-banner").classList.remove("hidden");
+  }
+
+  // Load economy
+  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10);
+  try {
+    userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]");
+  } catch(e) { userInventory = []; }
+  
+  updateCoinDisplay();
+  
+  document.getElementById("btn-leaderboard")?.addEventListener("click", () => {
+    openLeaderboardModal();
+  });
 
   field = new ParticleField(canvas);
   field.setAmbient(theme.ambient);
   field.start();
 
+  if (isPreview || calendarMeta.today?.day > 24 || (calendarMeta.today?.month !== 12 && calendarMeta.today?.day !== undefined)) {
+    const printBtn = document.getElementById("print-pdf-btn");
+    if (printBtn) {
+      printBtn.classList.remove("hidden");
+      printBtn.addEventListener("click", () => window.print());
+    }
+  }
+
+  document.getElementById("toggle-effects-btn").addEventListener("click", () => {
+    effectsEnabled = !effectsEnabled;
+    if (effectsEnabled) {
+      canvas.classList.remove("hidden");
+      field.start();
+    } else {
+      canvas.classList.add("hidden");
+      field.stop();
+    }
+    document.getElementById("toggle-effects-btn").style.opacity = effectsEnabled ? "1" : "0.5";
+  });
+  
+  if (typeof io !== "undefined") {
+    socket = io();
+    socket.emit("join_calendar", routeId);
+    
+    socket.on("trigger_push", (data) => {
+      if (Notification.permission === "granted") {
+        new Notification("Kalender Update", { body: data.message, icon: "/icons/icon-192x192.png" });
+      } else {
+        alert("WICHTIGE NACHRICHT:\n" + data.message);
+      }
+    });
+
+    socket.on("partner_ready", (day) => {
+      partnerReady[day] = true;
+      showLockToast(`Dein Partner ist bereit, Türchen ${day} zu öffnen!`);
+      // Update UI if we were already waiting
+      const el = document.querySelector(`.door-scene[data-day="${day}"]`);
+      if (el && el.dataset.waiting === "true") {
+        el.dataset.waiting = "false";
+        tryOpenDoor(day, el, pendingBody[day] || {});
+        delete pendingBody[day];
+      }
+    });
+    
+    socket.on("door_opened_sync", (data) => {
+      // The partner successfully opened the door, let's reflect that locally
+      const idx = days.findIndex((d) => d.day === data.day);
+      if (idx !== -1 && !days[idx].opened) {
+        days[idx] = { ...days[idx], ...data.result, opened: true };
+        const el = document.querySelector(`.door-scene[data-day="${data.day}"]`);
+        if (el) {
+          applyDoorState(el, days[idx]);
+          openDoorAnimation(el, days[idx]);
+        }
+      }
+    });
+  }
+  
+  if (!isPreview) {
+    initPet(calendarMeta.streak || 0);
+    initPixelArt();
+    initGlobalAudioPlayer();
+    
+    // Request Notification Permission and Web Push
+    if ("serviceWorker" in navigator && "PushManager" in window) {
+      if (Notification.permission === "default" || Notification.permission === "granted") {
+        setTimeout(() => {
+          Notification.requestPermission().then(permission => {
+            if (permission === "granted") subscribeUserToPush();
+          });
+        }, 2000);
+      }
+    }
+  }
+
   renderDoorGrid();
   animateEntrance();
+}
+
+// Convert VAPID key
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function subscribeUserToPush() {
+  try {
+    const swReg = await navigator.serviceWorker.ready;
+    const existing = await swReg.pushManager.getSubscription();
+    if (existing) return; // already subbed
+
+    const res = await fetch(`/api/calendar/${routeId}/vapidPublicKey`);
+    const { publicKey } = await res.json();
+    if (!publicKey) return;
+
+    const sub = await swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+    await fetch(`/api/calendar/${routeId}/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sub)
+    });
+    console.log("Web Push abonniert!");
+  } catch (err) {
+    console.error("Web Push Error:", err);
+  }
+}
+
+function renderFatalError(err) {
+  document.body.setAttribute("data-theme", "modern");
+  document.getElementById("app-root").innerHTML = `
+    <div class="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
+      <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-rose-500/30 text-center">
+        <div class="bg-rose-500/10 p-6 border-b border-rose-500/30">
+          <div class="text-6xl mb-2 text-rose-500">❌</div>
+          <h1 class="text-2xl font-black text-rose-400">Ein Fehler ist aufgetreten</h1>
+        </div>
+        <div class="p-6">
+          <p class="text-slate-300 mb-6">${err.message}</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initPet(streak) {
+  const petEl = document.getElementById("digital-pet");
+  const emoji = document.getElementById("pet-emoji");
+  const status = document.getElementById("pet-status");
+  
+  if (!petEl) return;
+  petEl.classList.remove("hidden");
+  
+  let petState = "sleepy";
+  if (streak > 0 && streak <= 5) petState = "happy";
+  if (streak > 5) petState = "glowing";
+  
+  petEl.addEventListener("mouseenter", () => status.classList.remove("opacity-0"));
+  petEl.addEventListener("mouseleave", () => status.classList.add("opacity-0"));
+  
+  petEl.addEventListener("click", () => {
+    // bounce animation
+    emoji.style.transform = "translateY(-20px)";
+    setTimeout(() => emoji.style.transform = "translateY(0)", 200);
+    
+    // Day 24 AR unlock?
+    const opened24 = days.find(d => d.day === 24 && d.opened);
+    if (opened24) {
+      alert("AR Feature: Das Rentier wartet auf dich! (Feature in Entwicklung)");
+    }
+  });
+
+  if (petState === "sleepy") {
+    emoji.textContent = "🦌💤";
+    emoji.classList.add("grayscale", "opacity-70");
+    status.textContent = "Schläft... Öffne ein Türchen!";
+  } else if (petState === "happy") {
+    emoji.textContent = userInventory.includes("hat") ? "🎩🦌🎅" : "🦌🎅";
+    status.textContent = `Glücklich! (${streak} Tage Streak)`;
+  } else {
+    emoji.textContent = userInventory.includes("glasses") ? "🕶️🦌✨" : (userInventory.includes("hat") ? "🎩🦌✨" : "🦌✨");
+    emoji.classList.add("drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]");
+    status.textContent = `On Fire! 🔥 (${streak} Tage Streak)`;
+  }
+}
+
+// ---------- Shop ----------
+
+document.getElementById("shop-btn").onclick = () => {
+  document.getElementById("shop-modal").classList.remove("hidden");
+  updateCoinDisplay();
+};
+
+document.getElementById("shop-close").onclick = () => {
+  document.getElementById("shop-modal").classList.add("hidden");
+};
+
+window.buyItem = function(item, cost) {
+  if (userInventory.includes(item)) {
+    alert("Du besitzt dieses Item bereits!");
+    return;
+  }
+  if (userCoins < cost) {
+    alert("Nicht genug Münzen!");
+    return;
+  }
+  userCoins -= cost;
+  userInventory.push(item);
+  localStorage.setItem(`coins_${routeId}`, userCoins);
+  localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
+  updateCoinDisplay();
+  initPet(calendarMeta?.streak || 0);
+  alert("Gekauft! Das Rentier hat sich sofort umgezogen.");
+};
+
+// ---------- Pixel Art ----------
+
+let activeColor = "#ffffff";
+let pixelCount = 0;
+const gridSize = 50; // 50x50
+const cellSize = 10; // 500px canvas / 50
+
+function initPixelArt() {
+  const btn = document.getElementById("pixel-art-btn");
+  const modal = document.getElementById("pixel-modal");
+  const close = document.getElementById("pixel-close");
+  const canvas = document.getElementById("pixel-canvas");
+  const ctx = canvas.getContext("2d");
+  const countEl = document.getElementById("pixel-count");
+
+  // Calculate available pixels (10 per opened door minus used)
+  const openedDoors = days.filter(d => d.opened).length;
+  const usedPixels = parseInt(localStorage.getItem(`pixels_${routeId}`) || "0", 10);
+  pixelCount = Math.max(0, openedDoors * 10 - usedPixels);
+  countEl.textContent = pixelCount;
+
+  // Active color selection
+  document.querySelectorAll(".pixel-color-btn").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll(".pixel-color-btn").forEach(bb => bb.classList.remove("border-white"));
+      b.classList.add("border-white");
+      activeColor = b.dataset.color;
+    };
+  });
+  document.querySelector('.pixel-color-btn').classList.add("border-white");
+
+  // Draw grid
+  ctx.fillStyle = "#1e293b";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  btn.onclick = () => {
+    modal.classList.remove("hidden");
+    if (socket) {
+      socket.emit("get_pixels", routeId);
+    }
+  };
+
+  close.onclick = () => modal.classList.add("hidden");
+
+  // Socket handlers
+  if (socket) {
+    socket.on("pixels_state", (state) => {
+      Object.entries(state).forEach(([coords, color]) => {
+        const [x, y] = coords.split(",").map(Number);
+        ctx.fillStyle = color;
+        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      });
+    });
+
+    socket.on("pixel_update", (data) => {
+      ctx.fillStyle = data.color;
+      ctx.fillRect(data.x * cellSize, data.y * cellSize, cellSize, cellSize);
+    });
+  }
+
+  // Drawing
+  let isDrawing = false;
+  
+  const placePixel = (e) => {
+    if (pixelCount <= 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    const x = Math.floor(((e.clientX - rect.left) * scaleX) / cellSize);
+    const y = Math.floor(((e.clientY - rect.top) * scaleY) / cellSize);
+    
+    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+      // Draw locally
+      ctx.fillStyle = activeColor;
+      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      
+      // Emit
+      if (socket) {
+        socket.emit("put_pixel", { calendarId: routeId, x, y, color: activeColor });
+      }
+      
+      // Update count
+      pixelCount--;
+      countEl.textContent = pixelCount;
+      localStorage.setItem(`pixels_${routeId}`, usedPixels + (openedDoors * 10 - usedPixels - pixelCount));
+    }
+  };
+
+  canvas.addEventListener("mousedown", (e) => {
+    isDrawing = true;
+    placePixel(e);
+  });
+  canvas.addEventListener("mousemove", (e) => {
+    if (isDrawing) placePixel(e);
+  });
+  window.addEventListener("mouseup", () => {
+    isDrawing = false;
+  });
+}
+
+// ---------- Global Audio Player ----------
+
+function initGlobalAudioPlayer() {
+  const audioDocs = days.filter(d => d.opened && d.contentType === "audio" && d.content?.audioUrl).sort((a,b) => a.day - b.day);
+  if (audioDocs.length === 0) return;
+
+  const playerEl = document.getElementById("global-player");
+  const audioEl = document.getElementById("gp-audio");
+  const playBtn = document.getElementById("gp-play");
+  const titleEl = document.getElementById("gp-title");
+  const progEl = document.getElementById("gp-progress");
+  const progContainer = document.getElementById("gp-progress-container");
+  const closeBtn = document.getElementById("gp-close");
+  
+  playerEl.classList.remove("hidden");
+
+  let currentIndex = parseInt(localStorage.getItem(`audioIdx_${routeId}`) || "0", 10);
+  if (currentIndex >= audioDocs.length) currentIndex = 0;
+  
+  const loadTrack = (idx) => {
+    const track = audioDocs[idx];
+    titleEl.textContent = `Tag ${track.day}: ${track.content.title || "Audio"}`;
+    audioEl.src = track.content.audioUrl;
+    
+    // Resume position if it's the exact same track
+    const savedTime = parseFloat(localStorage.getItem(`audioTime_${routeId}`) || "0");
+    const savedIdx = parseInt(localStorage.getItem(`audioIdx_${routeId}`) || "0", 10);
+    if (idx === savedIdx && savedTime > 0) {
+      audioEl.currentTime = savedTime;
+    }
+  };
+
+  loadTrack(currentIndex);
+
+  playBtn.onclick = () => {
+    if (audioEl.paused) {
+      audioEl.play();
+      playBtn.textContent = "⏸️";
+    } else {
+      audioEl.pause();
+      playBtn.textContent = "▶️";
+    }
+  };
+
+  audioEl.ontimeupdate = () => {
+    const pct = (audioEl.currentTime / audioEl.duration) * 100;
+    progEl.style.width = (pct || 0) + "%";
+    localStorage.setItem(`audioTime_${routeId}`, audioEl.currentTime);
+  };
+
+  audioEl.onended = () => {
+    if (currentIndex < audioDocs.length - 1) {
+      currentIndex++;
+      localStorage.setItem(`audioIdx_${routeId}`, currentIndex);
+      localStorage.setItem(`audioTime_${routeId}`, 0);
+      loadTrack(currentIndex);
+      audioEl.play();
+    } else {
+      playBtn.textContent = "▶️";
+    }
+  };
+
+  progContainer.onclick = (e) => {
+    const rect = progContainer.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audioEl.currentTime = pct * audioEl.duration;
+  };
+  
+  closeBtn.onclick = () => {
+    playerEl.classList.add("hidden");
+    audioEl.pause();
+  };
 }
 
 function renderFatalError(err) {
@@ -102,11 +546,33 @@ function leafFrontHtml(door, cols, rows, house) {
 
 function renderDoorGrid() {
   doorGrid.innerHTML = "";
-  const order = theme.order || days.map((d) => d.day);
+  let order = theme.order || days.map((d) => d.day);
+
+  if (calendarMeta.randomLayout) {
+    const arr = [...order];
+    let seed = calendarMeta.year + (calendarMeta.recipientName?.length || 0);
+    // Seeded Fisher-Yates shuffle
+    for (let i = arr.length - 1; i > 0; i--) {
+      seed = (seed * 9301 + 49297) % 233280;
+      const r = seed / 233280;
+      const j = Math.floor(r * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    order = arr;
+  }
 
   order.forEach((dayNum, index) => {
     const door = days.find((d) => d.day === dayNum);
     if (!door) return;
+    
+    // Check choice requirement
+    if (door.content && door.content.reqChoiceDay && door.content.reqChoiceOpt) {
+      const requiredDay = door.content.reqChoiceDay;
+      const requiredOpt = door.content.reqChoiceOpt;
+      if (!calendarMeta.choices || calendarMeta.choices[requiredDay] !== requiredOpt) {
+        return; // Don't render this door
+      }
+    }
 
     const scene = document.createElement("div");
     scene.className = "door-scene";
@@ -139,6 +605,10 @@ function renderDoorGrid() {
     scene.addEventListener("click", () => handleDoorClick(door.day, scene));
     doorGrid.appendChild(scene);
     applyDoorState(scene, door);
+
+    if (calendarMeta.today?.month === 12 && calendarMeta.today?.day === door.day && !door.opened) {
+      scene.classList.add("is-today");
+    }
   });
 
   fitGridCells();
@@ -148,6 +618,15 @@ function applyDoorState(scene, door) {
   scene.classList.toggle("is-locked", !door.unlocked);
   scene.classList.toggle("is-ready", door.unlocked && !door.opened);
   scene.classList.toggle("is-open", Boolean(door.opened));
+
+  // Challenge doors that have been completed get a green glow
+  if (door.contentType === "challenge" && door.opened) {
+    const isDone = localStorage.getItem(`challenge_done_${routeId}_${door.day}`) === "true";
+    scene.classList.toggle("is-done", isDone);
+  } else {
+    scene.classList.remove("is-done");
+  }
+
   scene.querySelector(".interior-icon").innerHTML = iconSvg(door.opened ? door.contentType || "empty" : theme.interiorIcon);
   scene.setAttribute(
     "aria-label",
@@ -169,7 +648,7 @@ function fitGridCells() {
 new ResizeObserver(() => fitGridCells()).observe(doorGrid);
 
 function animateEntrance() {
-  if (!window.gsap) return;
+  if (!window.gsap || !effectsEnabled) return;
   gsap.from("#calendar-header > *", { opacity: 0, y: 14, duration: 0.7, stagger: 0.08, ease: "power2.out" });
   gsap.from(".door-scene", {
     opacity: 0,
@@ -180,6 +659,12 @@ function animateEntrance() {
     ease: "back.out(1.5)",
     delay: 0.15,
     clearProps: "transform",
+    onComplete: () => {
+      const todayEl = document.querySelector(".is-today");
+      if (todayEl) {
+        setTimeout(() => todayEl.scrollIntoView({ behavior: "smooth", block: "center" }), 500);
+      }
+    }
   });
 }
 
@@ -201,13 +686,359 @@ async function handleDoorClick(dayNum, sceneEl) {
     return;
   }
 
+  let requestBody = {};
+  
+  if (dayNum === 24 && calendarMeta.metaPuzzle && !isPreview) {
+    const pwd = prompt(`🔐 Das 24. Türchen ist durch das Meta-Rätsel versiegelt!\n\nSetze alle Buchstaben aus den Tagen 1-23 zusammen.\n\nPasswort eingeben:`);
+    if (!pwd) return;
+    requestBody.metaPassword = pwd;
+  }
+
+  if (door.isLocked && door.content?.lockPassword) {
+    const pwd = prompt(`🔒 Dieses Türchen ist durch ein Passwort geschützt!\n\nHinweis: ${door.lockHint || 'Kein Hinweis'}\n\nPasswort eingeben:`);
+    if (!pwd) return;
+    requestBody.password = pwd;
+  }
+  
+  // Sensor Locks (Voice & Camera)
+  if (door.content?.sensorLock && !isPreview) {
+    const sl = door.content.sensorLock;
+    if (sl === "voice") {
+      const success = await promptVoiceLock(sceneEl);
+      if (!success) return;
+    } else if (sl.startsWith("camera-")) {
+      const color = sl.split("-")[1];
+      const success = await promptCameraLock(sceneEl, color);
+      if (!success) return;
+    } else if (sl === "geoAR") {
+      const success = await promptGeoAR(doorEl, door.content.geoLat, door.content.geoLon);
+      if (!success) return;
+    }
+  }
+
+  if (door.requiresLocation && !isPreview) {
+    showLockToast("Prüfe deinen Standort... Bitte erlaube den GPS-Zugriff.");
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+      });
+      const userLat = pos.coords.latitude;
+      const userLng = pos.coords.longitude;
+      const targetLat = door.content.lat;
+      const targetLng = door.content.lng;
+      
+      // Calculate distance using Haversine
+      const R = 6371e3; // metres
+      const φ1 = userLat * Math.PI/180;
+      const φ2 = targetLat * Math.PI/180;
+      const Δφ = (targetLat-userLat) * Math.PI/180;
+      const Δλ = (targetLng-userLng) * Math.PI/180;
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c;
+
+      if (distance > 50) { // 50 meters radius
+        shakeDoor(sceneEl);
+        showLockToast(`Du bist noch zu weit weg! (ca. ${Math.round(distance)}m). Hinweis: ${door.content.hint}`);
+        return;
+      }
+    } catch (err) {
+      shakeDoor(sceneEl);
+      showLockToast("Standort konnte nicht ermittelt werden. Ohne GPS bleibt das Türchen zu!");
+      return;
+    }
+  }
+
+  await tryOpenDoor(dayNum, sceneEl, requestBody);
+}
+
+// ---------- Sensor Locks ----------
+
+async function promptVoiceLock(doorEl) {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4";
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 text-center max-w-sm w-full">
+        <div class="text-6xl mb-4">🎤</div>
+        <h3 class="text-xl font-bold text-white mb-2">Voice-Unlock aktiv!</h3>
+        <p class="text-slate-300 mb-6 text-sm">Puste ins Mikrofon oder singe einen Weihnachtssong für 3 Sekunden, um das Türchen zu öffnen.</p>
+        <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden mb-6 border border-white/10">
+          <div id="volume-bar" class="h-full bg-emerald-500 transition-all duration-75" style="width: 0%"></div>
+        </div>
+        <button id="cancel-voice" class="text-slate-400 hover:text-white text-sm">Abbrechen</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    let audioCtx, analyser, dataArray, source, stream, rafId;
+    let thresholdCounter = 0;
+
+    const cleanup = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (audioCtx) audioCtx.close();
+      modal.remove();
+    };
+
+    document.getElementById("cancel-voice").onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => {
+      stream = s;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const bar = document.getElementById("volume-bar");
+
+      const checkVolume = () => {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        const avg = sum / dataArray.length; // 0-255
+
+        bar.style.width = Math.min(100, (avg / 128) * 100) + "%";
+
+        if (avg > 50) { // Threshold
+          thresholdCounter++;
+          bar.classList.replace("bg-emerald-500", "bg-rose-500");
+        } else {
+          thresholdCounter = Math.max(0, thresholdCounter - 1);
+          bar.classList.replace("bg-rose-500", "bg-emerald-500");
+        }
+
+        if (thresholdCounter > 60) { // ~ 1-2 seconds at 60fps
+          cleanup();
+          resolve(true);
+        } else {
+          rafId = requestAnimationFrame(checkVolume);
+        }
+      };
+      checkVolume();
+    }).catch(err => {
+      alert("Mikrofon konnte nicht aktiviert werden: " + err.message);
+      cleanup();
+      resolve(false);
+    });
+  });
+}
+
+async function promptCameraLock(doorEl, colorGoal) {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4";
+    modal.innerHTML = `
+      <div class="bg-slate-900 border border-emerald-500/50 rounded-2xl p-4 text-center max-w-sm w-full">
+        <h3 class="text-xl font-bold text-white mb-2">Kamera-Schnitzeljagd!</h3>
+        <p class="text-slate-300 mb-4 text-sm">Finde einen Gegenstand, der <b class="text-${colorGoal === 'red' ? 'rose' : 'emerald'}-400">${colorGoal === 'red' ? 'ROT' : 'GRÜN'}</b> ist, und halte ihn in die Mitte der Kamera.</p>
+        <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-black mb-4 border-2 border-white/10">
+          <video id="cam-video" class="w-full h-full object-cover" autoplay playsinline></video>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-16 h-16 border-4 border-white/50 rounded-full"></div>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-4 border border-white/10">
+          <div id="color-match-bar" class="h-full bg-emerald-500 transition-all" style="width: 0%"></div>
+        </div>
+        <button id="cancel-cam" class="text-slate-400 hover:text-white text-sm">Abbrechen</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    let stream, rafId;
+    let matchCounter = 0;
+    const video = document.getElementById("cam-video");
+    const bar = document.getElementById("color-match-bar");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const cleanup = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      modal.remove();
+    };
+
+    document.getElementById("cancel-cam").onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then((s) => {
+      stream = s;
+      video.srcObject = stream;
+      video.onplay = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        const scan = () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          // Get center pixel region
+          const cx = Math.floor(canvas.width / 2);
+          const cy = Math.floor(canvas.height / 2);
+          const size = 20;
+          const frame = ctx.getImageData(cx - size/2, cy - size/2, size, size);
+          const data = frame.data;
+          
+          let r = 0, g = 0, b = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i]; g += data[i+1]; b += data[i+2];
+          }
+          const pixels = size * size;
+          r /= pixels; g /= pixels; b /= pixels;
+          
+          let isMatch = false;
+          if (colorGoal === 'red' && r > 150 && r > g * 1.5 && r > b * 1.5) isMatch = true;
+          if (colorGoal === 'green' && g > 120 && g > r * 1.3 && g > b * 1.3) isMatch = true;
+          
+          if (isMatch) {
+            matchCounter += 5;
+          } else {
+            matchCounter = Math.max(0, matchCounter - 2);
+          }
+          
+          bar.style.width = Math.min(100, matchCounter) + "%";
+          
+          if (matchCounter >= 100) {
+            cleanup();
+            resolve(true);
+          } else {
+            rafId = requestAnimationFrame(scan);
+          }
+        };
+        scan();
+      };
+    }).catch(err => {
+      alert("Kamera konnte nicht aktiviert werden: " + err.message);
+      cleanup();
+      resolve(false);
+    });
+  });
+}
+
+async function promptGeoAR(doorEl, lat, lon) {
+  return new Promise((resolve) => {
+    // Phase 1: GPS Check
+    showLockToast("Prüfe GPS-Koordinaten...");
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const userLat = pos.coords.latitude;
+      const userLon = pos.coords.longitude;
+      const targetLat = parseFloat(lat);
+      const targetLon = parseFloat(lon);
+      
+      // Simple distance calc (approx)
+      const R = 6371e3;
+      const f1 = userLat * Math.PI/180;
+      const f2 = targetLat * Math.PI/180;
+      const df = (targetLat - userLat) * Math.PI/180;
+      const dl = (targetLon - userLon) * Math.PI/180;
+      const a = Math.sin(df/2) * Math.sin(df/2) + Math.cos(f1) * Math.cos(f2) * Math.sin(dl/2) * Math.sin(dl/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c;
+      
+      if (distance > 50 && targetLat && targetLon) {
+        showLockToast(`Du bist noch ${Math.round(distance)}m entfernt!`);
+        return resolve(false);
+      }
+      
+      lockToast.classList.add("hidden");
+      
+      // Phase 2: AR Catch
+      const modal = document.createElement("div");
+      modal.className = "fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center";
+      modal.innerHTML = `
+        <h3 class="text-white text-xl font-bold mb-4 absolute top-10 text-center w-full">Fange das Geschenk!<br><span class="text-sm font-normal text-slate-300">Drehe dein Handy, um es zu finden.</span></h3>
+        <div class="relative w-full h-full overflow-hidden">
+          <div id="ar-target" class="absolute text-6xl cursor-pointer transition-transform transform -translate-x-1/2 -translate-y-1/2" style="left:50%; top:50%;">🎁</div>
+        </div>
+        <button id="ar-cancel" class="absolute bottom-10 bg-slate-800 text-white px-6 py-2 rounded-full">Abbrechen</button>
+      `;
+      document.body.appendChild(modal);
+      
+      const target = document.getElementById("ar-target");
+      let rx = 0; let ry = 0;
+      
+      const handleOrientation = (e) => {
+        rx = e.gamma || 0; // -90 to 90
+        ry = e.beta || 0;  // -180 to 180
+        
+        const left = 50 + (rx * 2);
+        const top = 50 + ((ry - 45) * 2);
+        
+        target.style.left = `${Math.max(-20, Math.min(120, left))}%`;
+        target.style.top = `${Math.max(-20, Math.min(120, top))}%`;
+      };
+      
+      window.addEventListener("deviceorientation", handleOrientation);
+      
+      target.onclick = () => {
+        window.removeEventListener("deviceorientation", handleOrientation);
+        modal.remove();
+        resolve(true);
+      };
+      
+      document.getElementById("ar-cancel").onclick = () => {
+        window.removeEventListener("deviceorientation", handleOrientation);
+        modal.remove();
+        resolve(false);
+      };
+      
+    }, (err) => {
+      showLockToast("GPS-Zugriff verweigert oder nicht verfügbar.");
+      resolve(false);
+    }, { enableHighAccuracy: true });
+  });
+}
+
+async function tryOpenDoor(dayNum, sceneEl, body = {}) {
+  const door = days.find((d) => d.day === dayNum);
+  // If syncOpen is required and we aren't previewing
+  if (calendarMeta.syncOpen && !isPreview) {
+    if (!partnerReady[dayNum]) {
+      sceneEl.dataset.waiting = "true";
+      showLockToast("Warte auf Partner... (Beide müssen gleichzeitig hier sein und auf das Türchen klicken)");
+      sceneEl.classList.add("pulse");
+      
+      // Tell partner we are ready
+      pendingBody[dayNum] = body;
+      if (socket) socket.emit("door_ready", { calendarId: routeId, day: dayNum });
+      return;
+    }
+  }
+
+  sceneEl.classList.remove("pulse");
+  sceneEl.dataset.waiting = "false";
+  
   try {
     const result = isPreview
       ? { contentType: door.contentType || "empty", content: door.content }
-      : await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/open`, { method: "POST" });
-    door.opened = true;
-    door.contentType = result.contentType;
-    door.content = result.content;
+      : await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/open`, { 
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+    const idx = days.findIndex((d) => d.day === dayNum);
+    if (idx !== -1) {
+      days[idx] = { ...days[idx], ...result };
+    }
+    const currentDoor = days.find((d) => d.day === dayNum) || door;
+    
+    // Notify partner that we successfully opened it so they can sync
+    if (calendarMeta.syncOpen && !isPreview && socket) {
+      socket.emit("door_opened_sync", { calendarId: routeId, day: dayNum, result });
+    }
+    
+    document.getElementById("btn-leaderboard")?.addEventListener("click", () => {
+      openLeaderboardModal();
+    });
+    currentDoor.opened = true;
+    currentDoor.contentType = result.contentType;
+    currentDoor.content = result.content;
   } catch (err) {
     if (err.status === 403) {
       door.unlocked = false;
@@ -220,7 +1051,8 @@ async function handleDoorClick(dayNum, sceneEl) {
     return;
   }
 
-  openDoorAnimation(sceneEl, door);
+  const updatedDoor = days.find((d) => d.day === dayNum) || door;
+  openDoorAnimation(sceneEl, updatedDoor);
 }
 
 function shakeDoor(sceneEl) {
@@ -243,10 +1075,22 @@ function showLockToast(message) {
 
 function openDoorAnimation(sceneEl, door) {
   const rect = sceneEl.getBoundingClientRect();
-  applyDoorState(sceneEl, door);
-  if (window.atmosphere) window.atmosphere.playMagicChime();
-  setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
-  setTimeout(() => openContentModal(door), 780);
+  
+  // Apply door state in next frame to ensure any previous DOM updates don't swallow the CSS transition
+  requestAnimationFrame(() => {
+    applyDoorState(sceneEl, door);
+    
+    if (window.atmosphere) window.atmosphere.playMagicChime();
+    if (effectsEnabled) setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
+    
+    if (door.day === 24 && window.confetti && effectsEnabled) {
+      setTimeout(() => {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 9999 });
+      }, 400);
+    }
+    
+    setTimeout(() => openContentModal(door), 780);
+  });
 }
 
 function formatDateDe(iso) {
@@ -257,13 +1101,106 @@ function formatDateDe(iso) {
 // ---------- Content modal ----------
 
 function openContentModal(door) {
-  modalBody.innerHTML = renderContent(door.contentType, door.content, door.day);
+  let html = renderContent(door.contentType, door.content, door.day);
+  if (door.content?.metaLetter) {
+    html += `<div class="mt-8 p-4 bg-indigo-900/40 border border-indigo-500/30 rounded-xl text-center">
+      <p class="text-indigo-300 text-xs uppercase tracking-widest font-bold mb-1">Hinweis für Tag 24:</p>
+      <div class="text-3xl font-black text-white drop-shadow-md">${escapeHtml(door.content.metaLetter)}</div>
+    </div>`;
+  }
+  modalBody.innerHTML = html;
   contentModal.classList.remove("hidden");
+  
+  if (door.opened && !isPreview) {
+    document.getElementById("modal-feedback").classList.remove("hidden");
+    setupFeedback(door.day);
+  } else {
+    document.getElementById("modal-feedback").classList.add("hidden");
+  }
+
   requestAnimationFrame(() => contentModal.classList.add("modal-visible"));
-  if (window.gsap) {
+  if (window.gsap && effectsEnabled) {
     gsap.fromTo("#modal-card", { y: 30, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" });
   }
   wireContentInteractions(door);
+}
+
+// Upload file helper for feedback
+async function uploadFeedbackFile(file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+  if (!res.ok) throw new Error("Upload failed");
+  return res.json();
+}
+
+function setupFeedback(dayNum) {
+  const emojis = document.querySelectorAll(".feedback-emoji");
+  emojis.forEach(btn => {
+    // Clean old listeners
+    const newBtn = btn.cloneNode(true);
+    btn.replaceWith(newBtn);
+    newBtn.addEventListener("click", async () => {
+      newBtn.style.transform = "scale(1.5)";
+      setTimeout(() => newBtn.style.transform = "", 200);
+      try {
+        await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/reaction`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emoji: newBtn.textContent })
+        });
+        showLockToast("Reaktion gesendet!");
+      } catch (e) {
+        showLockToast("Fehler: " + e.message);
+      }
+    });
+  });
+
+  const voiceBtn = document.getElementById("feedback-voice");
+  const newVoiceBtn = voiceBtn.cloneNode(true);
+  voiceBtn.replaceWith(newVoiceBtn);
+  
+  let mediaRecorder;
+  let audioChunks = [];
+  
+  newVoiceBtn.addEventListener("click", async () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+      newVoiceBtn.innerHTML = "🎙 Antworten";
+      newVoiceBtn.classList.replace("bg-emerald-600/20", "bg-rose-600/20");
+      newVoiceBtn.classList.replace("text-emerald-500", "text-rose-500");
+      showLockToast("Wird gesendet...");
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          const file = new File([blob], "reply.webm", { type: "audio/webm" });
+          try {
+            const { url } = await uploadFeedbackFile(file);
+            await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/reply`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "audio", url })
+            });
+            showLockToast("Sprachnachricht gesendet!");
+          } catch (e) {
+            showLockToast("Senden fehlgeschlagen: " + e.message);
+          }
+          stream.getTracks().forEach(t => t.stop());
+        };
+        mediaRecorder.start();
+        newVoiceBtn.innerHTML = "⏹ Stopp & Senden";
+        newVoiceBtn.classList.replace("bg-rose-600/20", "bg-emerald-600/20");
+        newVoiceBtn.classList.replace("text-rose-500", "text-emerald-500");
+      } catch (err) {
+        showLockToast("Kein Mikrofon-Zugriff möglich.");
+      }
+    }
+  });
 }
 
 document.getElementById("modal-close").addEventListener("click", closeContentModal);
@@ -273,6 +1210,60 @@ contentModal.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !contentModal.classList.contains("hidden")) closeContentModal();
 });
+
+function openLeaderboardModal() {
+  const lb = calendarMeta.leaderboard || [];
+  
+  let rows = `<p class="modal-muted">Noch keine Einträge.</p>`;
+  if (lb.length > 0) {
+    // Sort descending by score
+    lb.sort((a, b) => b.score - a.score);
+    rows = `<div class="space-y-2 mt-4">
+      ${lb.map((entry, idx) => `
+        <div class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-xl text-emerald-400">#${idx + 1}</span>
+            <div>
+              <div class="font-bold text-white">${escapeHtml(entry.name)}</div>
+              <div class="text-xs text-slate-400">${escapeHtml(entry.game)} (Tür ${entry.day})</div>
+            </div>
+          </div>
+          <div class="font-bold text-lg">${entry.score}</div>
+        </div>
+      `).join("")}
+    </div>`;
+  }
+
+  modalBody.innerHTML = cardWrap(
+    "catcher", // using catcher icon for games
+    "🏆 Rangliste",
+    `<p class="modal-muted">Wer hat am besten abgeschnitten?</p>
+     ${rows}
+     <div class="mt-6 text-center">
+       <button id="global-stats-btn" class="text-indigo-400 text-sm hover:text-indigo-300">Globale Statistik anzeigen</button>
+       <div id="global-stats-result" class="hidden mt-2 text-sm text-slate-300"></div>
+     </div>`
+  );
+  
+  document.getElementById("modal-feedback").classList.add("hidden");
+  contentModal.classList.remove("hidden");
+  
+  document.getElementById("global-stats-btn").addEventListener("click", async () => {
+    try {
+      const res = await fetchJson('/api/global-stats');
+      const resEl = document.getElementById("global-stats-result");
+      resEl.textContent = `Weltweit wurden bereits ${res.totalOpened} Türchen geöffnet! 🌍`;
+      resEl.classList.remove("hidden");
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  requestAnimationFrame(() => contentModal.classList.add("modal-visible"));
+  if (window.gsap && effectsEnabled) {
+    gsap.fromTo("#modal-card", { y: 30, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.6)" });
+  }
+}
 
 function closeContentModal() {
   contentModal.classList.remove("modal-visible");
@@ -421,6 +1412,207 @@ function renderContent(type, c, dayNum) {
       );
     }
 
+    case "location":
+      return cardWrap(
+        "location",
+        "Gefunden!",
+        `<p class="modal-muted mb-4">Du warst am richtigen Ort.</p>
+         <p class="modal-text" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+      );
+
+    case "giveaway":
+      return cardWrap(
+        "giveaway",
+        c.title,
+        `<p class="modal-muted mb-4">${escapeHtml(c.description)}</p>
+         <div id="giveaway-form" class="space-y-3">
+           <input type="email" id="giveaway-email" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Deine E-Mail Adresse" />
+           <button id="giveaway-btn" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 transition-colors">Am Gewinnspiel teilnehmen</button>
+         </div>
+         <p id="giveaway-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+      );
+
+    case "puzzle":
+      return cardWrap(
+        "puzzle",
+        "Schiebepuzzle",
+        `<p class="modal-muted mb-4">Löse das Puzzle, um das ganze Bild zu sehen!</p>
+         <div id="puzzle-container" class="mx-auto bg-white/10 p-2 rounded-lg" style="width: 280px; height: 280px; position: relative;"></div>
+         <p id="puzzle-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+      );
+
+    case "ar":
+      return cardWrap(
+        "ar",
+        c.title,
+        `<p class="modal-muted mb-4">Tippe auf das AR-Symbol unten rechts, um das Modell im echten Raum zu platzieren!</p>
+         <div style="width:100%;height:300px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,0.1)">
+           <model-viewer src="${escapeHtml(c.modelUrl)}" ar ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate style="width:100%;height:100%;"></model-viewer>
+         </div>`
+      );
+
+    case "catcher":
+      return cardWrap(
+        "catcher",
+        c.title,
+        `<p class="modal-muted mb-2">Fange ${c.targetScore} Geschenke!</p>
+         <div id="catcher-container" style="position:relative;width:100%;height:300px;background:#1e293b;border-radius:12px;overflow:hidden;touch-action:none;">
+           <canvas id="catcher-canvas" style="width:100%;height:100%;display:block;"></canvas>
+           <div id="catcher-score" style="position:absolute;top:10px;left:10px;font-weight:bold;color:white;font-size:1.2rem;">0 / ${c.targetScore}</div>
+         </div>
+         <p id="catcher-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">Gewonnen! 🎉</p>`
+      );
+
+    case "product":
+      return cardWrap(
+        "product",
+        "Für Dich",
+        `<div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center p-4">
+           ${c.image ? `<img src="${escapeHtml(c.image)}" class="w-full h-48 object-cover rounded-xl mb-4" />` : ''}
+           <h3 class="text-xl font-bold mb-2 text-center">${escapeHtml(c.title)}</h3>
+           <div class="flex items-center gap-3 mb-4">
+             ${c.oldPrice ? `<span class="text-rose-400 line-through text-sm">${escapeHtml(c.oldPrice)}</span>` : ''}
+             ${c.newPrice ? `<span class="text-2xl font-black text-emerald-400">${escapeHtml(c.newPrice)}</span>` : ''}
+           </div>
+           ${c.discount ? `<div class="bg-indigo-900/50 text-indigo-200 border border-indigo-500/30 font-mono px-4 py-2 rounded-lg mb-6 border-dashed font-bold flex items-center gap-2"><span>🏷️</span> ${escapeHtml(c.discount)}</div>` : ''}
+           ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">Zum Shop <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></a>` : ''}
+         </div>`
+      );
+
+    case "choice": {
+      const alreadyChosen = calendarMeta.choices && calendarMeta.choices[dayNum];
+      return cardWrap(
+        "choice",
+        "Wähle weise...",
+        `<p class="modal-muted mb-6 text-lg">${escapeHtml(c.question)}</p>
+         ${alreadyChosen ? 
+            `<div class="bg-emerald-900/40 border border-emerald-500/30 p-4 rounded-xl text-center">Du hast dich für <b>Option ${alreadyChosen}</b> entschieden.</div>` :
+            `<div class="flex flex-col gap-3">
+               <button onclick="submitChoice(${dayNum}, 'A')" class="bg-slate-800 hover:bg-emerald-600 border border-white/10 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors text-left flex items-center gap-3"><span class="bg-black/30 rounded-full w-8 h-8 flex items-center justify-center">A</span> ${escapeHtml(c.optionA)}</button>
+               <button onclick="submitChoice(${dayNum}, 'B')" class="bg-slate-800 hover:bg-emerald-600 border border-white/10 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors text-left flex items-center gap-3"><span class="bg-black/30 rounded-full w-8 h-8 flex items-center justify-center">B</span> ${escapeHtml(c.optionB)}</button>
+             </div>`
+         }`
+      );
+    }
+
+    case "coins": {
+      if (!isPreview && !door.coinsClaimed) {
+        door.coinsClaimed = true; // prevent re-claim in memory
+        userCoins += (c.coinAmount || 50);
+        localStorage.setItem(`coins_${routeId}`, userCoins);
+        updateCoinDisplay();
+      }
+      return cardWrap(
+        "coins",
+        "Münz-Schatz gefunden!",
+        `<div class="text-center p-8 bg-amber-500/10 rounded-2xl border border-amber-500/30">
+          <div class="text-6xl mb-4 animate-bounce">🪙</div>
+          <h3 class="text-2xl font-black text-amber-500 mb-2">+${escapeHtml(c.coinAmount || 50)} Münzen</h3>
+          <p class="text-slate-300">Du kannst diese Münzen oben rechts im Nordpol-Shop ausgeben!</p>
+         </div>`
+      );
+    }
+    
+    case "diary": {
+      const savedAns = localStorage.getItem(`diary_${routeId}_${dayNum}`) || "";
+      let html = `<p class="modal-muted mb-4 font-serif text-lg italic text-emerald-100">${escapeHtml(c.diaryQuestion)}</p>
+         <textarea id="diary-ans-${dayNum}" rows="4" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500" placeholder="Deine Antwort...">${escapeHtml(savedAns)}</textarea>
+         <button onclick="saveDiary(${dayNum})" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors">Eintrag speichern 📝</button>`;
+      
+      if (dayNum === 24) {
+        html += `<button onclick="printDiaryPdf()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"><span>🖨️</span> Gesamtes Tagebuch drucken</button>`;
+      }
+      return cardWrap("diary", "Dein Advents-Tagebuch", html);
+    }
+
+    case "printplay": {
+      return cardWrap(
+        "printplay",
+        escapeHtml(c.ppTitle || "Spielteil"),
+        `<div class="text-center">
+           <img src="${escapeHtml(c.ppImage)}" class="w-full max-w-sm mx-auto rounded-xl border-4 border-white/20 mb-4" />
+           <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl w-full shadow-lg">🖨️ Ausdrucken (Print & Play)</button>
+         </div>`
+      );
+    }
+
+    case "timecapsule": {
+      return cardWrap(
+        "timecapsule",
+        "Zeitreise ins nächste Jahr ⏳",
+        `<p class="modal-muted mb-4">Hinterlasse eine Nachricht für dich selbst. Wir speichern sie sicher und erinnern dich nächstes Jahr am 1. Dezember daran!</p>
+         <textarea id="tc-msg" rows="4" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white mb-4" placeholder="Liebes Zukunfts-Ich..."></textarea>
+         <button onclick="saveTimeCapsule(${dayNum})" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-colors">Nachricht in die Zukunft senden 🚀</button>`
+      );
+    }
+
+    case "duel": {
+      return cardWrap(
+        "duel",
+        "Schneeball-Duell! ⛄",
+        `<div id="duel-ui" class="text-center p-6 bg-blue-900/30 rounded-2xl border border-blue-500/30">
+          <p class="mb-4 text-blue-200">Suche Gegner für ein Live-Duell...</p>
+          <div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <button onclick="startDuelSearch(${dayNum})" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95">Spielersuche starten</button>
+        </div>`
+      );
+    }
+
+    case "iot-box": {
+      return cardWrap(
+        "iot-box",
+        "Die physische Schatztruhe 🧰",
+        `<div id="iot-ui" class="text-center p-6 bg-slate-900/50 rounded-2xl border border-slate-500/30">
+          <p class="mb-4 text-slate-300">Dieser Inhalt ist an eine echte Bluetooth-Schatzkiste gekoppelt!</p>
+          <div class="text-6xl mb-6">🔒</div>
+          <button onclick="connectIotBox()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
+            <span>Bluetooth Scanner starten</span>
+          </button>
+        </div>`
+      );
+    }
+
+    case "spotify-collab": {
+      const playlist = calendarMetaObj.playlist || [];
+      const hasAdded = localStorage.getItem(`spotify_${routeId}_${dayNum}`) === "true";
+      
+      let html = `<div class="bg-black/50 p-6 rounded-2xl border border-green-500/30 text-white">
+        <h3 class="text-xl font-bold text-green-400 mb-4 flex items-center gap-2"><span>🎵</span> Familien-Playlist</h3>`;
+        
+      if (!hasAdded && !isPreview) {
+        html += `<div class="mb-6">
+          <p class="text-sm text-slate-300 mb-2">Suche einen Weihnachtssong und füge ihn zur gemeinsamen Playlist hinzu!</p>
+          <div class="flex gap-2">
+            <input type="text" id="spotify-search" placeholder="z.B. Last Christmas..." class="flex-1 bg-slate-800 border border-white/10 rounded-full px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
+            <button onclick="searchSpotify(${dayNum})" class="bg-green-500 hover:bg-green-400 text-black font-bold px-4 py-2 rounded-full">Suchen</button>
+          </div>
+          <div id="spotify-results" class="mt-3 flex flex-col gap-2"></div>
+        </div>`;
+      } else {
+        html += `<p class="text-sm text-green-300 mb-6 font-bold">Du hast bereits einen Song beigetragen!</p>`;
+      }
+      
+      html += `<div class="border-t border-white/10 pt-4"><h4 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Aktuelle Playlist (${playlist.length} Songs)</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">`;
+      
+      if (playlist.length === 0) {
+        html += `<p class="text-slate-500 italic text-sm">Die Playlist ist noch leer.</p>`;
+      } else {
+        playlist.forEach((song, i) => {
+          html += `<div class="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg">
+            <div class="text-slate-500 w-4 text-right text-xs font-mono">${i+1}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-sm truncate">${escapeHtml(song.title)}</div>
+              <div class="text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</div>
+            </div>
+            <div class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Tag ${song.day}</div>
+          </div>`;
+        });
+      }
+      
+      html += `</div></div></div>`;
+      return cardWrap("spotify-collab", "Gemeinsame Playlist", html);
+    }
+
     case "empty":
     default:
       return cardWrap("empty", null, `<p class="modal-muted">Für Türchen ${dayNum} wurde noch keine Überraschung hinterlegt.</p>`);
@@ -437,8 +1629,11 @@ function wireContentInteractions(door) {
   }
   if (door.contentType === "scratchcard") setupScratchcard();
   if (door.contentType === "quiz") setupQuiz(c);
-  if (door.contentType === "challenge") setupChallenge();
+  if (door.contentType === "challenge") setupChallenge(door);
   if (door.contentType === "memory") setupMemory();
+  if (door.contentType === "giveaway") setupGiveaway(c, door.day);
+  if (door.contentType === "puzzle") setupPuzzle(c);
+  if (door.contentType === "catcher") setupCatcher(c, door.day);
 
   if (door.contentType === "countdown" && c.eventDate) {
     const target = new Date(`${c.eventDate}T00:00:00`).getTime();
@@ -555,10 +1750,23 @@ function setupQuiz(c) {
   });
 }
 
-function setupChallenge() {
+function setupChallenge(door) {
   const btn = document.getElementById("challenge-btn");
   const success = document.getElementById("challenge-success");
   if (!btn) return;
+
+  // Use the exact day of the door currently shown in the modal
+  const dayNum = door ? door.day : null;
+  const doorScene = dayNum ? document.querySelector(`.door-scene[data-day="${dayNum}"]`) : null;
+  const completedKey = dayNum ? `challenge_done_${routeId}_${dayNum}` : null;
+
+  // Restore completed state from localStorage (e.g. after page reload)
+  if (completedKey && localStorage.getItem(completedKey) === "true") {
+    btn.classList.add("hidden");
+    success.classList.remove("hidden");
+    if (doorScene) doorScene.classList.add("is-done");
+  }
+
   btn.addEventListener("click", () => {
     btn.disabled = true;
     btn.classList.add("hidden");
@@ -566,6 +1774,10 @@ function setupChallenge() {
     const rect = success.getBoundingClientRect();
     field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
     if (window.atmosphere) window.atmosphere.playMagicChime();
+
+    // Mark the door green and persist
+    if (doorScene) doorScene.classList.add("is-done");
+    if (completedKey) localStorage.setItem(completedKey, "true");
   });
 }
 
@@ -612,6 +1824,220 @@ function setupMemory() {
   });
 }
 
+function setupGiveaway(c, dayNum) {
+  const btn = document.getElementById("giveaway-btn");
+  const emailInput = document.getElementById("giveaway-email");
+  const success = document.getElementById("giveaway-success");
+  const form = document.getElementById("giveaway-form");
+  
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    if (!email) return showLockToast("Bitte E-Mail eingeben.");
+    btn.disabled = true;
+    try {
+      await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/giveaway`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      form.classList.add("hidden");
+      success.classList.remove("hidden");
+      const rect = success.getBoundingClientRect();
+      field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+      if (window.atmosphere) window.atmosphere.playMagicChime();
+    } catch (e) {
+      showLockToast(e.message);
+      btn.disabled = false;
+    }
+  });
+}
+
+function setupPuzzle(c) {
+  const container = document.getElementById("puzzle-container");
+  const success = document.getElementById("puzzle-success");
+  if (!container || !c.imageUrl) return;
+
+  const size = 3;
+  let tiles = [];
+  let emptyTile = { x: size - 1, y: size - 1 };
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (x === size - 1 && y === size - 1) continue;
+      tiles.push({ x, y, bgX: x, bgY: y });
+    }
+  }
+
+  // Shuffle
+  for (let i = 0; i < 50; i++) {
+    const movable = tiles.filter(t => Math.abs(t.x - emptyTile.x) + Math.abs(t.y - emptyTile.y) === 1);
+    if (movable.length > 0) {
+      const tile = movable[Math.floor(Math.random() * movable.length)];
+      const tx = emptyTile.x;
+      const ty = emptyTile.y;
+      emptyTile.x = tile.x;
+      emptyTile.y = tile.y;
+      tile.x = tx;
+      tile.y = ty;
+    }
+  }
+
+  const render = () => {
+    container.innerHTML = "";
+    tiles.forEach(t => {
+      const el = document.createElement("div");
+      el.style.position = "absolute";
+      el.style.width = "33.33%";
+      el.style.height = "33.33%";
+      el.style.left = `${t.x * 33.33}%`;
+      el.style.top = `${t.y * 33.33}%`;
+      el.style.backgroundImage = `url(${c.imageUrl})`;
+      el.style.backgroundSize = "300% 300%";
+      el.style.backgroundPosition = `${t.bgX * 50}% ${t.bgY * 50}%`;
+      el.style.transition = "all 0.2s ease";
+      el.style.borderRadius = "4px";
+      el.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.2)";
+      el.style.cursor = "pointer";
+
+      el.addEventListener("click", () => {
+        if (Math.abs(t.x - emptyTile.x) + Math.abs(t.y - emptyTile.y) === 1) {
+          const tx = emptyTile.x;
+          const ty = emptyTile.y;
+          emptyTile.x = t.x;
+          emptyTile.y = t.y;
+          t.x = tx;
+          t.y = ty;
+          render();
+          checkWin();
+        }
+      });
+      container.appendChild(el);
+    });
+  };
+
+  const checkWin = () => {
+    const isWin = tiles.every(t => t.x === t.bgX && t.y === t.bgY);
+    if (isWin) {
+      setTimeout(() => {
+        container.style.pointerEvents = "none";
+        const el = document.createElement("div");
+        el.style.position = "absolute";
+        el.style.width = "33.33%";
+        el.style.height = "33.33%";
+        el.style.left = `${emptyTile.x * 33.33}%`;
+        el.style.top = `${emptyTile.y * 33.33}%`;
+        el.style.backgroundImage = `url(${c.imageUrl})`;
+        el.style.backgroundSize = "300% 300%";
+        el.style.backgroundPosition = "100% 100%";
+        el.style.borderRadius = "4px";
+        container.appendChild(el);
+        success.classList.remove("hidden");
+        const rect = container.getBoundingClientRect();
+        field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+        if (window.atmosphere) window.atmosphere.playMagicChime();
+      }, 300);
+    }
+  };
+
+  render();
+}
+
+function setupCatcher(c, dayNum) {
+  const canvas = document.getElementById("catcher-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const parent = canvas.parentElement;
+  
+  canvas.width = parent.clientWidth;
+  canvas.height = parent.clientHeight;
+  
+  let score = 0;
+  const target = c.targetScore || 20;
+  const scoreEl = document.getElementById("catcher-score");
+  const success = document.getElementById("catcher-success");
+  
+  let basket = { x: canvas.width / 2 - 25, y: canvas.height - 40, w: 50, h: 30 };
+  let items = [];
+  let isRunning = true;
+  let raf;
+
+  // Move basket
+  const moveBasket = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const x = clientX - rect.left;
+    basket.x = Math.max(0, Math.min(canvas.width - basket.w, x - basket.w / 2));
+  };
+  canvas.addEventListener("mousemove", moveBasket);
+  canvas.addEventListener("touchmove", (e) => { e.preventDefault(); moveBasket(e); }, { passive: false });
+
+  const loop = () => {
+    if (!isRunning) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw basket
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(basket.x, basket.y, basket.w, basket.h);
+    
+    // Spawn item
+    if (Math.random() < 0.03) {
+      items.push({ x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20, speed: 2 + Math.random() * 3 });
+    }
+    
+    // Update items
+    for (let i = items.length - 1; i >= 0; i--) {
+      let item = items[i];
+      item.y += item.speed;
+      
+      // Draw item (gift)
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(item.x, item.y, item.w, item.h);
+      ctx.fillStyle = "#facc15";
+      ctx.fillRect(item.x + 8, item.y, 4, item.h);
+      ctx.fillRect(item.x, item.y + 8, item.w, 4);
+      
+      // Collision
+      if (item.y + item.h >= basket.y && item.y <= basket.y + basket.h &&
+          item.x + item.w >= basket.x && item.x <= basket.x + basket.w) {
+        score++;
+        scoreEl.textContent = `${score} / ${target}`;
+        items.splice(i, 1);
+        if (score >= target) {
+          isRunning = false;
+          success.classList.remove("hidden");
+          const rect = canvas.getBoundingClientRect();
+          field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors);
+          if (window.atmosphere) window.atmosphere.playMagicChime();
+          
+          fetchJson(`/api/calendar/${routeId}/score`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: calendarMeta.recipientName, game: "Catcher", score: target, day: dayNum })
+          }).catch(console.error);
+        }
+      } else if (item.y > canvas.height) {
+        items.splice(i, 1);
+      }
+    }
+    if (isRunning) raf = requestAnimationFrame(loop);
+  };
+  
+  // Cleanup on modal close
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((m) => {
+      if (m.attributeName === "class" && contentModal.classList.contains("hidden")) {
+        isRunning = false;
+        cancelAnimationFrame(raf);
+        observer.disconnect();
+      }
+    });
+  });
+  observer.observe(contentModal, { attributes: true });
+  
+  loop();
+}
+
 function toVideoEmbed(url) {
   if (!url) return "";
   try {
@@ -635,6 +2061,28 @@ function toVideoEmbed(url) {
   return url;
 }
 
+window.submitChoice = async function(day, option) {
+  if (isPreview) return alert("Vorschau: Option " + option + " gewählt.");
+  try {
+    await fetchJson(`/api/calendar/${routeId}/choice`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ day, option })
+    });
+    if (!calendarMeta.choices) calendarMeta.choices = {};
+    calendarMeta.choices[day] = option;
+    
+    // Re-render modal to show selection
+    const door = days.find((d) => d.day === day);
+    openContentModal(door);
+    
+    // Re-render grid to apply any condition updates
+    renderDoorGrid();
+  } catch (err) {
+    alert("Fehler beim Speichern: " + err.message);
+  }
+};
+
 function toSpotifyEmbed(url) {
   if (!url) return null;
   try {
@@ -650,4 +2098,205 @@ function toSpotifyEmbed(url) {
   }
 }
 
-init();
+window.saveDiary = function(day) {
+  const ans = document.getElementById(`diary-ans-${day}`).value;
+  localStorage.setItem(`diary_${routeId}_${day}`, ans);
+  alert("Tagebucheintrag gespeichert!");
+};
+
+window.printDiaryPdf = function() {
+  const printWin = window.open('', '_blank');
+  let html = `<html><head><title>Jahresrückblick</title><style>body{font-family:serif;padding:40px;line-height:1.6;}h1{text-align:center;} .entry{margin-bottom:30px;} .q{font-weight:bold;margin-bottom:10px;} .a{font-style:italic;color:#333;}</style></head><body><h1>Mein Advents-Tagebuch</h1>`;
+  
+  days.filter(d => d.contentType === "diary").sort((a,b) => a.day - b.day).forEach(d => {
+    const ans = localStorage.getItem(`diary_${routeId}_${d.day}`) || "(kein Eintrag)";
+    html += `<div class="entry"><div class="q">Tag ${d.day}: ${escapeHtml(d.content.diaryQuestion || '')}</div><div class="a">${escapeHtml(ans)}</div></div>`;
+  });
+  
+  html += `</body></html>`;
+  printWin.document.write(html);
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(() => printWin.print(), 500);
+};
+
+window.saveTimeCapsule = async function(day) {
+  const msg = document.getElementById("tc-msg").value;
+  if (!msg.trim()) return alert("Bitte schreibe eine Nachricht!");
+  try {
+    await fetchJson(`/api/calendar/${routeId}/capsule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg })
+    });
+    alert("Deine Nachricht wurde sicher verschlossen und wird dir in exakt 1 Jahr zugestellt! 🚀");
+  } catch (err) {
+    alert("Fehler: " + err.message);
+  }
+};
+
+window.startDuelSearch = function(day) {
+  if (isPreview) return alert("Vorschau: Duell wird übersprungen.");
+  const ui = document.getElementById("duel-ui");
+  ui.innerHTML = `<p class="mb-4 text-blue-200">Warte auf Gegner...</p><div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>`;
+  
+  if (socket) {
+    socket.emit("join_duel", { calendarId: routeId, day });
+    
+    socket.once("start_duel", () => {
+      let myScore = 0;
+      let oppScore = 0;
+      let timeLeft = 10;
+      let intv;
+      
+      const renderDuel = () => {
+        ui.innerHTML = `
+          <h3 class="text-2xl font-black text-white mb-2">SCHNEEBALLSCHLACHT!</h3>
+          <div class="text-4xl font-mono text-emerald-400 mb-4">00:${timeLeft.toString().padStart(2, '0')}</div>
+          <div class="flex justify-between items-center bg-black/30 rounded-xl p-4 mb-6">
+            <div class="text-center w-1/2 border-r border-white/10">
+              <div class="text-xs text-blue-300 uppercase font-bold">Du</div>
+              <div class="text-3xl font-black text-white" id="duel-me">${myScore}</div>
+            </div>
+            <div class="text-center w-1/2">
+              <div class="text-xs text-rose-300 uppercase font-bold">Gegner</div>
+              <div class="text-3xl font-black text-white" id="duel-opp">${oppScore}</div>
+            </div>
+          </div>
+          <button id="duel-throw" class="w-full h-24 bg-blue-500 hover:bg-blue-400 active:bg-white active:scale-95 text-white font-black text-2xl rounded-2xl shadow-[0_10px_0_#1e3a8a] active:shadow-[0_0px_0_#1e3a8a] active:translate-y-[10px] transition-all">❄️ WIRF!</button>
+        `;
+        
+        document.getElementById("duel-throw").onclick = () => {
+          myScore++;
+          document.getElementById("duel-me").textContent = myScore;
+          socket.emit("snowball_hit", { calendarId: routeId, day });
+        };
+      };
+      
+      socket.on("opponent_hit", () => {
+        oppScore++;
+        const oppEl = document.getElementById("duel-opp");
+        if (oppEl) oppEl.textContent = oppScore;
+      });
+      
+      renderDuel();
+      
+      intv = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+          clearInterval(intv);
+          socket.off("opponent_hit");
+          if (myScore > oppScore) {
+            ui.innerHTML = `<h3 class="text-3xl font-black text-emerald-400 mb-4">GEWONNEN! 🏆</h3><p class="text-white mb-4">Du hast deinen Gegner besiegt.</p><button onclick="alert('Inhalt freigeschaltet! (Dies ist eine Simulation)')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full">Geschenk öffnen</button>`;
+          } else if (myScore < oppScore) {
+            ui.innerHTML = `<h3 class="text-3xl font-black text-rose-400 mb-4">VERLOREN! 🧊</h3><p class="text-white">Dein Gegner war schneller. Komm morgen wieder oder nutze den Shop.</p>`;
+          } else {
+            ui.innerHTML = `<h3 class="text-3xl font-black text-amber-400 mb-4">UNENTSCHIEDEN! 🤝</h3><p class="text-white">Beide waren gleich schnell.</p>`;
+          }
+        } else {
+          renderDuel();
+        }
+      }, 1000);
+    });
+  } else {
+    alert("Keine Live-Verbindung zum Server.");
+  }
+};
+
+window.connectIotBox = async function() {
+  if (!navigator.bluetooth) {
+    alert("Dein Browser unterstützt Web-Bluetooth nicht. Versuche es mit Google Chrome auf Android oder Desktop!");
+    return;
+  }
+  
+  try {
+    const ui = document.getElementById("iot-ui");
+    ui.innerHTML = `<p class="mb-4 text-emerald-300 animate-pulse">Suche nach Geräten...</p>`;
+    
+    // We request ANY device for simulation purposes, using battery_service as a common filter
+    // Note: User MUST click a device in the native OS prompt to proceed
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['battery_service']
+    });
+    
+    // Simulate connection and sending unlock command
+    ui.innerHTML = `<p class="mb-4 text-emerald-300">Verbinde mit ${escapeHtml(device.name || "Schatztruhe")}...</p>`;
+    
+    setTimeout(() => {
+      ui.innerHTML = `
+        <div class="text-6xl mb-6 animate-bounce">🔓</div>
+        <h3 class="text-2xl font-black text-emerald-400 mb-2">Truhe geöffnet!</h3>
+        <p class="text-slate-300">Das Bluetooth-Signal (0xFF) wurde erfolgreich gesendet.</p>
+      `;
+    }, 2000);
+    
+  } catch (err) {
+    const ui = document.getElementById("iot-ui");
+    ui.innerHTML = `<p class="text-rose-400 font-bold mb-4">Verbindung abgebrochen.</p><button onclick="connectIotBox()" class="bg-emerald-600 text-white py-2 px-4 rounded-xl">Nochmal versuchen</button>`;
+    console.error(err);
+  }
+};
+
+window.searchSpotify = function(day) {
+  const query = document.getElementById("spotify-search").value.toLowerCase();
+  const resEl = document.getElementById("spotify-results");
+  if (!query) return;
+  
+  // Mock search results
+  resEl.innerHTML = `<div class="animate-pulse text-sm text-green-300">Suche auf Spotify...</div>`;
+  
+  setTimeout(() => {
+    const mockSongs = [
+      { title: "Last Christmas", artist: "Wham!" },
+      { title: "All I Want for Christmas Is You", artist: "Mariah Carey" },
+      { title: "Driving Home for Christmas", artist: "Chris Rea" },
+      { title: "It's Beginning to Look a Lot like Christmas", artist: "Michael Bublé" },
+      { title: "Wonderful Dream (Holidays are Coming)", artist: "Melanie Thornton" }
+    ].filter(s => s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
+    
+    if (mockSongs.length === 0) {
+      resEl.innerHTML = `<p class="text-sm text-rose-300">Keine Weihnachtssongs gefunden.</p>`;
+      return;
+    }
+    
+    resEl.innerHTML = mockSongs.map(s => `
+      <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg border border-white/5 hover:border-green-500/50 transition-colors">
+        <div class="flex-1 min-w-0 mr-2">
+          <div class="font-bold text-sm truncate text-white">${escapeHtml(s.title)}</div>
+          <div class="text-xs text-slate-400 truncate">${escapeHtml(s.artist)}</div>
+        </div>
+        <button onclick="addSpotifySong(${day}, '${escapeHtml(s.title.replace(/'/g, "\\'"))}', '${escapeHtml(s.artist.replace(/'/g, "\\'"))}')" class="bg-white text-black text-xs font-bold px-3 py-1 rounded-full hover:scale-105 transition-transform">Hinzufügen</button>
+      </div>
+    `).join("");
+  }, 600);
+};
+
+window.addSpotifySong = async function(day, title, artist) {
+  try {
+    const res = await fetch(`/api/calendar/${routeId}/playlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ day, title, artist })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    
+    localStorage.setItem(`spotify_${routeId}_${day}`, "true");
+    
+    // Update local meta and re-render
+    if (!calendarMetaObj.playlist) calendarMetaObj.playlist = [];
+    calendarMetaObj.playlist.push({ day, title, artist });
+    
+    const door = days.find((d) => d.day === day);
+    openContentModal(door);
+  } catch (err) {
+    alert("Fehler: " + err.message);
+  }
+};
+
+// Bootstrap: resolve custom-domain token first, then initialise the calendar.
+(async () => {
+  await resolveRouteId();
+  if (routeId) init();
+})();

@@ -15,6 +15,10 @@ module.exports = {
   isProd: (process.env.NODE_ENV || "development") === "production",
   baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
   timezone: process.env.TIMEZONE || "Europe/Berlin",
+  // Base domain for subdomain-based custom URLs.
+  // Set BASE_DOMAIN=adventskalender.de in production.
+  // Customers get:  ihr-slug.adventskalender.de
+  baseDomain: process.env.BASE_DOMAIN || "localhost",
   admin: {
     username: required("ADMIN_USERNAME", "Stibe"),
     password: required("ADMIN_PASSWORD", "change-me-please"),
@@ -26,4 +30,11 @@ module.exports = {
     uploadsDir: path.join(__dirname, "..", "uploads"),
     publicDir: path.join(__dirname, "..", "..", "public"),
   },
+  smtp: {
+    host: process.env.SMTP_HOST || "",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+    from: process.env.SMTP_FROM || '"Adventskalender" <noreply@adventskalender.local>',
+  }
 };
