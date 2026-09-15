@@ -51,12 +51,68 @@ async function init() {
   }
 }
 
+let currentView = localStorage.getItem("dashboardView") || "grid";
+
 async function loadCalendars() {
   const calendars = await api.listCalendars();
+  const listEl = document.getElementById("calendar-list");
+  const tableContainer = document.getElementById("calendar-table-container");
+  const tableBody = document.getElementById("calendar-table-body");
+  const emptyState = document.getElementById("empty-state");
+  
   listEl.innerHTML = "";
+  tableBody.innerHTML = "";
   emptyState.classList.toggle("hidden", calendars.length > 0);
-  calendars.forEach((cal) => listEl.appendChild(renderCard(cal)));
+  
+  if (calendars.length === 0) {
+    listEl.classList.add("hidden");
+    tableContainer.classList.add("hidden");
+    return;
+  }
+  
+  if (currentView === "grid") {
+    listEl.classList.remove("hidden");
+    tableContainer.classList.add("hidden");
+    calendars.forEach((cal) => listEl.appendChild(renderCard(cal)));
+  } else {
+    listEl.classList.add("hidden");
+    tableContainer.classList.remove("hidden");
+    calendars.forEach((cal) => tableBody.appendChild(renderTableRow(cal)));
+  }
+  updateViewButtons();
 }
+
+function updateViewButtons() {
+  const gridBtn = document.getElementById("view-grid-btn");
+  const tableBtn = document.getElementById("view-table-btn");
+  if (currentView === "grid") {
+    gridBtn.classList.replace("text-slate-400", "text-white");
+    gridBtn.classList.replace("hover:bg-slate-700", "bg-emerald-600");
+    gridBtn.classList.add("shadow");
+    tableBtn.classList.replace("text-white", "text-slate-400");
+    tableBtn.classList.replace("bg-emerald-600", "hover:bg-slate-700");
+    tableBtn.classList.remove("shadow");
+  } else {
+    tableBtn.classList.replace("text-slate-400", "text-white");
+    tableBtn.classList.replace("hover:bg-slate-700", "bg-emerald-600");
+    tableBtn.classList.add("shadow");
+    gridBtn.classList.replace("text-white", "text-slate-400");
+    gridBtn.classList.replace("bg-emerald-600", "hover:bg-slate-700");
+    gridBtn.classList.remove("shadow");
+  }
+}
+
+document.getElementById("view-grid-btn").addEventListener("click", () => {
+  currentView = "grid";
+  localStorage.setItem("dashboardView", "grid");
+  loadCalendars();
+});
+
+document.getElementById("view-table-btn").addEventListener("click", () => {
+  currentView = "table";
+  localStorage.setItem("dashboardView", "table");
+  loadCalendars();
+});
 
 window.toggleMenu = (id) => {
   document.querySelectorAll('[id^="menu-"]').forEach((m) => {
@@ -164,6 +220,47 @@ window.addEventListener("click", (e) => {
     document.querySelectorAll('[id^="menu-"]').forEach((m) => m.classList.add("hidden"));
   }
 });
+
+function renderTableRow(cal) {
+  const row = document.createElement("tr");
+  row.className = "hover:bg-white/5 transition-colors group";
+  const progressPct = Math.round((cal.filledDoors / 24) * 100);
+  
+  row.innerHTML = `
+    <td class="px-4 py-3">
+      <div class="font-display font-semibold text-white">${escapeHtml(cal.recipientName)}</div>
+      <div class="text-xs text-slate-500">Erstellt: ${new Date(cal.createdAt).toLocaleDateString("de-DE")}</div>
+    </td>
+    <td class="px-4 py-3">${THEME_LABELS[cal.theme] || cal.theme} (${cal.year})</td>
+    <td class="px-4 py-3">
+      <div class="flex items-center gap-2">
+        <span class="text-emerald-400 font-bold">${cal.filledDoors}/24</span>
+        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div class="h-full bg-emerald-500" style="width: ${progressPct}%"></div>
+        </div>
+      </div>
+    </td>
+    <td class="px-4 py-3">
+      <span class="text-amber-400 font-bold">${cal.openedDoors}/24</span>
+    </td>
+    <td class="px-4 py-3 text-right">
+      <div class="relative inline-block text-left">
+        <button class="calendar-menu-btn text-slate-400 hover:text-white p-2" onclick="toggleMenu('table-${cal.id}')">
+          •••
+        </button>
+        <div id="menu-table-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden text-left">
+          <a href="/admin/editor.html?id=${cal.id}" class="block px-4 py-2 hover:bg-slate-700 text-white">Bearbeiten</a>
+          <button onclick="copyLink('${cal.shareUrl}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white">Link kopieren</button>
+          <a href="${cal.shareUrl}" target="_blank" class="block px-4 py-2 hover:bg-slate-700 text-white">Ansehen</a>
+          <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
+          <button onclick="showAnalytics('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
+          <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
+        </div>
+      </div>
+    </td>
+  `;
+  return row;
+}
 
 function renderCard(cal) {
   const card = document.createElement("div");

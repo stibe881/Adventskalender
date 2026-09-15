@@ -101,8 +101,32 @@
     </section>
 
     <section>
-      <h2 class="font-display text-xl font-semibold mb-4">Deine Kalender</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-xl font-semibold">Deine Kalender</h2>
+        <div class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10">
+          <button id="view-grid-btn" class="p-1.5 rounded-md bg-emerald-600 text-white shadow" title="Kachel-Ansicht">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </button>
+          <button id="view-table-btn" class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400" title="Listen-Ansicht">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
       <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <div id="calendar-table-container" class="hidden overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
+            <tr>
+              <th class="px-4 py-3">Empfänger</th>
+              <th class="px-4 py-3">Theme</th>
+              <th class="px-4 py-3">Befüllt</th>
+              <th class="px-4 py-3">Geöffnet</th>
+              <th class="px-4 py-3 text-right">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="calendar-table-body" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
       <p id="empty-state" class="hidden text-slate-500 text-sm">Noch kein Kalender erstellt – leg oben deinen ersten an.</p>
     </section>
   </main>
