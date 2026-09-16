@@ -5,6 +5,14 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const config = require("./config");
 
+// Prevent server crash on unhandled promise rejections (Node.js v15+ exits by default)
+process.on("unhandledRejection", (reason) => {
+  console.error("[UNHANDLED REJECTION] Server bleibt aktiv:", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[UNCAUGHT EXCEPTION] Server bleibt aktiv:", err);
+});
+
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const calendarRoutes = require("./routes/calendar");
@@ -115,10 +123,15 @@ app.get("/api/calendar/by-domain", async (req, res) => {
     subdomain = host;
   }
 
-  const db = require("./db");
-  const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host);
-  if (!calendar) return res.status(404).json({ error: "Kein Kalender für diese Domain gefunden." });
-  res.json({ token: calendar.token });
+  try {
+    const db = require("./db");
+    const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host);
+    if (!calendar) return res.status(404).json({ error: "Kein Kalender für diese Domain gefunden." });
+    res.json({ token: calendar.token });
+  } catch (err) {
+    console.error("[/api/calendar/by-domain] DB-Fehler:", err.message);
+    res.status(503).json({ error: "Datenbank nicht erreichbar." });
+  }
 });
 
 // API
