@@ -122,28 +122,9 @@ router.post("/login", loginLimiter, async (req, res) => {
   res.json({ ok: true, email: user.email });
 });
 
-// DEV-LOGIN BYPASS
-router.post("/dev-login", async (req, res) => {
-  const devEmail = "admin@bypass.local";
-  let user = await db.getUserByEmail(devEmail);
-  
-  if (!user) {
-    user = await db.createUser({
-      id: crypto.randomUUID(),
-      email: devEmail,
-      passwordHash: "not-needed",
-      createdAt: new Date().toISOString(),
-      isPremium: true,
-      isVerified: true,
-      verificationToken: null,
-    });
-  }
-  
-  user.username = "AdminBypass";
-  
-  const token = signUserToken(user);
-  setAuthCookie(res, token);
-  res.json({ ok: true, email: user.email });
+// DEV-LOGIN BYPASS (disabled in production)
+router.post("/dev-login", (req, res) => {
+  return res.status(404).json({ error: "Not found." });
 });
 
 router.post("/logout", (req, res) => {
