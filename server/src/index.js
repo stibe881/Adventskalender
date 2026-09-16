@@ -92,6 +92,7 @@ app.use(async (req, res, next) => {
     }
   } catch (err) {
     console.error("[Middleware] Datenbank-Fehler beim Subdomain-Lookup:", err);
+    return next();
   }
 
   // Rewrite /c/:token style if someone navigates there
