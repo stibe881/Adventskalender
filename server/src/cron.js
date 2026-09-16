@@ -30,7 +30,7 @@ function startCron() {
       return;
     }
 
-    const calendars = db.getAllCalendars();
+    const calendars = await db.getAllCalendars();
     for (const cal of calendars) {
       if (!cal.recipientEmail) continue;
 
@@ -72,7 +72,7 @@ function startCron() {
       hour12: false,
     }); // z.B. "08:00"
 
-    const calendars = db.getAllCalendars();
+    const calendars = await db.getAllCalendars();
     for (const cal of calendars) {
       const cfg = cal.customConfig || {};
       if (!cfg.dailyReminderEnabled) continue;
@@ -108,7 +108,7 @@ function startCron() {
         } catch (e) {
           // Abgelaufene Subscription entfernen (410 = gone, 404 = not found)
           if (e.statusCode === 410 || e.statusCode === 404) {
-            db.updateCalendar(cal.id, (c) => {
+            await db.updateCalendar(cal.id, (c) => {
               c.subscriptions = (c.subscriptions || []).filter(s => s.endpoint !== sub.endpoint);
               return c;
             });

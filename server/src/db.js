@@ -1,140 +1,174 @@
-const fs = require("fs");
-const path = require("path");
+const mysql = require("mysql2/promise");
 const config = require("./config");
 
-const DATA_FILE = config.paths.dataFile;
+const pool = mysql.createPool({
+  host: config.db.host,
+  user: config.db.user,
+  password: config.db.password,
+  database: config.db.database,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-function ensureDataFile() {
-  const dir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ calendars: [] }, null, 2));
-  }
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(255) PRIMARY KEY,
+      email VARCHAR(255) UNIQUE,
+      password VARCHAR(255),
+      verificationToken VARCHAR(255),
+      isPro BOOLEAN DEFAULT FALSE,
+      data JSON
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS calendars (
+      id VARCHAR(255) PRIMARY KEY,
+      ownerId VARCHAR(255),
+      token VARCHAR(255) UNIQUE,
+      subdomain VARCHAR(255),
+      data JSON
+    )
+  `);
 }
 
-function load() {
-  ensureDataFile();
-  const raw = fs.readFileSync(DATA_FILE, "utf-8");
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.calendars)) parsed.calendars = [];
-    if (!Array.isArray(parsed.users)) parsed.users = [];
-    return parsed;
-  } catch (err) {
-    throw new Error(`db.json ist beschädigt oder ungültig: ${err.message}`);
-  }
+initDB().catch(console.error);
+
+async function getAllCalendars() {
+  const [rows] = await pool.query("SELECT * FROM calendars");
+  return rows.map(r => r.data);
 }
 
-function save(data) {
-  ensureDataFile();
-  const tmpFile = `${DATA_FILE}.tmp`;
-  fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2));
-  fs.renameSync(tmpFile, DATA_FILE);
-}
-
-function getAllCalendars() {
-  return load().calendars;
-}
-
-function getCalendarsByOwnerOrCollaborator(userId, email) {
-  return load().calendars.filter((c) => {
-    if (c.ownerId === userId) return true;
-    if (c.collaborators && c.collaborators.includes(email)) return true;
-    return false;
-  });
-}
-
-function getCalendarById(id) {
-  return load().calendars.find((c) => c.id === id) || null;
-}
-
-function getCalendarByToken(token) {
-  return load().calendars.find((c) => c.token === token) || null;
-}
-
-function createCalendar(calendar) {
-  const data = load();
-  data.calendars.push(calendar);
-  save(data);
-  return calendar;
-}
-
-function updateCalendar(id, updaterFn) {
-  const data = load();
-  const idx = data.calendars.findIndex((c) => c.id === id);
-  if (idx === -1) return null;
-  const updated = updaterFn(data.calendars[idx]);
-  data.calendars[idx] = updated;
-  save(data);
-  return updated;
-}
-
-function deleteCalendar(id) {
-  const data = load();
-  const before = data.calendars.length;
-  data.calendars = data.calendars.filter((c) => c.id !== id);
-  save(data);
-  return data.calendars.length < before;
-}
-
-function updateUser(id, updater) {
-  const data = load();
-  const idx = data.users.findIndex(u => u.id === id);
-  if (idx !== -1) {
-    data.users[idx] = updater(data.users[idx]);
-    save(data);
-    return data.users[idx];
-  }
-  return null;
-}
-
-function getCalendarsByOwnerOrCollaborator(ownerId, email) {
-  return load().calendars.filter((c) => {
+async function getCalendarsByOwnerOrCollaborator(ownerId, email) {
+  const calendars = await getAllCalendars();
+  return calendars.filter(c => {
     if (c.ownerId === ownerId) return true;
     if (c.collaborators && c.collaborators.includes(email)) return true;
     return false;
   });
 }
 
-function getUserByEmail(email) {
-  return load().users.find((u) => u.email === email) || null;
+async function getCalendarById(id) {
+  const [rows] = await pool.query("SELECT * FROM calendars WHERE id = ?", [id]);
+  return rows.length ? rows[0].data : null;
 }
 
-function getUserByVerificationToken(token) {
-  return load().users.find((u) => u.verificationToken === token) || null;
+async function getCalendarByToken(token) {
+  const [rows] = await pool.query("SELECT * FROM calendars WHERE token = ?", [token]);
+  return rows.length ? rows[0].data : null;
 }
 
-function updateUser(id, updaterFn) {
-  const data = load();
-  const idx = data.users.findIndex((u) => u.id === id);
-  if (idx === -1) return null;
-  const updated = updaterFn(data.users[idx]);
-  data.users[idx] = updated;
-  save(data);
+async function getCalendarBySubdomain(subdomain) {
+  if (!subdomain) return null;
+  const [rows] = await pool.query("SELECT * FROM calendars WHERE subdomain = ?", [subdomain.toLowerCase().trim()]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function createCalendar(calendar) {
+  await pool.query(
+    "INSERT INTO calendars (id, ownerId, token, subdomain, data) VALUES (?, ?, ?, ?, ?)",
+    [
+      calendar.id,
+      calendar.ownerId,
+      calendar.token,
+      calendar.customConfig?.subdomain?.toLowerCase().trim() || null,
+      JSON.stringify(calendar)
+    ]
+  );
+  return calendar;
+}
+
+async function updateCalendar(id, updaterFn) {
+  const cal = await getCalendarById(id);
+  if (!cal) return null;
+  const updated = await updaterFn(cal);
+  await pool.query(
+    "UPDATE calendars SET ownerId = ?, token = ?, subdomain = ?, data = ? WHERE id = ?",
+    [
+      updated.ownerId,
+      updated.token,
+      updated.customConfig?.subdomain?.toLowerCase().trim() || null,
+      JSON.stringify(updated),
+      id
+    ]
+  );
   return updated;
 }
 
-function createUser(user) {
-  const data = load();
-  if (user.isPro === undefined) {
-    user.isPro = false;
-  }
-  data.users.push(user);
-  save(data);
+async function deleteCalendar(id) {
+  const [result] = await pool.query("DELETE FROM calendars WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+}
+
+// User operations
+async function getUserByEmail(email) {
+  const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+  if (!rows.length) return null;
+  const u = rows[0].data;
+  u.id = rows[0].id;
+  u.email = rows[0].email;
+  u.password = rows[0].password;
+  u.verificationToken = rows[0].verificationToken;
+  u.isPro = Boolean(rows[0].isPro);
+  return u;
+}
+
+async function getUserByVerificationToken(token) {
+  const [rows] = await pool.query("SELECT * FROM users WHERE verificationToken = ?", [token]);
+  if (!rows.length) return null;
+  const u = rows[0].data;
+  u.id = rows[0].id;
+  u.email = rows[0].email;
+  u.password = rows[0].password;
+  u.verificationToken = rows[0].verificationToken;
+  u.isPro = Boolean(rows[0].isPro);
+  return u;
+}
+
+async function createUser(user) {
+  if (user.isPro === undefined) user.isPro = false;
+  const data = { ...user };
+  await pool.query(
+    "INSERT INTO users (id, email, password, verificationToken, isPro, data) VALUES (?, ?, ?, ?, ?, ?)",
+    [
+      user.id,
+      user.email,
+      user.password,
+      user.verificationToken || null,
+      user.isPro,
+      JSON.stringify(data)
+    ]
+  );
   return user;
 }
 
-function getCalendarBySubdomain(subdomain) {
-  if (!subdomain) return null;
-  const normalized = subdomain.toLowerCase().trim();
-  return (
-    load().calendars.find(
-      (c) =>
-        c.customConfig &&
-        c.customConfig.subdomain &&
-        c.customConfig.subdomain.toLowerCase().trim() === normalized
-    ) || null
+async function updateUser(id, updaterFn) {
+  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  if (!rows.length) return null;
+  const user = rows[0].data;
+  user.id = rows[0].id;
+  user.email = rows[0].email;
+  user.password = rows[0].password;
+  user.verificationToken = rows[0].verificationToken;
+  user.isPro = Boolean(rows[0].isPro);
+
+  const updated = await updaterFn(user);
+  const data = { ...updated };
+  
+  await pool.query(
+    "UPDATE users SET email = ?, password = ?, verificationToken = ?, isPro = ?, data = ? WHERE id = ?",
+    [
+      updated.email,
+      updated.password,
+      updated.verificationToken || null,
+      updated.isPro,
+      JSON.stringify(data),
+      id
+    ]
   );
+  return updated;
 }
 
 module.exports = {

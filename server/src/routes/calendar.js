@@ -53,8 +53,8 @@ function publicDayView(calendar, door) {
   };
 }
 
-router.get("/:token", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.get("/:token", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Dieser Kalender existiert nicht." });
 
   if (calendar.customConfig && calendar.customConfig.password) {
@@ -105,8 +105,8 @@ router.get("/:token", (req, res) => {
   });
 });
 
-router.post("/:token/days/:day/open", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/days/:day/open", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Dieser Kalender existiert nicht." });
 
   const dayNum = parseInt(req.params.day, 10);
@@ -143,7 +143,7 @@ router.post("/:token/days/:day/open", (req, res) => {
     }
   }
 
-  const updated = db.updateCalendar(calendar.id, (cal) => {
+  const updated = await db.updateCalendar(calendar.id, (cal) => {
     const d = cal.days.find((x) => x.day === dayNum);
     if (d) {
       d.opened = true;
@@ -168,15 +168,15 @@ router.post("/:token/days/:day/open", (req, res) => {
   });
 });
 
-router.post("/:token/days/:day/reaction", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/days/:day/reaction", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
   
   const dayNum = parseInt(req.params.day, 10);
   const emoji = req.body.emoji;
   if (!emoji) return res.status(400).json({ error: "Emoji fehlt" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     const idx = cal.days.findIndex((d) => d.day === dayNum);
     if (!cal.days[idx].feedback) cal.days[idx].feedback = { reactions: [], replies: [] };
     cal.days[idx].feedback.reactions.push(emoji);
@@ -185,15 +185,15 @@ router.post("/:token/days/:day/reaction", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/days/:day/giveaway", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/days/:day/giveaway", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
   
   const dayNum = parseInt(req.params.day, 10);
   const email = req.body.email;
   if (!email) return res.status(400).json({ error: "Email fehlt" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     const idx = cal.days.findIndex((d) => d.day === dayNum);
     if (!cal.days[idx].giveawayEntries) cal.days[idx].giveawayEntries = [];
     if (!cal.days[idx].giveawayEntries.includes(email)) {
@@ -204,15 +204,15 @@ router.post("/:token/days/:day/giveaway", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/days/:day/reply", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/days/:day/reply", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
   
   const dayNum = parseInt(req.params.day, 10);
   const { type, url, text } = req.body;
   if (!type) return res.status(400).json({ error: "Typ fehlt" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     const idx = cal.days.findIndex((d) => d.day === dayNum);
     if (!cal.days[idx].feedback) cal.days[idx].feedback = { reactions: [], replies: [] };
     cal.days[idx].feedback.replies.push({ type, url, text, createdAt: new Date().toISOString() });
@@ -221,14 +221,14 @@ router.post("/:token/days/:day/reply", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/score", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/score", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
   
   const { name, game, score, day } = req.body;
   if (!name || !game || score === undefined) return res.status(400).json({ error: "Daten fehlen" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.leaderboard) cal.leaderboard = [];
     const existingIdx = cal.leaderboard.findIndex(e => e.name === name && e.game === game);
     if (existingIdx !== -1) {
@@ -249,11 +249,11 @@ router.post("/:token/score", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/refer", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/refer", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     cal.referrals = (cal.referrals || 0) + 1;
     return cal;
   });
@@ -261,14 +261,14 @@ router.post("/:token/refer", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/choice", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/choice", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   const { day, option } = req.body;
   if (!day || !option) return res.status(400).json({ error: "Missing day or option." });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.choices) cal.choices = {};
     cal.choices[day] = option;
     return cal;
@@ -277,13 +277,13 @@ router.post("/:token/choice", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/capsule", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/capsule", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   if (!req.body.message) return res.status(400).json({ error: "No message" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.timeCapsules) cal.timeCapsules = [];
     cal.timeCapsules.push({ message: req.body.message, date: new Date().toISOString() });
     return cal;
@@ -293,14 +293,14 @@ router.post("/:token/capsule", (req, res) => {
   res.json({ success: true });
 });
 
-router.post("/:token/playlist", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/playlist", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   const { day, title, artist } = req.body;
   if (!day || !title || !artist) return res.status(400).json({ error: "Missing fields" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.playlist) cal.playlist = [];
     cal.playlist.push({ day, title, artist, addedAt: new Date().toISOString() });
     return cal;
@@ -314,14 +314,14 @@ router.get("/:token/vapidPublicKey", (req, res) => {
   res.json({ publicKey: getVapidPublicKey() });
 });
 
-router.post("/:token/subscribe", (req, res) => {
-  const calendar = db.getCalendarByToken(req.params.token);
+router.post("/:token/subscribe", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   const subscription = req.body;
   if (!subscription || !subscription.endpoint) return res.status(400).json({ error: "Invalid subscription" });
 
-  db.updateCalendar(calendar.id, (cal) => {
+  await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.subscriptions) cal.subscriptions = [];
     // Only add if not already present
     const exists = cal.subscriptions.find(s => s.endpoint === subscription.endpoint);

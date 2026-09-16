@@ -151,8 +151,8 @@ function toSummary(cal) {
 }
 
 // User Upgrade
-router.post("/upgrade", (req, res) => {
-  db.updateUser(req.user.id, (u) => {
+router.post("/upgrade", async (req, res) => {
+  await db.updateUser(req.user.id, (u) => {
     u.isPro = true;
     return u;
   });
@@ -168,12 +168,13 @@ function hasAccess(calendar, user) {
 
 // ---------- Calendars ----------
 
-router.get("/calendars", (req, res) => {
-  const calendars = db.getCalendarsByOwnerOrCollaborator(req.user.id, req.user.email).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+router.get("/calendars", async (req, res) => {
+  const calendars = await db.getCalendarsByOwnerOrCollaborator(req.user.id, req.user.email);
+  calendars.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   res.json(calendars.map(toSummary));
 });
 
-router.post("/calendars", (req, res) => {
+router.post("/calendars", async (req, res) => {
   const { recipientName, recipientEmail, theme, year, customConfig, template, randomLayout } = req.body || {};
   if (!recipientName || !String(recipientName).trim()) {
     return res.status(400).json({ error: "Name des Beschenkten ist erforderlich." });
@@ -207,22 +208,22 @@ router.post("/calendars", (req, res) => {
     createdAt: new Date().toISOString(),
     days,
   };
-  db.createCalendar(calendar);
+  await db.createCalendar(calendar);
   res.status(201).json(toSummary(calendar));
 });
 
-router.get("/calendars/:id", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.get("/calendars/:id", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden oder kein Zugriff." });
   res.json(calendar);
 });
 
-router.put("/calendars/:id", (req, res) => {
+router.put("/calendars/:id", async (req, res) => {
   const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout } = req.body || {};
-  const calendar = db.getCalendarById(req.params.id);
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
-  const updated = db.updateCalendar(req.params.id, (cal) => {
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
     if (recipientEmail !== undefined) cal.recipientEmail = recipientEmail ? String(recipientEmail).trim() : null;
     if (theme && THEMES.includes(theme)) cal.theme = theme;
@@ -239,12 +240,12 @@ router.put("/calendars/:id", (req, res) => {
   res.json(toSummary(updated));
 });
 
-router.post("/calendars/:id/collaborators", (req, res) => {
+router.post("/calendars/:id/collaborators", async (req, res) => {
   const { email } = req.body || {};
-  const calendar = db.getCalendarById(req.params.id);
+  const calendar = await db.getCalendarById(req.params.id);
   if (!calendar || calendar.ownerId !== req.user.id) return res.status(403).json({ error: "Nur der Besitzer kann Mitbearbeiter einladen." });
 
-  const updated = db.updateCalendar(req.params.id, (cal) => {
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
     if (!cal.collaborators) cal.collaborators = [];
     if (email && !cal.collaborators.includes(email)) {
       cal.collaborators.push(email);
@@ -254,17 +255,17 @@ router.post("/calendars/:id/collaborators", (req, res) => {
   res.json(toSummary(updated));
 });
 
-router.delete("/calendars/:id", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.delete("/calendars/:id", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   // Only owner can delete
   if (!calendar || calendar.ownerId !== req.user.id) return res.status(404).json({ error: "Kalender nicht gefunden oder keine Berechtigung." });
-  const ok = db.deleteCalendar(req.params.id);
+  const ok = await db.deleteCalendar(req.params.id);
   if (!ok) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({ ok: true });
 });
 
-router.get("/calendars/:id/export-giveaway", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.get("/calendars/:id/export-giveaway", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   let csv = "Tag,Email\n";
@@ -281,8 +282,8 @@ router.get("/calendars/:id/export-giveaway", (req, res) => {
   res.send(csv);
 });
 
-router.post("/calendars/:id/import", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.post("/calendars/:id/import", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   // simple csv processing: Day,Type,ContentJSON
@@ -290,7 +291,7 @@ router.post("/calendars/:id/import", (req, res) => {
   if (!csvText) return res.status(400).json({ error: "Keine CSV Daten" });
 
   const lines = csvText.split("\n");
-  const updated = db.updateCalendar(req.params.id, (cal) => {
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
     lines.forEach(line => {
       const parts = line.split(";");
       if (parts.length >= 3) {
@@ -314,8 +315,8 @@ router.post("/calendars/:id/import", (req, res) => {
   res.json({ ok: true });
 });
 
-router.post("/calendars/:id/duplicate", (req, res) => {
-  const source = db.getCalendarById(req.params.id);
+router.post("/calendars/:id/duplicate", async (req, res) => {
+  const source = await db.getCalendarById(req.params.id);
   // Only owner can duplicate (or collaborator could, but let's say anyone with access)
   if (!hasAccess(source, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
@@ -337,16 +338,16 @@ router.post("/calendars/:id/duplicate", (req, res) => {
     content: d.content ? JSON.parse(JSON.stringify(d.content)) : null
   }));
 
-  db.createCalendar(duplicate);
+  await db.createCalendar(duplicate);
   res.status(201).json(toSummary(duplicate));
 });
 
-router.post("/calendars/:id/swap", (req, res) => {
+router.post("/calendars/:id/swap", async (req, res) => {
   const { dayA, dayB } = req.body || {};
-  const calendar = db.getCalendarById(req.params.id);
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
-  const updated = db.updateCalendar(req.params.id, (cal) => {
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
     const idxA = cal.days.findIndex((d) => d.day === dayA);
     const idxB = cal.days.findIndex((d) => d.day === dayB);
     if (idxA !== -1 && idxB !== -1) {
@@ -362,8 +363,8 @@ router.post("/calendars/:id/swap", (req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/calendars/:id/preview", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.get("/calendars/:id/preview", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   res.json({
     recipientName: calendar.recipientName,
@@ -388,8 +389,8 @@ router.get("/calendars/:id/preview", (req, res) => {
   });
 });
 
-router.get("/calendars/:id/analytics", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.get("/calendars/:id/analytics", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   const openings = calendar.days.map(d => ({
@@ -418,10 +419,10 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
     finalContent = { ...finalContent, qrImage: await generateQrDataUrl(finalContent.data) };
   }
 
-  const calendar = db.getCalendarById(req.params.id);
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
-  const updated = db.updateCalendar(req.params.id, (cal) => {
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
     const doorIdx = cal.days.findIndex((d) => d.day === dayNum);
     cal.days[doorIdx] = {
       ...cal.days[doorIdx],
@@ -434,14 +435,14 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
   res.json(updated.days.find((d) => d.day === dayNum));
 });
 
-router.post("/calendars/:id/days/:day/wichtel-link", (req, res) => {
-  const calendar = db.getCalendarById(req.params.id);
+router.post("/calendars/:id/days/:day/wichtel-link", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const dayNum = parseInt(req.params.day, 10);
   let token = null;
 
-  db.updateCalendar(req.params.id, (cal) => {
+  await db.updateCalendar(req.params.id, (cal) => {
     const doorIdx = cal.days.findIndex((d) => d.day === dayNum);
     if (doorIdx !== -1) {
       if (!cal.days[doorIdx].wichtelToken) {
@@ -480,7 +481,7 @@ const upload = multer({
   },
 });
 
-router.post("/upload", (req, res) => {
+router.post("/upload", async (req, res) => {
   upload.single("file")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Keine Datei erhalten." });
@@ -492,7 +493,7 @@ router.post("/calendars/:id/push", async (req, res) => {
   const db = require("../db");
   const { sendPushNotification } = require("../push");
   
-  const calendar = db.getCalendarById(req.params.id);
+  const calendar = await db.getCalendarById(req.params.id);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
   const subs = calendar.subscriptions || [];

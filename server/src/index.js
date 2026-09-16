@@ -32,9 +32,9 @@ app.use(cookieParser());
 startCron();
 app.use("/api/wichtel", require("./routes/wichtel"));
 
-app.get("/api/global-stats", (req, res) => {
+app.get("/api/global-stats", async (req, res) => {
   const db = require("./db");
-  const calendars = db.getAllCalendars();
+  const calendars = await db.getAllCalendars();
   let totalOpened = 0;
   calendars.forEach(c => {
     c.days.forEach(d => {
@@ -54,7 +54,7 @@ app.use("/vendor/gsap", express.static(path.join(config.paths.root, "node_module
 // look up the calendar whose customConfig.subdomain matches, then transparently serve
 // the right calendar SPA. API calls (/api/*) still pass through normally so
 // that calendar.js works without any extra config.
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   const host = (req.headers.host || "").split(":")[0]; // strip port
 
   // Skip: API/asset path
@@ -81,7 +81,7 @@ app.use((req, res, next) => {
   if (!subdomain) return next();
 
   const db = require("./db");
-  const calendar = db.getCalendarBySubdomain(subdomain) || db.getCalendarBySubdomain(host); // Fallback to host for exact matches
+  const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host); // Fallback to host for exact matches
 
   if (!calendar) return next(); // unknown domain -> fall through to 404
 
@@ -100,7 +100,7 @@ app.use((req, res, next) => {
 
 // Inject calendar token for subdomain requests so calendar.js
 // knows which calendar to load without needing /c/:token in the URL.
-app.get("/api/calendar/by-domain", (req, res) => {
+app.get("/api/calendar/by-domain", async (req, res) => {
   const host = (req.headers.host || "").split(":")[0];
   const baseDomain = config.baseDomain;
   let subdomain = null;
@@ -111,7 +111,7 @@ app.get("/api/calendar/by-domain", (req, res) => {
   }
 
   const db = require("./db");
-  const calendar = db.getCalendarBySubdomain(subdomain) || db.getCalendarBySubdomain(host);
+  const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host);
   if (!calendar) return res.status(404).json({ error: "Kein Kalender für diese Domain gefunden." });
   res.json({ token: calendar.token });
 });

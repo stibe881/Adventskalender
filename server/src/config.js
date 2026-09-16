@@ -15,6 +15,12 @@ module.exports = {
   isProd: (process.env.NODE_ENV || "development") === "production",
   baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
   timezone: process.env.TIMEZONE || "Europe/Berlin",
+  db: {
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || process.env.DB_PASS || "",
+    database: process.env.DB_NAME || "adventskalender",
+  },
   // Base domain for subdomain-based custom URLs.
   // Set BASE_DOMAIN=adventskalender.de in production.
   // Customers get:  ihr-slug.adventskalender.de

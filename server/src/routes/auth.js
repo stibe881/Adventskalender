@@ -32,7 +32,7 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Gültige E-Mail und Passwort (min. 6 Zeichen) erforderlich." });
   }
 
-  const existing = db.getUserByEmail(email);
+  const existing = await db.getUserByEmail(email);
   if (existing) {
     return res.status(400).json({ error: "Diese E-Mail ist bereits registriert." });
   }
@@ -40,7 +40,7 @@ router.post("/register", async (req, res) => {
   const passwordHash = await bcrypt.hash(String(password), 12);
   const verificationToken = crypto.randomBytes(32).toString("hex");
 
-  const newUser = db.createUser({
+  const newUser = await db.createUser({
     id: crypto.randomUUID(),
     email,
     passwordHash,
@@ -75,18 +75,18 @@ router.post("/register", async (req, res) => {
   res.json({ ok: true, email: newUser.email, message: "Bitte überprüfe deine E-Mails, um deinen Account zu aktivieren." });
 });
 
-router.get("/verify", (req, res) => {
+router.get("/verify", async (req, res) => {
   const { token } = req.query;
   if (!token) {
     return res.status(400).send("Kein Token angegeben.");
   }
 
-  const user = db.getUserByVerificationToken(token);
+  const user = await db.getUserByVerificationToken(token);
   if (!user) {
     return res.status(400).send("Ungültiger oder abgelaufener Token.");
   }
 
-  db.updateUser(user.id, (u) => ({
+  await db.updateUser(user.id, (u) => ({
     ...u,
     isVerified: true,
     verificationToken: null,
@@ -101,7 +101,7 @@ router.post("/login", loginLimiter, async (req, res) => {
     return res.status(400).json({ error: "E-Mail und Passwort erforderlich." });
   }
 
-  const user = db.getUserByEmail(email);
+  const user = await db.getUserByEmail(email);
   if (!user) {
     return res.status(401).json({ error: "E-Mail oder Passwort ist falsch." });
   }
@@ -125,10 +125,10 @@ router.post("/login", loginLimiter, async (req, res) => {
 // DEV-LOGIN BYPASS
 router.post("/dev-login", async (req, res) => {
   const devEmail = "admin@bypass.local";
-  let user = db.getUserByEmail(devEmail);
+  let user = await db.getUserByEmail(devEmail);
   
   if (!user) {
-    user = db.createUser({
+    user = await db.createUser({
       id: crypto.randomUUID(),
       email: devEmail,
       passwordHash: "not-needed",

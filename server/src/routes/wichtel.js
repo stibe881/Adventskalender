@@ -3,8 +3,8 @@ const db = require("../db");
 
 const router = express.Router();
 
-function getCalendarByWichtelToken(token) {
-  const calendars = db.getAllCalendars();
+async function getCalendarByWichtelToken(token) {
+  const calendars = await db.getAllCalendars();
   for (const cal of calendars) {
     if (!cal.days) continue;
     const door = cal.days.find(d => d.wichtelToken === token);
@@ -13,8 +13,8 @@ function getCalendarByWichtelToken(token) {
   return null;
 }
 
-router.get("/:token", (req, res) => {
-  const data = getCalendarByWichtelToken(req.params.token);
+router.get("/:token", async (req, res) => {
+  const data = await getCalendarByWichtelToken(req.params.token);
   if (!data) return res.status(404).json({ error: "Link ungültig oder abgelaufen." });
   
   res.json({
@@ -25,13 +25,13 @@ router.get("/:token", (req, res) => {
   });
 });
 
-router.put("/:token", (req, res) => {
-  const data = getCalendarByWichtelToken(req.params.token);
+router.put("/:token", async (req, res) => {
+  const data = await getCalendarByWichtelToken(req.params.token);
   if (!data) return res.status(404).json({ error: "Link ungültig." });
   
   const { contentType, content } = req.body;
   
-  db.updateCalendar(data.calendar.id, (cal) => {
+  await db.updateCalendar(data.calendar.id, (cal) => {
     const idx = cal.days.findIndex(d => d.day === data.door.day);
     if (idx !== -1) {
       cal.days[idx].contentType = contentType;
@@ -52,8 +52,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/:token/upload", upload.single("file"), (req, res) => {
-  const data = getCalendarByWichtelToken(req.params.token);
+router.post("/:token/upload", upload.single("file"), async (req, res) => {
+  const data = await getCalendarByWichtelToken(req.params.token);
   if (!data) return res.status(404).json({ error: "Link ungültig." });
   if (!req.file) return res.status(400).json({ error: "Keine Datei." });
   res.json({ url: `/uploads/${req.file.filename}` });
