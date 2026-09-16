@@ -51,7 +51,7 @@
           <label class="block text-sm text-slate-300 mb-1">Eigene Subdomain</label>
           <div class="flex items-center">
             <input type="text" id="subdomain" name="subdomain" class="flex-1 rounded-l-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="z. B. wagner" />
-            <span class="bg-slate-700 border border-l-0 border-white/10 px-3 py-2 text-sm text-slate-300 rounded-r-lg">.deine-domain.de</span>
+            <span id="base-domain-suffix" class="bg-slate-700 border border-l-0 border-white/10 px-3 py-2 text-sm text-slate-300 rounded-r-lg">.mein-adventskalender.ch</span>
           </div>
         </div>
         
@@ -309,5 +309,12 @@
   <script src="/admin/js/api.js"></script>
   <script src="/admin/js/contentTypes.js"></script>
   <script src="/admin/js/editor.js"></script>
+  <script>
+    // Load base domain dynamically from server config
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      const el = document.getElementById('base-domain-suffix');
+      if (el && cfg.baseDomain) el.textContent = '.' + cfg.baseDomain;
+    }).catch(() => {});
+  </script>
 </body>
 </html>

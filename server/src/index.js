@@ -40,6 +40,11 @@ app.use(cookieParser());
 startCron();
 app.use("/api/wichtel", require("./routes/wichtel"));
 
+// Public config endpoint so the frontend knows the base domain
+app.get("/api/config", (req, res) => {
+  res.json({ baseDomain: config.baseDomain });
+});
+
 app.get("/api/global-stats", async (req, res) => {
   const db = require("./db");
   const calendars = await db.getAllCalendars();
