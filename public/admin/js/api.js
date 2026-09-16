@@ -11,6 +11,7 @@ async function request(method, url, body, isForm = false) {
   const opts = {
     method,
     credentials: "include",
+    cache: "no-store",
     headers: {},
   };
   if (body !== undefined) {
