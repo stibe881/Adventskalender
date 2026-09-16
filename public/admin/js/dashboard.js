@@ -39,7 +39,11 @@ async function init() {
     
     document.getElementById("upgrade-btn").addEventListener("click", async () => {
       try {
-        await fetch("/api/admin/upgrade", { method: "POST" });
+        const res = await fetch("/api/admin/upgrade", { method: "POST" });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error("Server error: " + text);
+        }
         window.location.reload();
       } catch(e) { alert(e.message); }
     });
