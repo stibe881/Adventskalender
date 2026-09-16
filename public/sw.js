@@ -1,4 +1,4 @@
-const CACHE_NAME = "advent-cache-v1";
+const CACHE_NAME = "advent-cache-v2";
 const ASSETS = [
   "/",
   "/shared/styles.css",
@@ -16,20 +16,39 @@ self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
 });
 
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
+  );
+});
+
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  
+  // Exclude API calls from caching entirely
+  if (e.request.url.includes("/api/")) {
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).then((fetchRes) => {
+    fetch(e.request)
+      .then((fetchRes) => {
+        // Cache the latest version from network
         return caches.open(CACHE_NAME).then((cache) => {
-          // Cache dynamic assets too, except API calls
-          if (!e.request.url.includes("/api/")) {
-            cache.put(e.request, fetchRes.clone());
-          }
+          cache.put(e.request, fetchRes.clone());
           return fetchRes;
         });
-      });
-    }).catch(() => caches.match("/"))
+      })
+      .catch(() => {
+        // If network fails (offline), fall back to cache
+        return caches.match(e.request).then((res) => {
+          return res || caches.match("/");
+        });
+      })
   );
 });
 
