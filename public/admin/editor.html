@@ -60,7 +60,26 @@
           <input type="text" id="calendarPassword" name="calendarPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Geheimwort..." />
         </div>
         
-        <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
+        <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4 flex gap-4">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+            <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
+          </div>
+        </div>
+
+        <div class="sm:col-span-4 mt-2">
+          <label class="block text-sm text-slate-300 mb-1">Eigenes Logo (White-Labeling)</label>
+          <div class="flex items-center gap-4">
+            <input type="file" id="logoUpload" accept="image/*" class="text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
+            <div id="logoPreview" class="hidden">
+              <img id="logoPreviewImg" class="h-10 object-contain rounded" />
+              <button type="button" id="removeLogoBtn" class="text-xs text-rose-400 mt-1 hover:underline">Entfernen</button>
+            </div>
+            <input type="hidden" id="calendarLogo" name="calendarLogo" />
+          </div>
+        </div>
+        
+        <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4">
           <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
           <label for="strictMode" class="text-sm text-slate-300">Strict Mode <span class="text-slate-500">(Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen)</span></label>
         </div>

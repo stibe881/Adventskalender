@@ -787,3 +787,8 @@ body {
     display: none !important;
   }
 }
+
+
+/* Snowfall */
+.snow { position: absolute; top: -10px; width: 6px; height: 6px; background: white; border-radius: 50%; box-shadow: 0 0 4px white; animation: fall linear infinite; pointer-events: none; }
+@keyframes fall { 0% { transform: translateY(-10px) translateX(0); } 100% { transform: translateY(110vh) translateX(20px); } }

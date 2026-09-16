@@ -63,6 +63,21 @@ function updateCoinDisplay() {
   if (cd) cd.textContent = userCoins;
   const sb = document.getElementById("shop-balance");
   if (sb) sb.textContent = userCoins;
+  
+  // Sync to leaderboard if name is set
+  const lbName = localStorage.getItem("lb_name");
+  if (lbName && typeof routeId !== "undefined") {
+    fetchJson(`/api/calendar/${routeId}/score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: lbName, game: "Gesamt-Münzen", score: userCoins, day: "Alle" })
+    }).catch(() => {});
+  }
+}
+
+function saveUserCoins() {
+  localStorage.setItem(`coins_${routeId}`, userCoins);
+  updateCoinDisplay();
 }
 
 function updateProgress() {
@@ -173,6 +188,21 @@ async function init() {
   field = new ParticleField(canvas);
   field.setAmbient(theme.ambient);
   field.start();
+  
+  if (calendarMeta.customConfig && calendarMeta.customConfig.snowfall) {
+    const snowContainer = document.createElement("div");
+    snowContainer.className = "snow-container pointer-events-none fixed inset-0 z-50 overflow-hidden";
+    for (let i = 0; i < 50; i++) {
+      const flake = document.createElement("div");
+      flake.className = "snow";
+      flake.style.left = `${Math.random() * 100}vw`;
+      flake.style.animationDuration = `${Math.random() * 3 + 2}s`;
+      flake.style.animationDelay = `${Math.random() * 2}s`;
+      flake.style.opacity = Math.random() * 0.5 + 0.3;
+      snowContainer.appendChild(flake);
+    }
+    document.body.appendChild(snowContainer);
+  }
 
   if (isPreview || calendarMeta.today?.day > 24 || (calendarMeta.today?.month !== 12 && calendarMeta.today?.day !== undefined)) {
     const printBtn = document.getElementById("print-pdf-btn");
@@ -371,7 +401,7 @@ window.buyItem = function(item, cost) {
   }
   userCoins -= cost;
   userInventory.push(item);
-  localStorage.setItem(`coins_${routeId}`, userCoins);
+  saveUserCoins();
   localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
   updateCoinDisplay();
   initPet(calendarMeta?.streak || 0);
@@ -1264,29 +1294,42 @@ function openLeaderboardModal() {
   
   let rows = `<p class="modal-muted">Noch keine Einträge.</p>`;
   if (lb.length > 0) {
-    // Sort descending by score
     lb.sort((a, b) => b.score - a.score);
+    // Limit to top 10
+    const top10 = lb.slice(0, 10);
     rows = `<div class="space-y-2 mt-4">
-      ${lb.map((entry, idx) => `
+      ${top10.map((entry, idx) => `
         <div class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
           <div class="flex items-center gap-3">
-            <span class="font-bold text-xl text-emerald-400">#${idx + 1}</span>
+            <span class="font-bold text-xl ${idx < 3 ? 'text-amber-400' : 'text-slate-400'}">#${idx + 1}</span>
             <div>
               <div class="font-bold text-white">${escapeHtml(entry.name)}</div>
-              <div class="text-xs text-slate-400">${escapeHtml(entry.game)} (Tür ${entry.day})</div>
+              <div class="text-xs text-slate-400">${escapeHtml(entry.game)}</div>
             </div>
           </div>
-          <div class="font-bold text-lg">${entry.score}</div>
+          <div class="font-bold text-lg text-emerald-400">${entry.score} 🪙</div>
         </div>
       `).join("")}
     </div>`;
   }
 
+  const lbName = localStorage.getItem("lb_name") || "";
+  const nameForm = `
+    <div class="mt-6 bg-slate-800 p-4 rounded-xl border border-white/10 text-left">
+      <h4 class="font-bold text-white mb-2">Trage dich ein!</h4>
+      <p class="text-xs text-slate-400 mb-3">Du hast aktuell ${userCoins} Münzen. Speichere deinen Namen, um auf der Rangliste zu erscheinen.</p>
+      <div class="flex gap-2">
+        <input type="text" id="lb-name-input" placeholder="Dein Spielername..." value="${escapeHtml(lbName)}" class="flex-1 bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        <button id="lb-submit-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Speichern</button>
+      </div>
+    </div>
+  `;
+
   modalBody.innerHTML = cardWrap(
-    "catcher", // using catcher icon for games
-    "🏆 Rangliste",
-    `<p class="modal-muted">Wer hat am besten abgeschnitten?</p>
-     ${rows}
+    "coins",
+    "🏆 Top 10 Rangliste",
+    `${rows}
+     ${nameForm}
      <div class="mt-6 text-center">
        <button id="global-stats-btn" class="text-indigo-400 text-sm hover:text-indigo-300">Globale Statistik anzeigen</button>
        <div id="global-stats-result" class="hidden mt-2 text-sm text-slate-300"></div>
@@ -1296,6 +1339,26 @@ function openLeaderboardModal() {
   document.getElementById("modal-feedback").classList.add("hidden");
   contentModal.classList.remove("hidden");
   
+  document.getElementById("lb-submit-btn").addEventListener("click", async () => {
+    const name = document.getElementById("lb-name-input").value.trim();
+    if (!name) return alert("Bitte gib einen Namen ein!");
+    
+    localStorage.setItem("lb_name", name);
+    try {
+      await fetchJson(`/api/calendar/${routeId}/score`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, game: "Gesamt-Münzen", score: userCoins, day: "Alle" })
+      });
+      // Refresh calendarMeta leaderboard by fetching again
+      const data = await fetchJson(isPreview ? `/api/admin/calendars/${routeId}/preview` : `/api/calendar/${routeId}`);
+      calendarMeta.leaderboard = data.leaderboard || data.calendar?.leaderboard || [];
+      openLeaderboardModal(); // Re-render modal
+    } catch(err) {
+      alert("Fehler beim Speichern: " + err.message);
+    }
+  });
+
   document.getElementById("global-stats-btn").addEventListener("click", async () => {
     try {
       const res = await fetchJson('/api/global-stats');
@@ -1551,11 +1614,11 @@ function renderContent(type, c, dayNum) {
 
     case "coins": {
       if (!isPreview && !door.coinsClaimed) {
-        door.coinsClaimed = true; // prevent re-claim in memory
+        door.coinsClaimed = true;
         userCoins += (c.coinAmount || 50);
-        localStorage.setItem(`coins_${routeId}`, userCoins);
-        updateCoinDisplay();
+        saveUserCoins();
       }
+      updateCoinDisplay();
       return cardWrap(
         "coins",
         "Münz-Schatz gefunden!",

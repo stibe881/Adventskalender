@@ -230,13 +230,20 @@ router.post("/:token/score", (req, res) => {
 
   db.updateCalendar(calendar.id, (cal) => {
     if (!cal.leaderboard) cal.leaderboard = [];
-    cal.leaderboard.push({
-      name,
-      game,
-      score,
-      day,
-      createdAt: new Date().toISOString()
-    });
+    const existingIdx = cal.leaderboard.findIndex(e => e.name === name && e.game === game);
+    if (existingIdx !== -1) {
+      cal.leaderboard[existingIdx].score = score;
+      cal.leaderboard[existingIdx].day = day;
+      cal.leaderboard[existingIdx].updatedAt = new Date().toISOString();
+    } else {
+      cal.leaderboard.push({
+        name,
+        game,
+        score,
+        day,
+        createdAt: new Date().toISOString()
+      });
+    }
     return cal;
   });
   res.json({ success: true });

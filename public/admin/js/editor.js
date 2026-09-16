@@ -105,6 +105,34 @@ async function loadCalendar() {
   if (calendar.customConfig && calendar.customConfig.password) {
     document.getElementById("calendarPassword").value = calendar.customConfig.password;
   }
+  if (calendar.customConfig && calendar.customConfig.snowfall) {
+    document.getElementById("snowfall").checked = true;
+  }
+  
+  if (calendar.customConfig && calendar.customConfig.logo) {
+    document.getElementById("calendarLogo").value = calendar.customConfig.logo;
+    document.getElementById("logoPreviewImg").src = calendar.customConfig.logo;
+    document.getElementById("logoPreview").classList.remove("hidden");
+  }
+
+  document.getElementById("logoUpload").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const res = await api.upload(file);
+      document.getElementById("calendarLogo").value = res.url;
+      document.getElementById("logoPreviewImg").src = res.url;
+      document.getElementById("logoPreview").classList.remove("hidden");
+    } catch(err) {
+      alert("Fehler beim Logo-Upload: " + err.message);
+    }
+  });
+
+  document.getElementById("removeLogoBtn").addEventListener("click", () => {
+    document.getElementById("calendarLogo").value = "";
+    document.getElementById("logoPreview").classList.add("hidden");
+    document.getElementById("logoUpload").value = "";
+  });
 
   // Daily push reminder settings
   const cfg = calendar.customConfig || {};
@@ -1220,10 +1248,19 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     delete calendar.customConfig.password;
   }
 
+  const logoUrl = document.getElementById("calendarLogo").value;
+  if (logoUrl) {
+    if (!calendar.customConfig) calendar.customConfig = {};
+    calendar.customConfig.logo = logoUrl;
+  } else if (calendar.customConfig) {
+    delete calendar.customConfig.logo;
+  }
+
   // Save daily push reminder settings
   if (!calendar.customConfig) calendar.customConfig = {};
   calendar.customConfig.dailyReminderEnabled = document.getElementById("dailyReminderEnabled").checked;
   calendar.customConfig.dailyReminderTime = document.getElementById("dailyReminderTime").value || "08:00";
+  calendar.customConfig.snowfall = document.getElementById("snowfall").checked;
 
   await api.updateCalendar(calendarId, {
     recipientName: fd.get("recipientName"),

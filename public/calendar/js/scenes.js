@@ -50,8 +50,8 @@ function buildGarlandForTheme(themeKey, width) {
 
 function renderHeader(themeKey, theme, meta) {
   const header = document.getElementById("calendar-header");
-  const logo = meta?.customConfig?.logoUrl;
-  const logoHtml = logo && themeKey === "firma" ? `<img src="${escapeText(logo)}" alt="Firmenlogo" class="firma-logo mx-auto mb-4" style="max-height: 80px; max-width: 200px; object-fit: contain;" />` : "";
+  const logoUrl = meta?.customConfig?.logo;
+  const logoHtml = logoUrl ? `<img src="${escapeText(logoUrl)}" alt="Logo" class="mx-auto mb-4" style="max-height: 80px; max-width: 250px; object-fit: contain;" />` : "";
 
   let headerTopHtml = `<div class="flex items-center justify-center gap-3 mb-4">`;
   if (meta.streak > 1) {
@@ -64,21 +64,49 @@ function renderHeader(themeKey, theme, meta) {
   </button>`;
   headerTopHtml += `</div>`;
 
-  if (theme.ornament) {
+  const titleHtml = logoUrl ? logoHtml : `<h1 class="text-4xl md:text-6xl font-black mb-4 drop-shadow-lg leading-tight tracking-tight">${escapeText(meta.recipientName)}</h1>`;
+
+  if (themeKey === "modern" || themeKey === "neon") {
     header.innerHTML = `
-      ${logoHtml}
       ${headerTopHtml}
-      <div class="hero-eyebrow ornament">${escapeText(theme.eyebrow(meta))}</div>
-      <h1 class="hero-title ornament-title">${escapeText(theme.title(meta))}</h1>
-      <p class="hero-tagline">${escapeText(theme.tagline(meta))}</p>
+      ${titleHtml}
+      <p class="text-xl md:text-2xl text-slate-300 font-medium">Dezember ${meta.year}</p>
+    `;
+  } else if (themeKey === "classic") {
+    header.innerHTML = `
+      ${headerTopHtml}
+      ${titleHtml}
+      <p class="text-xl md:text-2xl font-serif text-amber-200/90 italic drop-shadow">Weihnachten ${meta.year}</p>
+    `;
+  } else if (themeKey === "playful") {
+    header.innerHTML = `
+      ${headerTopHtml}
+      ${titleHtml}
+      <p class="text-xl md:text-2xl font-black text-rose-300 tracking-wider">Macht euch bereit! (${meta.year})</p>
+    `;
+  } else if (themeKey === "firma") {
+    header.innerHTML = `
+      ${headerTopHtml}
+      ${titleHtml}
+      <p class="text-xl md:text-2xl font-bold opacity-80" style="color: var(--accent-light)">Dezember ${meta.year}</p>
+    `;
+  } else if (themeKey === "space") {
+    header.innerHTML = `
+      ${headerTopHtml}
+      ${titleHtml}
+      <p class="text-xl md:text-2xl font-mono text-cyan-300 tracking-[0.2em] uppercase">Expedition ${meta.year}</p>
+    `;
+  } else if (themeKey === "nature") {
+    header.innerHTML = `
+      ${headerTopHtml}
+      ${titleHtml}
+      <p class="text-xl md:text-2xl font-medium text-emerald-200 drop-shadow">Winterwald ${meta.year}</p>
     `;
   } else {
     header.innerHTML = `
-      ${logoHtml}
       ${headerTopHtml}
-      <div class="hero-eyebrow">${escapeText(theme.eyebrow(meta))}</div>
-      <h1 class="hero-title">${escapeText(theme.title(meta))}</h1>
-      <p class="hero-tagline">${escapeText(theme.tagline(meta))}</p>
+      ${titleHtml}
+      <p class="text-xl md:text-2xl opacity-90 drop-shadow">Dezember ${meta.year}</p>
     `;
   }
 }
