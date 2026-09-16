@@ -9,7 +9,6 @@ const ASSETS = [
   "/calendar/js/art.js",
   "/calendar/js/particles.js",
   "/calendar/js/scenes.js",
-  "/calendar/js/content.js",
   "/calendar/js/calendar.js"
 ];
 

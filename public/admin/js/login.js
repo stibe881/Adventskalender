@@ -26,20 +26,22 @@ const devLoginBtn = document.getElementById("dev-login-btn");
 
 let isRegisterMode = false;
 
-devLoginBtn.addEventListener("click", async () => {
-  errorMsg.classList.add("hidden");
-  devLoginBtn.disabled = true;
-  devLoginBtn.textContent = "Bitte warten...";
-  try {
-    await api.devLogin();
-    window.location.href = "/admin/dashboard.html";
-  } catch (err) {
-    errorMsg.textContent = err.message || "Bypass fehlgeschlagen.";
-    errorMsg.classList.remove("hidden");
-    devLoginBtn.disabled = false;
-    devLoginBtn.textContent = "Admin-Bereich ohne Login betreten (Bypass)";
-  }
-});
+if (devLoginBtn) {
+  devLoginBtn.addEventListener("click", async () => {
+    errorMsg.classList.add("hidden");
+    devLoginBtn.disabled = true;
+    devLoginBtn.textContent = "Bitte warten...";
+    try {
+      await api.devLogin();
+      window.location.href = "/admin/dashboard.html";
+    } catch (err) {
+      errorMsg.textContent = err.message || "Bypass fehlgeschlagen.";
+      errorMsg.classList.remove("hidden");
+      devLoginBtn.disabled = false;
+      devLoginBtn.textContent = "Admin-Bereich ohne Login betreten (Bypass)";
+    }
+  });
+}
 
 toggleBtn.addEventListener("click", () => {
   isRegisterMode = !isRegisterMode;
