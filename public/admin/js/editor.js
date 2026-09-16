@@ -621,17 +621,7 @@ document.getElementById("firma-bg").addEventListener("change", async (e) => {
   }
 });
 
-document.getElementById("firma-logo").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const { url } = await api.upload(file);
-    if (!calendar.customConfig) calendar.customConfig = {};
-    calendar.customConfig.logoUrl = url;
-  } catch (err) {
-    alert("Fehler beim Upload: " + err.message);
-  }
-});
+
 
 function fieldWrap(labelText, inputHtml) {
   return `<div><label class="block text-sm text-slate-300 mb-1">${labelText}</label>${inputHtml}</div>`;

@@ -33,6 +33,11 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+// Payment Webhook must be parsed as raw body before global express.json()
+const paymentRoutes = require("./routes/payment");
+app.use("/api/payment", paymentRoutes);
+
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
