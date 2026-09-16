@@ -63,6 +63,17 @@ async function init() {
       } catch(e) { alert(e.message); }
     });
 
+    if (user.email === "stefan.gross@gross-ict.ch") {
+      const toggleBtn = document.getElementById("admin-toggle-pro");
+      toggleBtn.classList.remove("hidden");
+      toggleBtn.addEventListener("click", async () => {
+        try {
+          await api.devTogglePro();
+          window.location.reload();
+        } catch (e) { alert(e.message); }
+      });
+    }
+
     await loadCalendars();
   } catch (err) {
     console.error("Dashboard Init Error:", err);

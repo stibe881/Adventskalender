@@ -168,6 +168,24 @@ router.post("/refresh", async (req, res) => {
   }
 });
 
+// Admin Dev-Toggle
+router.post("/dev-toggle-pro", async (req, res) => {
+  try {
+    if (req.user.email !== "stefan.gross@gross-ict.ch") {
+      return res.status(403).json({ error: "Nur für stefan.gross@gross-ict.ch" });
+    }
+    const updatedUser = await db.updateUser(req.user.email, (u) => {
+      u.isPro = !u.isPro;
+      return u;
+    });
+    const token = signUserToken(updatedUser);
+    setAuthCookie(res, token);
+    res.json({ ok: true, isPro: updatedUser.isPro });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function hasAccess(calendar, user) {
   if (!calendar) return false;
   if (calendar.ownerId === user.id) return true;

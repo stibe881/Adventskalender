@@ -43,6 +43,7 @@ const api = {
   me: () => request("GET", "/auth/me"),
   checkout: () => request("POST", "/payment/checkout"),
   refreshToken: () => request("POST", "/admin/refresh"),
+  devTogglePro: () => request("POST", "/admin/dev-toggle-pro"),
 
   listCalendars: () => request("GET", "/admin/calendars"),
   getCalendar: (id) => request("GET", `/admin/calendars/${id}`),
