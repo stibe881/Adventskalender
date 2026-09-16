@@ -1,5 +1,5 @@
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
+require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env"), override: true });
 
 function required(name, fallback) {
   const value = process.env[name] ?? fallback;
