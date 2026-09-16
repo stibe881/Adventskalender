@@ -61,14 +61,17 @@
         </div>
 
         <div class="sm:col-span-4 mt-2">
-          <label class="block text-sm text-slate-300 mb-1">Eigenes Logo (White-Labeling)</label>
+          <label class="block text-sm text-slate-300 mb-1">
+            Eigenes Logo (White-Labeling)
+            <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+          </label>
           <div class="flex items-center gap-4">
-            <input type="file" id="logoUpload" accept="image/*" class="text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
-            <div id="logoPreview" class="hidden">
-              <img id="logoPreviewImg" class="h-10 object-contain rounded" />
-              <button type="button" id="removeLogoBtn" class="text-xs text-rose-400 mt-1 hover:underline">Entfernen</button>
-            </div>
+            <input type="file" id="logoUpload" accept="image/*" class="pro-feature-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
             <input type="hidden" id="calendarLogo" name="calendarLogo" />
+            <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
+              <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
+              <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+            </div>
           </div>
         </div>
         
@@ -99,18 +102,27 @@
           </div>
         </div>
         <div class="sm:col-span-4 hidden" id="firma-settings">
-          <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl">
+          <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl relative">
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Corporate Farbe</label>
-              <input type="color" id="firma-color" value="#3b82f6" class="w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
+              <label class="block text-sm text-slate-300 mb-1">
+                Corporate Farbe
+                <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+              </label>
+              <input type="color" id="firma-color" value="#3b82f6" class="pro-feature-input w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
             </div>
             <div>
-              <label class="block text-sm text-slate-300 mb-1">Hintergrundbild</label>
-              <input type="file" id="firma-bg" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+              <label class="block text-sm text-slate-300 mb-1">
+                Hintergrundbild
+                <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+              </label>
+              <input type="file" id="firma-bg" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-sm text-slate-300 mb-1">Firmenlogo</label>
-              <input type="file" id="firma-logo" accept="image/*" class="text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+              <label class="block text-sm text-slate-300 mb-1">
+                Firmenlogo
+                <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+              </label>
+              <input type="file" id="firma-logo" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
             </div>
           </div>
         </div>

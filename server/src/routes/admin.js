@@ -241,7 +241,16 @@ router.put("/calendars/:id", async (req, res) => {
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
     if (recipientEmail !== undefined) cal.recipientEmail = recipientEmail ? String(recipientEmail).trim() : null;
     if (theme && THEMES.includes(theme)) cal.theme = theme;
-    if (customConfig !== undefined) cal.customConfig = customConfig;
+    if (customConfig !== undefined) {
+      cal.customConfig = customConfig;
+      // Strip PRO features if user is not PRO
+      if (!req.user.isPro && cal.customConfig) {
+        delete cal.customConfig.logo;
+        delete cal.customConfig.logoUrl;
+        delete cal.customConfig.firmaColor;
+        delete cal.customConfig.firmaBgUrl;
+      }
+    }
     if (strictMode !== undefined) cal.strictMode = Boolean(strictMode);
     if (randomLayout !== undefined) cal.randomLayout = Boolean(randomLayout);
     if (year) {

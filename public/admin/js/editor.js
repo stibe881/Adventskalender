@@ -27,11 +27,29 @@ async function init() {
     window.location.href = "/admin/dashboard.html";
     return;
   }
+  let currentUser = null;
   try {
-    await api.me();
+    currentUser = await api.me();
   } catch (_) {
     window.location.href = "/admin/";
     return;
+  }
+
+  if (!currentUser.isPro) {
+    document.querySelectorAll(".pro-feature-input").forEach(el => {
+      el.disabled = true;
+      el.classList.add("opacity-50", "cursor-not-allowed");
+      el.title = "Nur in der PRO Version verfügbar";
+    });
+    // Add click listeners to wrappers or the inputs themselves
+    document.querySelectorAll(".pro-feature-input").forEach(el => {
+      el.addEventListener("click", (e) => {
+        if (el.disabled) {
+          e.preventDefault();
+          alert("Diese Funktion (White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar. Bitte führe ein Upgrade im Dashboard durch.");
+        }
+      });
+    });
   }
 
   Object.entries(THEME_META).forEach(([key, meta]) => {
