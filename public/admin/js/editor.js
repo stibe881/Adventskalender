@@ -99,9 +99,6 @@ async function loadCalendar() {
     metaConfig.classList.toggle("hidden", !e.target.checked);
   });
   
-  if (calendar.customConfig && calendar.customConfig.subdomain) {
-    document.getElementById("subdomain").value = calendar.customConfig.subdomain;
-  }
   if (calendar.customConfig && calendar.customConfig.password) {
     document.getElementById("calendarPassword").value = calendar.customConfig.password;
   }
@@ -1232,14 +1229,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     calendar.customConfig.firmaColor = document.getElementById("firma-color").value;
   }
   
-  const cd = fd.get("subdomain");
-  if (cd) {
-    if (!calendar.customConfig) calendar.customConfig = {};
-    calendar.customConfig.subdomain = cd;
-  } else if (calendar.customConfig) {
-    delete calendar.customConfig.subdomain;
-  }
-  
+  // Subdomain is disabled for now on Hetzner Webhosting
   const pwd = fd.get("calendarPassword");
   if (pwd) {
     if (!calendar.customConfig) calendar.customConfig = {};
