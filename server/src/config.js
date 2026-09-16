@@ -24,7 +24,7 @@ module.exports = {
   // Base domain for subdomain-based custom URLs.
   // Set BASE_DOMAIN=adventskalender.de in production.
   // Customers get:  ihr-slug.adventskalender.de
-  baseDomain: process.env.BASE_DOMAIN || "localhost",
+  baseDomain: process.env.BASE_DOMAIN || "mein-adventskalender.ch",
   admin: {
     username: required("ADMIN_USERNAME", "Stibe"),
     password: required("ADMIN_PASSWORD", "change-me-please"),

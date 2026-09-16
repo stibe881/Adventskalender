@@ -80,14 +80,18 @@ app.use(async (req, res, next) => {
   
   if (!subdomain) return next();
 
-  const db = require("./db");
-  const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host); // Fallback to host for exact matches
+  try {
+    const db = require("./db");
+    const calendar = await db.getCalendarBySubdomain(subdomain) || await db.getCalendarBySubdomain(host); // Fallback to host for exact matches
 
-  if (!calendar) return next(); // unknown domain -> fall through to 404
+    if (!calendar) return next(); // unknown domain -> fall through to 404
 
-  // Serve the calendar SPA for HTML requests (browser page loads)
-  if (req.path === "/" || req.path === "") {
-    return res.sendFile(path.join(config.paths.publicDir, "calendar", "index.html"));
+    // Serve the calendar SPA for HTML requests (browser page loads)
+    if (req.path === "/" || req.path === "") {
+      return res.sendFile(require("path").join(config.paths.publicDir, "calendar", "index.html"));
+    }
+  } catch (err) {
+    console.error("[Middleware] Datenbank-Fehler beim Subdomain-Lookup:", err);
   }
 
   // Rewrite /c/:token style if someone navigates there
