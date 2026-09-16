@@ -4,7 +4,7 @@ const config = require("../config");
 const COOKIE_NAME = "advent_session";
 
 function signUserToken(user) {
-  return jwt.sign({ role: "user", id: user.id, username: user.username }, config.jwtSecret, {
+  return jwt.sign({ role: "user", id: user.id, email: user.email, username: user.username, isPro: user.isPro }, config.jwtSecret, {
     expiresIn: "14d",
   });
 }

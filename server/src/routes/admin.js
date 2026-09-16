@@ -4,7 +4,7 @@ const crypto = require("crypto");
 const multer = require("multer");
 const config = require("../config");
 const db = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, signUserToken, setAuthCookie } = require("../middleware/auth");
 const { generateToken, generateId } = require("../utils/token");
 const { generateQrDataUrl } = require("../utils/qr");
 const { CONTENT_TYPES, THEMES } = require("../utils/contentTypes");
@@ -163,14 +163,8 @@ router.post("/upgrade", async (req, res) => {
       return res.status(404).json({ error: "Nutzer nicht gefunden." });
     }
 
-    const jwt = require("jsonwebtoken");
-    const config = require("../config");
-    const token = jwt.sign(
-      { id: updatedUser.id, email: updatedUser.email, username: updatedUser.username, isPro: true, role: "admin" },
-      config.jwtSecret,
-      { expiresIn: "7d" }
-    );
-    res.cookie("admin_token", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 7*24*60*60*1000 });
+    const token = signUserToken(updatedUser);
+    setAuthCookie(res, token);
     
     res.json({ ok: true, isPro: true });
   } catch (err) {
