@@ -152,10 +152,20 @@ function toSummary(cal) {
 
 // User Upgrade
 router.post("/upgrade", async (req, res) => {
-  await db.updateUser(req.user.id, (u) => {
+  const updatedUser = await db.updateUser(req.user.id, (u) => {
     u.isPro = true;
     return u;
   });
+  
+  const jwt = require("jsonwebtoken");
+  const config = require("../config");
+  const token = jwt.sign(
+    { id: updatedUser.id, email: updatedUser.email, username: updatedUser.username, isPro: true, role: "admin" },
+    config.jwtSecret,
+    { expiresIn: "7d" }
+  );
+  res.cookie("admin_token", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 7*24*60*60*1000 });
+  
   res.json({ ok: true, isPro: true });
 });
 
