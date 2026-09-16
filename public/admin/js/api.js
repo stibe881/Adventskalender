@@ -41,7 +41,9 @@ const api = {
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
-  checkout: () => request("POST", "/payment/checkout"),
+  changePassword: (currentPassword, newPassword) => request("POST", "/auth/change-password", { currentPassword, newPassword }),
+  deleteAccount: (password) => request("DELETE", "/auth/delete-account", { password }),
+  checkout: (calendarId) => request("POST", "/payment/checkout", { calendarId }),
   refreshToken: () => request("POST", "/admin/refresh"),
   devTogglePro: () => request("POST", "/admin/dev-toggle-pro"),
 

@@ -14,6 +14,11 @@ if (config.stripe.secretKey) {
 // Checkout Session erstellen
 router.post("/checkout", requireAuth, async (req, res) => {
   try {
+    const { calendarId } = req.body || {};
+    if (!calendarId) {
+      return res.status(400).json({ error: "Kein Kalender angegeben." });
+    }
+
     if (!stripeClient || !config.stripe.priceId) {
       return res.status(500).json({ error: "Stripe ist noch nicht konfiguriert." });
     }
@@ -27,7 +32,7 @@ router.post("/checkout", requireAuth, async (req, res) => {
           quantity: 1,
         },
       ],
-      client_reference_id: req.user.id,
+      client_reference_id: `${req.user.id}:${calendarId}`,
       success_url: `${config.baseUrl}/admin/index.html?payment=success`,
       cancel_url: `${config.baseUrl}/admin/index.html?payment=cancelled`,
       customer_email: req.user.email,
@@ -65,17 +70,18 @@ router.post(
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const userId = session.client_reference_id;
+      const refId = session.client_reference_id;
 
-      if (userId) {
+      if (refId && refId.includes(":")) {
+        const [userId, calendarId] = refId.split(":");
         try {
-          await db.updateUser(userId, (u) => {
-            u.isPro = true;
-            return u;
+          await db.updateCalendar(calendarId, (cal) => {
+            cal.isPro = true;
+            return cal;
           });
-          console.log(`User ${userId} wurde nach Zahlung auf PRO geupgradet.`);
+          console.log(`Kalender ${calendarId} wurde nach Zahlung auf PRO geupgradet.`);
         } catch (err) {
-          console.error(`Fehler beim Upgraden von User ${userId}:`, err);
+          console.error(`Fehler beim Upgraden von Kalender ${calendarId}:`, err);
         }
       }
     }

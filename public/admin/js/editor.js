@@ -1,6 +1,7 @@
 const params = new URLSearchParams(window.location.search);
 const calendarId = params.get("id");
 
+let currentUser = null;
 let calendar = null;
 let currentDay = null;
 let currentContent = {};
@@ -27,29 +28,11 @@ async function init() {
     window.location.href = "/admin/dashboard.html";
     return;
   }
-  let currentUser = null;
   try {
     currentUser = await api.me();
   } catch (_) {
     window.location.href = "/admin/";
     return;
-  }
-
-  if (!currentUser.isPro) {
-    document.querySelectorAll(".pro-feature-input").forEach(el => {
-      el.disabled = true;
-      el.classList.add("opacity-50", "cursor-not-allowed");
-      el.title = "Nur in der PRO Version verfügbar";
-    });
-    // Add click listeners to wrappers or the inputs themselves
-    document.querySelectorAll(".pro-feature-input").forEach(el => {
-      el.addEventListener("click", (e) => {
-        if (el.disabled) {
-          e.preventDefault();
-          alert("Diese Funktion (White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar. Bitte führe ein Upgrade im Dashboard durch.");
-        }
-      });
-    });
   }
 
   Object.entries(THEME_META).forEach(([key, meta]) => {
@@ -97,6 +80,23 @@ async function loadCalendar() {
   calendar = await api.getCalendar(calendarId);
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
   document.getElementById("cal-subtitle").textContent = `Dezember ${calendar.year} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
+
+  if (!calendar.isPro && !currentUser.isPro) {
+    document.querySelectorAll(".pro-feature-input").forEach(el => {
+      el.disabled = true;
+      el.classList.add("opacity-50", "cursor-not-allowed");
+      el.title = "Nur in der PRO Version verfügbar";
+    });
+    // Add click listeners to wrappers or the inputs themselves
+    document.querySelectorAll(".pro-feature-input").forEach(el => {
+      el.addEventListener("click", (e) => {
+        if (el.disabled) {
+          e.preventDefault();
+          alert("Diese Funktion (White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar. Bitte führe ein Upgrade im Dashboard durch.");
+        }
+      });
+    });
+  }
 
   const settingsForm = document.getElementById("settings-form");
   document.querySelector('input[name="recipientName"]').value = calendar.recipientName;

@@ -256,8 +256,8 @@ router.put("/calendars/:id", async (req, res) => {
     if (theme && THEMES.includes(theme)) cal.theme = theme;
     if (customConfig !== undefined) {
       cal.customConfig = customConfig;
-      // Strip PRO features if user is not PRO
-      if (!req.user.isPro && cal.customConfig) {
+      // Strip PRO features if user and calendar are not PRO
+      if (!req.user.isPro && !cal.isPro && cal.customConfig) {
         delete cal.customConfig.logo;
         delete cal.customConfig.logoUrl;
         delete cal.customConfig.firmaColor;

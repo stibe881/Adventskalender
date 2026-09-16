@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mein Konto – Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/admin/dashboard.html" class="text-slate-400 hover:text-white text-sm">← Zurück</a>
+        <h1 class="font-display font-bold text-lg leading-none">Mein Konto</h1>
+      </div>
+      <div>
+        <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Abmelden</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-8 flex-1 w-full space-y-10">
+    
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-4">Passwort ändern</h2>
+      <form id="change-password-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Aktuelles Passwort</label>
+          <input name="currentPassword" type="password" required
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Neues Passwort</label>
+          <input name="newPassword" type="password" required minlength="6"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div id="pw-error" class="hidden text-red-400 text-sm"></div>
+        <div id="pw-success" class="hidden text-emerald-400 text-sm"></div>
+        <button type="submit"
+          class="rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold px-5 py-2.5">
+          Passwort speichern
+        </button>
+      </form>
+    </section>
+
+    <section class="bg-red-900/20 border border-red-500/20 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold text-red-400 mb-2">Konto löschen</h2>
+      <p class="text-slate-400 text-sm mb-4">
+        Das Löschen deines Kontos ist endgültig. Alle deine erstellten Adventskalender werden unwiderruflich gelöscht.
+      </p>
+      
+      <button id="show-delete-btn"
+        class="rounded-lg bg-red-600/80 hover:bg-red-600 transition-colors text-white font-semibold px-5 py-2.5">
+        Konto löschen...
+      </button>
+
+      <form id="delete-account-form" class="hidden mt-4 space-y-4 p-4 border border-red-500/30 bg-red-950/30 rounded-lg">
+        <p class="text-sm text-red-300">Bitte gib dein Passwort ein, um die Löschung zu bestätigen.</p>
+        <div>
+          <label class="block text-sm text-red-300 mb-1">Passwort</label>
+          <input name="password" type="password" required
+            class="w-full rounded-lg bg-slate-900/60 border border-red-500/30 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
+        </div>
+        <div id="del-error" class="hidden text-red-400 text-sm"></div>
+        <div class="flex gap-3">
+          <button type="submit"
+            class="rounded-lg bg-red-600 hover:bg-red-500 transition-colors text-white font-semibold px-5 py-2.5">
+            Endgültig löschen
+          </button>
+          <button type="button" id="cancel-delete-btn"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors text-white font-semibold px-5 py-2.5">
+            Abbrechen
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/account.js"></script>
+</body>
+</html>

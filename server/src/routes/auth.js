@@ -136,4 +136,59 @@ router.get("/me", requireAuth, (req, res) => {
   res.json({ ok: true, email: req.user.email || req.user.username, isPro: req.user.isPro });
 });
 
+router.post("/change-password", requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "Aktuelles Passwort und neues Passwort (min. 6 Zeichen) erforderlich." });
+  }
+
+  const user = await db.getUserByEmail(req.user.email);
+  if (!user) {
+    return res.status(404).json({ error: "Benutzer nicht gefunden." });
+  }
+
+  const validPassword = await bcrypt.compare(String(currentPassword), user.passwordHash);
+  if (!validPassword) {
+    return res.status(401).json({ error: "Das aktuelle Passwort ist falsch." });
+  }
+
+  const passwordHash = await bcrypt.hash(String(newPassword), 12);
+  await db.updateUser(user.id, (u) => ({
+    ...u,
+    passwordHash
+  }));
+
+  res.json({ ok: true, message: "Passwort erfolgreich geändert." });
+});
+
+router.delete("/delete-account", requireAuth, async (req, res) => {
+  const { password } = req.body || {};
+  if (!password) {
+    return res.status(400).json({ error: "Passwort erforderlich, um das Konto zu löschen." });
+  }
+
+  const user = await db.getUserByEmail(req.user.email);
+  if (!user) {
+    return res.status(404).json({ error: "Benutzer nicht gefunden." });
+  }
+
+  const validPassword = await bcrypt.compare(String(password), user.passwordHash);
+  if (!validPassword) {
+    return res.status(401).json({ error: "Passwort ist falsch." });
+  }
+
+  await db.deleteUser(user.id);
+  
+  // Optional: Also delete calendars owned by this user
+  const allCalendars = await db.getAllCalendars();
+  for (const cal of allCalendars) {
+    if (cal.ownerId === user.id) {
+      await db.deleteCalendar(cal.id);
+    }
+  }
+
+  clearAuthCookie(res);
+  res.json({ ok: true, message: "Konto erfolgreich gelöscht." });
+});
+
 module.exports = router;

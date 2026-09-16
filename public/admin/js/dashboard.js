@@ -25,13 +25,6 @@ async function init() {
     document.getElementById("admin-name").textContent = user.email;
     isProUser = !!user.isPro;
     
-    if (isProUser) {
-      document.getElementById("pro-badge").classList.remove("hidden");
-      document.getElementById("upgrade-btn").classList.add("hidden");
-    } else {
-      document.getElementById("upgrade-btn").classList.remove("hidden");
-    }
-
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await api.logout();
       window.location.href = "/admin/";
@@ -40,28 +33,12 @@ async function init() {
     // Payment Status prüfen
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("payment") === "success") {
-      try {
-        await api.refreshToken(); // Refresh token since we are now PRO
-        alert("Zahlung erfolgreich! Du bist jetzt PRO User.");
-        window.history.replaceState({}, document.title, window.location.pathname);
-        window.location.reload();
-        return;
-      } catch (err) {
-        console.error("Token refresh failed:", err);
-      }
+      alert("Zahlung erfolgreich! Dieser Kalender hat nun PRO-Features freigeschaltet.");
+      window.history.replaceState({}, document.title, window.location.pathname);
     } else if (urlParams.get("payment") === "cancelled") {
       alert("Zahlung abgebrochen.");
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-
-    document.getElementById("upgrade-btn").addEventListener("click", async () => {
-      try {
-        const res = await api.checkout();
-        if (res.url) {
-          window.location.href = res.url;
-        }
-      } catch(e) { alert(e.message); }
-    });
 
     if (user.email === "stefan.gross@gross-ict.ch") {
       const toggleBtn = document.getElementById("admin-toggle-pro");
@@ -161,6 +138,15 @@ window.duplicateCalendar = async (id) => {
   }
 };
 
+window.upgradeCalendar = async (id) => {
+  try {
+    const res = await api.checkout(id);
+    if (res.url) window.location.href = res.url;
+  } catch (err) {
+    alert("Fehler beim Checkout: " + err.message);
+  }
+};
+
 window.deleteCalendar = async (id) => {
   if (!confirm("Kalender wirklich löschen?")) return;
   try {
@@ -197,9 +183,9 @@ window.promptImport = async (id) => {
 
 let currentChart = null;
 
-window.showAnalytics = async (id) => {
-  if (!isProUser) {
-    alert("Diese Funktion ist nur für PRO-Nutzer verfügbar.");
+window.showAnalytics = async (id, calIsPro = false) => {
+  if (!isProUser && !calIsPro) {
+    alert("Diese Funktion ist nur für PRO-Kalender verfügbar.");
     return;
   }
   try {
@@ -282,8 +268,9 @@ function renderTableRow(cal) {
           <a href="/admin/editor.html?id=${cal.id}" class="block px-4 py-2 hover:bg-slate-700 text-white">Bearbeiten</a>
           <button onclick="copyLink('${cal.shareUrl}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white">Link kopieren</button>
           <a href="${cal.shareUrl}" target="_blank" class="block px-4 py-2 hover:bg-slate-700 text-white">Ansehen</a>
+          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-500 font-bold border-t border-white/10">⭐ PRO Upgrade</button>` : ``}
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
-          <button onclick="showAnalytics('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
+          <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
           <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
         </div>
       </div>
@@ -309,7 +296,7 @@ function renderCard(cal) {
         </button>
         <div id="menu-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden">
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white flex items-center gap-2">Kopieren</button>
-          <button onclick="showAnalytics('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>
+          <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>
           <a href="/api/admin/calendars/${cal.id}/export-giveaway" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 flex items-center gap-2" download>Leads Exportieren</a>
           <button onclick="promptImport('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-blue-400 flex items-center gap-2">CSV Import</button>
           <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-500 flex items-center gap-2">Löschen</button>
@@ -333,6 +320,7 @@ function renderCard(cal) {
       <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">🔗 Link</button>
       <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren">📑 Kopieren</button>
       <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
+      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-medium px-3 py-1.5 transition-colors">⭐ PRO</button>` : `<span class="px-3 py-1.5 text-xs text-amber-500 font-bold bg-amber-500/10 rounded-lg">PRO</span>`}
     </div>
   `;
 
@@ -341,8 +329,20 @@ function renderCard(cal) {
     const btn = e.currentTarget;
     const original = btn.textContent;
     btn.textContent = "Kopiert!";
-    setTimeout(() => (btn.textContent = original), 1500);
+    setTimeout(() => { btn.textContent = original; }, 2000);
   });
+
+  const upgradeBtn = card.querySelector('[data-action="upgrade"]');
+  if (upgradeBtn) {
+    upgradeBtn.addEventListener("click", async () => {
+      try {
+        const res = await api.checkout(cal.id);
+        if (res.url) {
+          window.location.href = res.url;
+        }
+      } catch(e) { alert(e.message); }
+    });
+  }
 
   card.querySelector('[data-action="duplicate"]').addEventListener("click", async (e) => {
     e.currentTarget.disabled = true;

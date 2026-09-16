@@ -203,6 +203,11 @@ async function updateUser(idOrEmail, updaterFn) {
   return updated;
 }
 
+async function deleteUser(id) {
+  const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+}
+
 module.exports = {
   getAllCalendars,
   getCalendarsByOwnerOrCollaborator,
@@ -216,4 +221,5 @@ module.exports = {
   getUserByVerificationToken,
   createUser,
   updateUser,
+  deleteUser,
 };
