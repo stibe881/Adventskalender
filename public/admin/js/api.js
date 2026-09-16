@@ -41,6 +41,8 @@ const api = {
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
+  checkout: () => request("POST", "/payment/checkout"),
+  refreshToken: () => request("POST", "/admin/refresh"),
 
   listCalendars: () => request("GET", "/admin/calendars"),
   getCalendar: (id) => request("GET", `/admin/calendars/${id}`),

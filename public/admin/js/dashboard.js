@@ -37,14 +37,29 @@ async function init() {
       window.location.href = "/admin/";
     });
     
+    // Payment Status prüfen
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("payment") === "success") {
+      try {
+        await api.refreshToken(); // Refresh token since we are now PRO
+        alert("Zahlung erfolgreich! Du bist jetzt PRO User.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+        window.location.reload();
+        return;
+      } catch (err) {
+        console.error("Token refresh failed:", err);
+      }
+    } else if (urlParams.get("payment") === "cancelled") {
+      alert("Zahlung abgebrochen.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     document.getElementById("upgrade-btn").addEventListener("click", async () => {
       try {
-        const res = await fetch("/api/admin/upgrade", { method: "POST" });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error("Server error: " + text);
+        const res = await api.checkout();
+        if (res.url) {
+          window.location.href = res.url;
         }
-        window.location.reload();
       } catch(e) { alert(e.message); }
     });
 

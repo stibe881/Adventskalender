@@ -150,26 +150,21 @@ function toSummary(cal) {
   };
 }
 
-// User Upgrade
-router.post("/upgrade", async (req, res) => {
+// Session Token Refresh (e.g. after Stripe Payment)
+router.post("/refresh", async (req, res) => {
   try {
-    // Pass email as fallback for MySQL migration where old JWT ID doesn't match
-    const updatedUser = await db.updateUser(req.user.email || req.user.id, (u) => {
-      u.isPro = true;
-      return u;
-    });
-    
-    if (!updatedUser) {
+    const user = await db.getUserByEmail(req.user.email);
+    if (!user) {
       return res.status(404).json({ error: "Nutzer nicht gefunden." });
     }
 
-    const token = signUserToken(updatedUser);
+    const token = signUserToken(user);
     setAuthCookie(res, token);
     
-    res.json({ ok: true, isPro: true });
+    res.json({ ok: true, isPro: user.isPro });
   } catch (err) {
-    console.error("Upgrade error:", err);
-    res.status(500).json({ error: "Interner Fehler beim Upgrade: " + err.message });
+    console.error("Refresh error:", err);
+    res.status(500).json({ error: "Interner Fehler beim Refresh: " + err.message });
   }
 });
 
