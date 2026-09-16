@@ -153,7 +153,8 @@ function toSummary(cal) {
 // User Upgrade
 router.post("/upgrade", async (req, res) => {
   try {
-    const updatedUser = await db.updateUser(req.user.id, (u) => {
+    // Pass email as fallback for MySQL migration where old JWT ID doesn't match
+    const updatedUser = await db.updateUser(req.user.email || req.user.id, (u) => {
       u.isPro = true;
       return u;
     });

@@ -167,9 +167,18 @@ async function createUser(user) {
   return user;
 }
 
-async function updateUser(id, updaterFn) {
-  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+async function updateUser(idOrEmail, updaterFn) {
+  let rows;
+  // Try by ID first
+  [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [idOrEmail]);
+  
+  // Fallback to email if not found by ID (useful during migration where JWT token ID doesn't match)
+  if (!rows.length && typeof idOrEmail === "string" && idOrEmail.includes("@")) {
+    [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [idOrEmail.toLowerCase().trim()]);
+  }
+  
   if (!rows.length) return null;
+  
   const user = rows[0].data;
   user.id = rows[0].id;
   user.email = rows[0].email;
@@ -188,7 +197,7 @@ async function updateUser(id, updaterFn) {
       updated.verificationToken || null,
       updated.isPro,
       JSON.stringify(data),
-      id
+      user.id
     ]
   );
   return updated;
