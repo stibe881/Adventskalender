@@ -1,15 +1,38 @@
 const mysql = require("mysql2/promise");
-const config = require("./config");
+const fs = require("fs");
+const path = require("path");
+
+// Read .env file directly to bypass Hetzner's environment variable injection
+// which overrides process.env even with dotenv override:true
+function readEnvFile() {
+  try {
+    const envPath = path.join(__dirname, "..", "..", ".env");
+    const content = fs.readFileSync(envPath, "utf8");
+    const env = {};
+    content.split("\n").forEach((line) => {
+      const match = line.match(/^([^#=\s][^=]*)=(.*)$/);
+      if (match) {
+        env[match[1].trim()] = match[2].trim().replace(/^["']|["']$/g, "");
+      }
+    });
+    return env;
+  } catch (e) {
+    return {};
+  }
+}
+
+const envVars = readEnvFile();
 
 const pool = mysql.createPool({
-  host: config.db.host,
-  user: config.db.user,
-  password: config.db.password,
-  database: config.db.database,
+  host: envVars.DB_HOST || process.env.DB_HOST || "localhost",
+  user: envVars.DB_USER || process.env.DB_USER || "root",
+  password: envVars.DB_PASS || envVars.DB_PASSWORD || process.env.DB_PASS || "",
+  database: envVars.DB_NAME || process.env.DB_NAME || "adventskalender",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
+
 
 async function initDB() {
   await pool.query(`
