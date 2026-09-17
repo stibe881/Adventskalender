@@ -126,9 +126,36 @@ function applyTemplate(days, templateId) {
       d.content = { message: `Zitat des Tages #${d.day}:\n\n"${quote.text}"\n\n— ${quote.author}`, sender: "Inspiration" };
     });
   } else if (templateId === "fitness") {
+    const fitnessChallenges = [
+      "Mach 15 Kniebeugen (Squats).",
+      "Halte den Unterarmstütz (Plank) für 30 Sekunden.",
+      "Mach 10 Liegestütze (auf Knien oder Füßen).",
+      "Mache 20 Hampelmänner (Jumping Jacks).",
+      "Dehne dich für 5 Minuten komplett durch.",
+      "Mach 15 Ausfallschritte (Lunges) pro Bein.",
+      "Gehe heute 10.000 Schritte oder mache einen 30-minütigen Spaziergang.",
+      "Mach 20 Crunches oder Sit-ups.",
+      "Stell dich auf ein Bein und halte die Balance für 60 Sekunden (pro Bein).",
+      "Mache 30 Sekunden lang High Knees (Kniehebelauf auf der Stelle).",
+      "Mache 15 Trizeps-Dips an einem Stuhl oder der Couch.",
+      "Halte die Wandsitz-Position (Wall Sit) für 45 Sekunden.",
+      "Mache 10 Burpees (Hocksprünge).",
+      "Trinke heute mindestens 2,5 Liter Wasser.",
+      "Mach 20 Mountain Climbers (Bergsteiger).",
+      "Mache 15 Beckenheben (Glute Bridges) auf dem Boden.",
+      "Verzichte heute komplett auf Zucker und Süßigkeiten.",
+      "Mach 30 Sekunden lang Schattenboxen.",
+      "Dehne deine Beine und versuche mit gestreckten Knien die Zehen zu berühren.",
+      "Mache 15 Wadenheben (Calf Raises) an einer Treppenstufe.",
+      "Gehe heute alle Treppen zu Fuß und nimm keinen Aufzug.",
+      "Mach 40 Sekunden lang Russian Twists für die Bauchmuskeln.",
+      "Mache 10 Seitstütze (Side Planks) mit Hüftheben pro Seite.",
+      "Mach ein 15-minütiges Yoga- oder Stretching-Workout."
+    ];
     days.forEach(d => {
       d.contentType = "challenge";
-      d.content = { task: `Fitness-Challenge #${d.day}:\nMach 10 Kniebeugen!`, btnText: "Erledigt!", successMessage: "Stark!" };
+      const task = fitnessChallenges[(d.day - 1) % fitnessChallenges.length];
+      d.content = { task: `Fitness-Challenge #${d.day}:\n${task}`, btnText: "Erledigt!", successMessage: "Stark!" };
     });
   } else if (templateId === "trivia") {
     days.forEach(d => {
