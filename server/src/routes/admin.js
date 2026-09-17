@@ -286,9 +286,36 @@ function applyTemplate(days, templateId) {
       d.content = { task: `Rätsel & Spaß #${d.day}:\n${task}`, btnText: "Erledigt!", successMessage: "Toll gemacht!" };
     });
   } else if (templateId === "praise") {
+    const compliments = [
+      "Du hast ein wundervolles Lächeln, das jeden Raum erhellt.",
+      "Ich bewundere deine ehrliche und offene Art.",
+      "Mit dir kann man einfach die besten Gespräche führen.",
+      "Du bist unglaublich hilfsbereit und immer für andere da.",
+      "Dein Humor ist fantastisch – du bringst mich immer zum Lachen!",
+      "Ich liebe es, wie leidenschaftlich du über die Dinge sprichst, die dir wichtig sind.",
+      "Du strahlst so viel positive Energie aus.",
+      "Du bist ein großartiger Zuhörer und gibst immer die besten Ratschläge.",
+      "Ich schätze deine Geduld und deine ruhige Art in stressigen Situationen.",
+      "Du hast einen tollen Geschmack und Stil.",
+      "Deine Kreativität und deine Ideen beeindrucken mich immer wieder.",
+      "Es ist bewundernswert, wie du deine Ziele verfolgst und nie aufgibst.",
+      "Du schaffst es immer, dass sich Menschen in deiner Nähe wohlfühlen.",
+      "Ich mag deine spontane und abenteuerlustige Seite.",
+      "Du bist so fürsorglich und hast ein riesiges Herz.",
+      "Deine Zuverlässigkeit ist etwas, worauf man sich immer verlassen kann.",
+      "Du inspirierst mich dazu, eine bessere Version meiner selbst zu sein.",
+      "Ich liebe deine Art, auch in kleinen Dingen das Schöne zu sehen.",
+      "Du hast so viel Mut und Stärke in dir.",
+      "Deine Begeisterung für das Leben ist absolut ansteckend.",
+      "Ich schätze es sehr, dass ich bei dir einfach ich selbst sein darf.",
+      "Du gibst nicht auf, auch wenn es mal schwierig wird – das ist beeindruckend.",
+      "Du machst die Welt für alle, die dich kennen, ein kleines bisschen schöner.",
+      "Danke, dass es dich gibt! Du bist einfach wunderbar, genau so, wie du bist."
+    ];
     days.forEach(d => {
       d.contentType = "text";
-      d.content = { message: `Was ich an dir schätze #${d.day}:\n\nDu bist so wundervoll, weil...`, sender: "Dein Fan" };
+      const compliment = compliments[(d.day - 1) % compliments.length];
+      d.content = { message: `Was ich an dir schätze #${d.day}:\n\n${compliment}`, sender: "Dein Fan" };
     });
   } else if (templateId === "photo_memories") {
     days.forEach(d => {
