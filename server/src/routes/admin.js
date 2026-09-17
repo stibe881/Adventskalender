@@ -158,9 +158,36 @@ function applyTemplate(days, templateId) {
       d.content = { task: `Fitness-Challenge #${d.day}:\n${task}`, btnText: "Erledigt!", successMessage: "Stark!" };
     });
   } else if (templateId === "trivia") {
+    const triviaQuestions = [
+      { q: "Woher kommt der Brauch des Adventskalenders ursprünglich?", o: ["Deutschland", "USA", "Frankreich", "Schweden"], a: 0 },
+      { q: "Wie viele Rentiere ziehen laut dem bekannten Lied Santa's Schlitten?", o: ["6", "8", "9", "10"], a: 2 },
+      { q: "Welches Gewürz gibt dem Lebkuchen seinen typischen Geschmack?", o: ["Vanille", "Zimt & Nelken", "Kardamom", "Pfeffer"], a: 1 },
+      { q: "In welcher Stadt wurde das Jesuskind geboren?", o: ["Jerusalem", "Nazareth", "Bethlehem", "Rom"], a: 2 },
+      { q: "Welcher Baum wird traditionell als Weihnachtsbaum verwendet?", o: ["Eiche", "Tanne oder Fichte", "Kiefer", "Buche"], a: 1 },
+      { q: "Wer schrieb die bekannte Weihnachtsgeschichte 'A Christmas Carol'?", o: ["Charles Dickens", "William Shakespeare", "Mark Twain", "J.K. Rowling"], a: 0 },
+      { q: "Wie heißt der Grinch in der deutschen Version des Films?", o: ["Der Grinch", "Griesgram", "Grüner Klaus", "Schreck"], a: 0 },
+      { q: "Aus welchem Land stammt der Stollen ursprünglich?", o: ["Österreich", "Schweiz", "Deutschland", "Polen"], a: 2 },
+      { q: "Wie viele Türchen hat ein klassischer Adventskalender?", o: ["20", "24", "25", "31"], a: 1 },
+      { q: "Welches Tier ist am Nordpol NICHT zu finden?", o: ["Eisbär", "Pinguin", "Polarfuchs", "Schneeeule"], a: 1 },
+      { q: "Was hängen Kinder in den USA und England traditionell an den Kamin?", o: ["Stiefel", "Socken (Stockings)", "Hüte", "Schals"], a: 1 },
+      { q: "Wie heißt die rotnasige Rentier-Leitfigur von Santa Claus?", o: ["Rudolph", "Comet", "Cupid", "Blitzen"], a: 0 },
+      { q: "Was bedeutet das Wort 'Advent' übersetzt?", o: ["Geschenk", "Warten", "Ankunft", "Winter"], a: 2 },
+      { q: "In welchem Monat wird in den meisten orthodoxen Kirchen Weihnachten gefeiert?", o: ["Dezember", "Januar", "Februar", "November"], a: 1 },
+      { q: "Welche Pflanze ist ein beliebtes Symbol für Weihnachten, unter der man sich küsst?", o: ["Mistelzweig", "Stechpalme", "Weihnachtsstern", "Tannenzweig"], a: 0 },
+      { q: "Welches Lied ist das weltweit am meisten verkaufte Weihnachtslied?", o: ["Last Christmas", "White Christmas", "Jingle Bells", "Silent Night"], a: 1 },
+      { q: "Wie nennt man den Vorabend von Weihnachten (24. Dezember)?", o: ["Heiligabend", "Nikolaustag", "Erster Weihnachtstag", "Silvester"], a: 0 },
+      { q: "Aus welchem Teig werden klassische Ausstechplätzchen meistens gemacht?", o: ["Hefeteig", "Mürbeteig", "Blätterteig", "Biskuitteig"], a: 1 },
+      { q: "Wie viele Zacken hat der Herrnhuter Stern traditionell?", o: ["12", "16", "25", "30"], a: 2 },
+      { q: "Welcher Heilige wird am 6. Dezember gefeiert?", o: ["St. Martin", "St. Nikolaus", "St. Patrick", "St. Valentin"], a: 1 },
+      { q: "Wo wohnt der Weihnachtsmann der Legende nach?", o: ["Am Nordpol", "In Finnland (Rovaniemi)", "Am Südpol", "Sowohl Nordpol als auch Rovaniemi gelten oft"], a: 3 },
+      { q: "Welches Ballett wird traditionell oft zur Weihnachtszeit aufgeführt?", o: ["Schwanensee", "Der Nussknacker", "Dornröschen", "Giselle"], a: 1 },
+      { q: "Was verbrennt man traditionell in manchen englischen Haushalten am Kaminfeuer (Yule Log)?", o: ["Einen Tannenbaum", "Einen Holzklotz", "Alte Briefe", "Trockenes Laub"], a: 1 },
+      { q: "Wie lautet der berühmte Ausruf von Santa Claus?", o: ["Ho Ho Ho!", "Merry Christmas!", "Jingle All The Way!", "Let it snow!"], a: 0 }
+    ];
     days.forEach(d => {
       d.contentType = "quiz";
-      d.content = { question: `Quizfrage #${d.day}: Was ist...?`, options: ["Antwort A", "Antwort B", "Antwort C", "Antwort D"], correctIndex: 0, successMessage: "Richtig!", failureMessage: "Leider falsch.", prizeText: "10 Punkte", prizeCoins: 10 };
+      const q = triviaQuestions[(d.day - 1) % triviaQuestions.length];
+      d.content = { question: `Quizfrage #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Richtig! Klasse gemacht.", failureMessage: "Leider falsch.", prizeText: "10 Punkte", prizeCoins: 10 };
     });
   } else if (templateId === "recipes") {
     days.forEach(d => {
