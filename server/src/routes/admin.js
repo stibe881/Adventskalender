@@ -87,9 +87,36 @@ function applyTemplate(days, templateId) {
       d.content = { message: `Rezept #${d.day}:\n\nZutaten:\n- ...\n\nZubereitung:\n...`, sender: "Bäckerei" };
     });
   } else if (templateId === "couples_activities") {
+    const activities = [
+      "Zusammen den Sonnenuntergang anschauen",
+      "Heute kochen wir zusammen etwas Neues!",
+      "Ein gemeinsamer Spaziergang ohne Handys",
+      "Gegenseitig eine Massage geben",
+      "Einen Filmabend mit Popcorn machen",
+      "Zusammen ein neues Café ausprobieren",
+      "Ein Brettspiel oder Kartenspiel spielen",
+      "Gegenseitig 3 Dinge sagen, die wir aneinander lieben",
+      "Zusammen Plätzchen oder Kuchen backen",
+      "Ein heißes Bad zusammen nehmen",
+      "Einen Ausflug in die Natur machen",
+      "Gemeinsam ein Puzzle beginnen",
+      "Ein Picknick im Wohnzimmer veranstalten",
+      "Fotos von früher anschauen und in Erinnerungen schwelgen",
+      "Zusammen ein Workout oder Yoga machen",
+      "Ein leckeres Frühstück im Bett",
+      "Einen Glühwein oder heißen Kakao trinken",
+      "Zusammen ein Weihnachtsgedicht oder -lied lernen",
+      "Gegenseitig einen Wunsch erfüllen",
+      "Einen ganzen Abend nur bei Kerzenschein verbringen",
+      "Gemeinsam den Sternenhimmel beobachten",
+      "Eine Kissenschlacht machen",
+      "Zusammen die Weihnachtsdekoration aufhängen",
+      "Ein romantisches Dinner zuhause"
+    ];
     days.forEach(d => {
       d.contentType = "challenge";
-      d.content = { task: `Aktivität #${d.day}:\nHeute kochen wir zusammen etwas Neues!`, btnText: "Erledigt!", successMessage: "Schön war's!" };
+      const activity = activities[(d.day - 1) % activities.length];
+      d.content = { task: `Aktivität #${d.day}:\n${activity}`, btnText: "Erledigt!", successMessage: "Schön war's!" };
     });
   } else if (templateId === "kids_fun") {
     days.forEach(d => {
