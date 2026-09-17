@@ -12,7 +12,7 @@ if (config.stripe.secretKey) {
 }
 
 // Checkout Session erstellen
-router.post("/checkout", requireAuth, async (req, res) => {
+router.post("/checkout", express.json(), requireAuth, async (req, res) => {
   try {
     const { calendarId } = req.body || {};
     if (!calendarId) {
