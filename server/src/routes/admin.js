@@ -94,9 +94,36 @@ function applyTemplate(days, templateId) {
       d.content = { message: `Witz des Tages #${d.day}:\n\n${joke}`, sender: "Spaßvogel" };
     });
   } else if (templateId === "quotes") {
+    const quotesList = [
+      { text: "Phantasie ist wichtiger als Wissen, denn Wissen ist begrenzt.", author: "Albert Einstein" },
+      { text: "Wege entstehen dadurch, dass man sie geht.", author: "Franz Kafka" },
+      { text: "Die reinste Form des Wahnsinns ist es, alles beim Alten zu lassen und gleichzeitig zu hoffen, dass sich etwas ändert.", author: "Albert Einstein" },
+      { text: "Wer immer tut, was er schon kann, bleibt immer das, was er schon ist.", author: "Henry Ford" },
+      { text: "Auch aus Steinen, die einem in den Weg gelegt werden, kann man Schönes bauen.", author: "Johann Wolfgang von Goethe" },
+      { text: "Die Zukunft gehört denen, die an die Wahrhaftigkeit ihrer Träume glauben.", author: "Eleanor Roosevelt" },
+      { text: "Glaube an dich selbst, und es wird unweigerlich der Tag kommen, an dem andere keine andere Wahl haben, als an dich zu glauben.", author: "Cynthia Kersey" },
+      { text: "Das Geheimnis des Erfolgs ist anzufangen.", author: "Mark Twain" },
+      { text: "Verweile nicht in der Vergangenheit, träume nicht von der Zukunft. Konzentriere dich auf den gegenwärtigen Moment.", author: "Buddha" },
+      { text: "Mut steht am Anfang des Handelns, Glück am Ende.", author: "Demokrit" },
+      { text: "Man muss das Unmögliche versuchen, um das Mögliche zu erreichen.", author: "Hermann Hesse" },
+      { text: "Das Leben ist wie Fahrrad fahren. Um die Balance zu halten, musst du in Bewegung bleiben.", author: "Albert Einstein" },
+      { text: "Es ist nicht zu wenig Zeit, die wir haben, sondern es ist zu viel Zeit, die wir nicht nutzen.", author: "Lucius Annaeus Seneca" },
+      { text: "Jeder Tag ist eine neue Chance, das zu tun, was du möchtest.", author: "Friedrich Schiller" },
+      { text: "Erfolg ist nicht der Schlüssel zum Glück. Glück ist der Schlüssel zum Erfolg.", author: "Albert Schweitzer" },
+      { text: "Was wäre das Leben, hätten wir nicht den Mut, etwas zu riskieren?", author: "Vincent van Gogh" },
+      { text: "Der einzige Weg, großartige Arbeit zu leisten, ist, zu lieben, was man tut.", author: "Steve Jobs" },
+      { text: "Glück ist kein Geschenk der Götter, sondern die Frucht innerer Einstellung.", author: "Erich Fromm" },
+      { text: "Es gibt nur zwei Tage im Jahr, an denen man nichts tun kann. Der eine ist Gestern, der andere Morgen.", author: "Dalai Lama" },
+      { text: "Gib jedem Tag die Chance, der schönste deines Lebens zu werden.", author: "Mark Twain" },
+      { text: "Die wahre Entdeckungsreise besteht nicht darin, neue Landschaften zu suchen, sondern mit neuen Augen zu sehen.", author: "Marcel Proust" },
+      { text: "Ein Ziel ist ein Traum mit einer Frist.", author: "Napoleon Hill" },
+      { text: "Man sieht nur mit dem Herzen gut. Das Wesentliche ist für die Augen unsichtbar.", author: "Antoine de Saint-Exupéry" },
+      { text: "Der beste Weg, die Zukunft vorauszusagen, ist, sie zu erfinden.", author: "Alan Kay" }
+    ];
     days.forEach(d => {
       d.contentType = "text";
-      d.content = { message: `"Zitat des Tages #${d.day}"\n\n- (Autor)`, sender: "Inspiration" };
+      const quote = quotesList[(d.day - 1) % quotesList.length];
+      d.content = { message: `Zitat des Tages #${d.day}:\n\n"${quote.text}"\n\n— ${quote.author}`, sender: "Inspiration" };
     });
   } else if (templateId === "fitness") {
     days.forEach(d => {
