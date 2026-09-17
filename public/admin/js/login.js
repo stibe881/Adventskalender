@@ -43,14 +43,27 @@ if (devLoginBtn) {
   });
 }
 
+const formTitle = document.getElementById("form-title");
+const registerFields = document.getElementById("register-fields");
+const registerPasswordConfirm = document.getElementById("register-password-confirm");
+const passwordConfirmInput = document.getElementById("password-confirm");
+
 toggleBtn.addEventListener("click", () => {
   isRegisterMode = !isRegisterMode;
   if (isRegisterMode) {
+    formTitle.textContent = "Neues Konto erstellen";
     submitBtn.textContent = "Registrieren";
-    toggleBtn.textContent = "Schon einen Account? Anmelden";
+    toggleBtn.textContent = "Schon einen Account? Zur Anmeldung";
+    registerFields.classList.remove("hidden");
+    registerPasswordConfirm.classList.remove("hidden");
+    passwordConfirmInput.required = true;
   } else {
+    formTitle.textContent = "Anmelden";
     submitBtn.textContent = "Anmelden";
-    toggleBtn.textContent = "Noch keinen Account? Registrieren";
+    toggleBtn.textContent = "Noch keinen Account? Hier Registrieren";
+    registerFields.classList.add("hidden");
+    registerPasswordConfirm.classList.add("hidden");
+    passwordConfirmInput.required = false;
   }
   errorMsg.classList.add("hidden");
 });
@@ -63,17 +76,26 @@ form.addEventListener("submit", async (e) => {
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const username = document.getElementById("username").value.trim();
+  const company = document.getElementById("company").value.trim();
+  const passwordConfirm = passwordConfirmInput.value;
 
   try {
     if (isRegisterMode) {
-      const res = await api.register(email, password);
-      errorMsg.textContent = res.message;
+      if (password !== passwordConfirm) {
+        throw new Error("Die Passwörter stimmen nicht überein.");
+      }
+      const res = await api.register(email, password, username, company);
+      errorMsg.textContent = res.message || "Erfolgreich registriert. Bitte E-Mail bestätigen.";
       errorMsg.classList.remove("hidden");
       errorMsg.classList.replace("text-rose-400", "text-emerald-400");
       errorMsg.classList.replace("bg-rose-950/40", "bg-emerald-950/40");
       errorMsg.classList.replace("border-rose-900", "border-emerald-900");
       submitBtn.disabled = false;
       submitBtn.textContent = "Registrieren";
+      // Clear password fields
+      document.getElementById("password").value = "";
+      passwordConfirmInput.value = "";
     } else {
       await api.login(email, password);
       window.location.href = "/admin/dashboard.html";

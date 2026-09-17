@@ -27,7 +27,7 @@ const transporter = nodemailer.createTransport({
 });
 
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, username, company } = req.body || {};
   if (!email || !password || email.length < 5 || password.length < 6 || !email.includes("@")) {
     return res.status(400).json({ error: "Gültige E-Mail und Passwort (min. 6 Zeichen) erforderlich." });
   }
@@ -43,6 +43,8 @@ router.post("/register", async (req, res) => {
   const newUser = await db.createUser({
     id: crypto.randomUUID(),
     email,
+    username: username ? String(username).trim() : null,
+    company: company ? String(company).trim() : null,
     passwordHash,
     createdAt: new Date().toISOString(),
     isPremium: false,

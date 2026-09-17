@@ -25,15 +25,40 @@
     </div>
 
     <form id="login-form" class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+      <h2 id="form-title" class="text-xl font-bold text-white text-center mb-6">Anmelden</h2>
       <div>
         <label class="block text-sm text-slate-300 mb-1" for="email">E-Mail Adresse</label>
         <input id="email" name="email" type="email" autocomplete="email" required
           class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="beispiel@domain.de" />
       </div>
+      <!-- Registrierung Felder -->
+      <div id="register-fields" class="hidden space-y-4">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1" for="username">Benutzername (optional)</label>
+          <input id="username" name="username" type="text"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Dein Name" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1" for="company">Firmenname (optional)</label>
+          <input id="company" name="company" type="text"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Deine Firma" />
+        </div>
+      </div>
+
       <div>
         <label class="block text-sm text-slate-300 mb-1" for="password">Passwort</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required
+          class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="••••••••" />
+      </div>
+
+      <!-- Passwort Bestätigung -->
+      <div id="register-password-confirm" class="hidden">
+        <label class="block text-sm text-slate-300 mb-1" for="password-confirm">Passwort bestätigen</label>
+        <input id="password-confirm" name="password-confirm" type="password"
           class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="••••••••" />
       </div>
