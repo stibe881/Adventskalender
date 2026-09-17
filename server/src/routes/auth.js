@@ -90,8 +90,9 @@ router.get("/verify", async (req, res) => {
 
   await db.updateUser(user.id, (u) => ({
     ...u,
-    isVerified: true,
-    verificationToken: null,
+    isVerified: true
+    // We intentionally keep the verificationToken so that if an email scanner 
+    // consumes the link first, the user's actual click still works and redirects them.
   }));
 
   res.redirect("/admin/index.html?verified=1");
