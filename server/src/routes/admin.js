@@ -190,9 +190,36 @@ function applyTemplate(days, templateId) {
       d.content = { question: `Quizfrage #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Richtig! Klasse gemacht.", failureMessage: "Leider falsch.", prizeText: "10 Punkte", prizeCoins: 10 };
     });
   } else if (templateId === "recipes") {
+    const recipes = [
+      "Vanillekipferl\nZutaten: 250g Mehl, 200g Butter, 100g Mandeln, 80g Zucker, Vanillezucker.\nZubereitung: Teig kneten, Hörnchen formen. Bei 175°C ca. 10 Min backen. Noch warm in Puder- und Vanillezucker wälzen.",
+      "Omas Lebkuchen\nZutaten: 500g Honig, 250g Zucker, 150g Butter, 1kg Mehl, Lebkuchengewürz, Natron.\nZubereitung: Honig, Zucker, Butter erwärmen. Mit Mehl & Gewürzen kneten. Über Nacht ruhen lassen. Ausrollen, backen.",
+      "Zimtsterne\nZutaten: 3 Eiweiß, 250g Puderzucker, 400g gemahlene Mandeln, 2 TL Zimt.\nZubereitung: Eiweiß steif schlagen, Puderzucker unterheben (etwas für Guss aufheben). Mandeln & Zimt unterrühren. Ausstechen, bestreichen, backen.",
+      "Heißer Bratapfel\nZutaten: 4 Äpfel, 50g Marzipan, 30g Rosinen, 30g Mandeln, Zimt, Butter.\nZubereitung: Äpfel aushöhlen, mit der Mischung füllen, Butterflöckchen darauf. Bei 200°C ca. 25 Min backen.",
+      "Selbstgemachter Glühwein\nZutaten: 1 Flasche Rotwein, 1 Orange, 2 Nelken, 1 Zimtstange, 3 EL Zucker.\nZubereitung: Alles langsam in einem Topf erwärmen (nicht kochen!). 20 Min ziehen lassen, Gewürze entfernen.",
+      "Spitzbuben (Linzer Plätzchen)\nZutaten: 300g Mehl, 200g Butter, 100g Zucker, 1 Ei, Marmelade.\nZubereitung: Mürbeteig herstellen. Kühlen. Plätzchen ausstechen (die Hälfte mit Loch). Backen. Mit Marmelade zusammensetzen.",
+      "Kokosmakronen\nZutaten: 4 Eiweiß, 200g Zucker, 200g Kokosraspeln, etwas Zitronensaft.\nZubereitung: Eiweiß steif schlagen. Zucker einrieseln lassen. Kokos unterheben. Kleine Häufchen bei 150°C ca. 15-20 Min backen.",
+      "Heiße Schokolade deluxe\nZutaten: 500ml Milch, 100g Zartbitterschokolade, 1 TL Zimt, Sahne, Marshmallows.\nZubereitung: Schokolade in heißer Milch schmelzen, Zimt dazu. Mit Sahne und Marshmallows toppen.",
+      "Butterplätzchen\nZutaten: 300g Mehl, 200g Butter, 100g Zucker, 1 Ei, Vanille.\nZubereitung: Teig kneten, 1 Std. kühlen. Ausstechen. Bei 180°C goldgelb backen. Nach Belieben verzieren.",
+      "Schoko-Crossies\nZutaten: 200g Kuvertüre, 100g Cornflakes, 50g Mandelstifte.\nZubereitung: Schokolade schmelzen. Cornflakes und Mandeln unterrühren. Häufchen auf Backpapier setzen und erkalten lassen.",
+      "Gebrannte Mandeln\nZutaten: 200g Mandeln, 200g Zucker, 100ml Wasser, 1 TL Zimt.\nZubereitung: Alles in Pfanne aufkochen, rühren bis Wasser verdampft und Zucker trocken wird. Weiter rühren, bis Zucker karamellisiert.",
+      "Eierpunsch\nZutaten: 1 Flasche Weißwein, 250ml Eierlikör, 1 Vanilleschote, Zucker, Sahne.\nZubereitung: Wein mit aufgeschnittener Vanilleschote sanft erhitzen. Eierlikör einrühren (nicht kochen). Mit Sahnehaube servieren.",
+      "Marzipankartoffeln\nZutaten: 200g Marzipanrohmasse, 50g Puderzucker, 1 EL Rosenwasser, Kakaopulver.\nZubereitung: Marzipan, Puderzucker und Rosenwasser verkneten. Kugeln formen und in Kakao wälzen.",
+      "Käsefondue (Klassisch)\nZutaten: 400g Gruyère, 400g Vacherin, 300ml Weißwein, 1 Knoblauchzehe, Kirschwasser, Brot.\nZubereitung: Topf mit Knoblauch ausreiben. Käse im warmen Wein schmelzen. Mit etwas Kirschwasser verfeinern.",
+      "Weihnachtliches Tiramisu\nZutaten: 250g Mascarpone, Spekulatius, 200ml Kaffee, Amaretto, Kakaopulver, 2 Eier, Zucker.\nZubereitung: Creme rühren. Spekulatius in Kaffee/Amaretto tauchen. Schichten. Mind. 4 Stunden kühlen, mit Kakao bestäuben.",
+      "Pfefferkuchenhaus-Teig\nZutaten: 500g Honig, 250g Zucker, 150g Butter, 1kg Mehl, 2 EL Kakaopulver, Lebkuchengewürz.\nZubereitung: Schmelzen, kneten, kühlen. Hausteile ausschneiden und backen. Mit Zuckerguss zusammenkleben.",
+      "Raclette-Idee: Pizza-Pfännchen\nZutaten: Pizzateig, Tomatensoße, Salami, geriebener Käse, Oregano.\nZubereitung: Teig dünn ins Pfännchen drücken, Soße und Belag darauf. Unter dem Raclette-Grill backen, bis der Käse goldbraun ist.",
+      "Schneller Apfelstrudel\nZutaten: 1 Pck. Blätterteig, 3 Äpfel, 50g Rosinen, 30g Mandeln, Zimt, Zucker.\nZubereitung: Äpfel würfeln, mit Rest mischen. Auf Teig verteilen, einrollen. Bei 200°C ca. 25 Min backen.",
+      "Baileys-Trüffel\nZutaten: 200g Zartbitterschokolade, 100ml Sahne, 4 cl Baileys, Kakaopulver.\nZubereitung: Heiße Sahne über gehackte Schokolade gießen, rühren. Baileys dazu. Kühlen, Kugeln formen, in Kakao wälzen.",
+      "Winterlicher Punsch (Alkoholfrei)\nZutaten: 1L Apfelsaft, 500ml Früchtetee, 1 Orange (in Scheiben), 2 Zimtstangen, 3 Nelken.\nZubereitung: Alles in einem großen Topf sanft erhitzen und 15 Minuten ziehen lassen.",
+      "Schmalzkuchen\nZutaten: 500g Mehl, 1/2 Würfel Hefe, 250ml lauwarme Milch, 50g Zucker, Puderzucker.\nZubereitung: Hefeteig ansetzen. Ausrollen, in Rauten schneiden. In heißem Fett ausbacken, mit reichlich Puderzucker bestreuen.",
+      "Herzhafte Blätterteig-Sterne\nZutaten: 1 Rolle Blätterteig, 100g geriebener Parmesan, Paprikapulver, 1 Ei.\nZubereitung: Sterne ausstechen. Mit Ei bestreichen, Käse und Gewürz bestreuen. Bei 200°C ca. 12 Minuten backen.",
+      "Mandarinen-Schichtdessert\nZutaten: 1 Dose Mandarinen, 200g Quark, 100ml Sahne, zerbröselte Kekse.\nZubereitung: Quark süßen, Sahne schlagen & unterheben. In Gläsern Kekse, Mandarinen und Creme schichten.",
+      "Klassischer Kartoffelsalat für Heiligabend\nZutaten: 1kg Kartoffeln (festkochend), 1 Zwiebel, heiße Brühe, Öl, Essig, Senf, Schnittlauch.\nZubereitung: Kartoffeln kochen, pellen, in Scheiben schneiden. Warme Brühe-Marinade darübergießen. Ziehen lassen."
+    ];
     days.forEach(d => {
       d.contentType = "text";
-      d.content = { message: `Rezept #${d.day}:\n\nZutaten:\n- ...\n\nZubereitung:\n...`, sender: "Bäckerei" };
+      const recipe = recipes[(d.day - 1) % recipes.length];
+      d.content = { message: `Rezept #${d.day}:\n\n${recipe}`, sender: "Weihnachtsbäckerei" };
     });
   } else if (templateId === "couples_activities") {
     const activities = [
