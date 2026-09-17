@@ -147,6 +147,7 @@ function toSummary(cal) {
     openedDoors: opened,
     randomLayout: Boolean(cal.randomLayout),
     collaborators: cal.collaborators || [],
+    isPro: Boolean(cal.isPro),
   };
 }
 
