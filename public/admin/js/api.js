@@ -41,6 +41,7 @@ const api = {
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
+  updateProfile: (username, company) => request("PUT", "/auth/profile", { username, company }),
   changePassword: (currentPassword, newPassword) => request("POST", "/auth/change-password", { currentPassword, newPassword }),
   deleteAccount: (password) => request("DELETE", "/auth/delete-account", { password }),
   checkout: (calendarId) => request("POST", "/payment/checkout", { calendarId }),

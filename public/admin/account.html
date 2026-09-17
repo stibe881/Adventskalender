@@ -25,6 +25,28 @@
   <main class="max-w-3xl mx-auto px-4 py-8 flex-1 w-full space-y-10">
     
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-4">Profildetails</h2>
+      <form id="profile-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Benutzername</label>
+          <input name="username" type="text"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Firmenname</label>
+          <input name="company" type="text"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div id="profile-error" class="hidden text-red-400 text-sm"></div>
+        <div id="profile-success" class="hidden text-emerald-400 text-sm"></div>
+        <button type="submit"
+          class="rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold px-5 py-2.5">
+          Profil speichern
+        </button>
+      </form>
+    </section>
+
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
       <h2 class="font-display text-xl font-semibold mb-4">Passwort ändern</h2>
       <form id="change-password-form" class="space-y-4">
         <div>

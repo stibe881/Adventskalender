@@ -135,8 +135,44 @@ router.post("/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/me", requireAuth, (req, res) => {
-  res.json({ ok: true, email: req.user.email || req.user.username, isPro: req.user.isPro });
+router.get("/me", requireAuth, async (req, res) => {
+  const user = await db.getUserByEmail(req.user.email);
+  if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden" });
+  res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company });
+});
+
+router.put("/profile", requireAuth, async (req, res) => {
+  const { username, company } = req.body || {};
+  
+  const user = await db.getUserByEmail(req.user.email);
+  if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden" });
+
+  if (username && username !== user.username) {
+    const existing = await db.getUserByUsername(username);
+    if (existing && existing.id !== user.id) {
+      return res.status(400).json({ error: "Dieser Benutzername ist bereits vergeben." });
+    }
+  }
+
+  if (company && company !== user.company) {
+    const existing = await db.getUserByCompany(company);
+    if (existing && existing.id !== user.id) {
+      return res.status(400).json({ error: "Dieser Firmenname ist bereits vergeben." });
+    }
+  }
+
+  await db.updateUser(user.id, (u) => ({
+    ...u,
+    username: username ? String(username).trim() : null,
+    company: company ? String(company).trim() : null,
+  }));
+
+  // Update JWT cookie with new username if we use it
+  const updatedUser = await db.getUserByEmail(req.user.email);
+  const token = signUserToken(updatedUser);
+  setAuthCookie(res, token);
+
+  res.json({ ok: true, message: "Profil erfolgreich aktualisiert." });
 });
 
 router.post("/change-password", requireAuth, async (req, res) => {

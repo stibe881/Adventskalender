@@ -9,6 +9,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const profileForm = document.getElementById("profile-form");
+  const profileError = document.getElementById("profile-error");
+  const profileSuccess = document.getElementById("profile-success");
+
+  if (profileForm) {
+    // Load current profile
+    api.me().then(user => {
+      if (user.username) profileForm.elements["username"].value = user.username;
+      if (user.company) profileForm.elements["company"].value = user.company;
+    }).catch(console.error);
+
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      profileError.classList.add("hidden");
+      profileSuccess.classList.add("hidden");
+      
+      const formData = new FormData(profileForm);
+      const username = formData.get("username");
+      const company = formData.get("company");
+
+      try {
+        const res = await api.updateProfile(username, company);
+        profileSuccess.textContent = res.message || "Profil aktualisiert.";
+        profileSuccess.classList.remove("hidden");
+      } catch (err) {
+        profileError.textContent = err.message;
+        profileError.classList.remove("hidden");
+      }
+    });
+  }
+
   const cpForm = document.getElementById("change-password-form");
   const cpError = document.getElementById("pw-error");
   const cpSuccess = document.getElementById("pw-success");
