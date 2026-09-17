@@ -254,9 +254,36 @@ function applyTemplate(days, templateId) {
       d.content = { task: `Aktivität #${d.day}:\n${activity}`, btnText: "Erledigt!", successMessage: "Schön war's!" };
     });
   } else if (templateId === "kids_fun") {
+    const kidsTasks = [
+      "Finde 3 rote Dinge im Raum!",
+      "Male einen schönen Schneemann und hänge das Bild auf.",
+      "Hüpfe 10 Mal auf einem Bein wie ein Flamingo!",
+      "Suche dir ein Buch aus und lass dir eine kleine Geschichte vorlesen.",
+      "Baue den höchsten Turm aus Bauklötzen oder Kissen, den du schaffen kannst.",
+      "Singe laut dein liebstes Weihnachtslied!",
+      "Schreibe oder male einen Wunschzettel für den Weihnachtsmann.",
+      "Mache ein lustiges Gesicht im Spiegel und versuche, nicht zu lachen.",
+      "Räume heute unaufgefordert 3 Spielzeuge an ihren Platz.",
+      "Finde etwas Weiches, etwas Hartes und etwas Kaltes im Haus.",
+      "Mache ein kleines Tänzchen zu deinem Lieblingslied.",
+      "Zähle, wie viele Türen es in eurer Wohnung/im Haus gibt.",
+      "Sage jemandem in deiner Familie heute etwas besonders Nettes.",
+      "Verstecke einen kleinen Gegenstand und lass jemand anderen danach suchen.",
+      "Male einen Stern und schneide ihn (mit Hilfe) vorsichtig aus.",
+      "Mache Tiergeräusche nach: Wie macht ein Löwe, eine Kuh und eine Ente?",
+      "Balanciere ein Buch für 10 Sekunden auf deinem Kopf.",
+      "Schließe die Augen und errate am Geruch, welches Gewürz oder Obst du vor der Nase hast.",
+      "Helfe heute beim Tischdecken für das Abendessen.",
+      "Versuche, 30 Sekunden lang auf Zehenspitzen zu gehen.",
+      "Baue eine kleine Höhle aus Decken und Kissen.",
+      "Mache 5 große Froschsprünge durch das Zimmer.",
+      "Finde 3 Dinge, die rund sind wie eine Weihnachtskugel.",
+      "Gib heute jedem in der Familie eine dicke Umarmung!"
+    ];
     days.forEach(d => {
       d.contentType = "challenge";
-      d.content = { task: `Rätselspaß #${d.day}:\nFinde 3 rote Dinge im Raum!`, btnText: "Gefunden!", successMessage: "Toll gemacht!" };
+      const task = kidsTasks[(d.day - 1) % kidsTasks.length];
+      d.content = { task: `Rätsel & Spaß #${d.day}:\n${task}`, btnText: "Erledigt!", successMessage: "Toll gemacht!" };
     });
   } else if (templateId === "praise") {
     days.forEach(d => {
