@@ -86,16 +86,30 @@ form.addEventListener("submit", async (e) => {
         throw new Error("Die Passwörter stimmen nicht überein.");
       }
       const res = await api.register(email, password, username, company);
-      errorMsg.textContent = res.message || "Erfolgreich registriert. Bitte E-Mail bestätigen.";
+      
+      // Switch back to login mode programmatically
+      isRegisterMode = false;
+      formTitle.textContent = "Anmelden";
+      submitBtn.textContent = "Anmelden";
+      toggleBtn.textContent = "Noch keinen Account? Hier Registrieren";
+      registerFields.classList.add("hidden");
+      registerPasswordConfirm.classList.add("hidden");
+      passwordConfirmInput.required = false;
+
+      // Show success message
+      errorMsg.textContent = "Bitte überprüfe deine E-Mails, um deinen Account zu aktivieren.";
       errorMsg.classList.remove("hidden");
       errorMsg.classList.replace("text-rose-400", "text-emerald-400");
       errorMsg.classList.replace("bg-rose-950/40", "bg-emerald-950/40");
       errorMsg.classList.replace("border-rose-900", "border-emerald-900");
+      
       submitBtn.disabled = false;
-      submitBtn.textContent = "Registrieren";
-      // Clear password fields
+      
+      // Clear all fields
       document.getElementById("password").value = "";
       passwordConfirmInput.value = "";
+      document.getElementById("username").value = "";
+      document.getElementById("company").value = "";
     } else {
       await api.login(email, password);
       window.location.href = "/admin/dashboard.html";
