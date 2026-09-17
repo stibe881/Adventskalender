@@ -52,9 +52,36 @@ function applyTemplate(days, templateId) {
   ];
 
   if (templateId === "romantic") {
+    const reasons = [
+      "Du bringst mich jeden Tag zum Lächeln, egal wie schwer es war.",
+      "Du bist mein bester Freund und mein größter Rückhalt.",
+      "Ich liebe es, wie du mich ansiehst, wenn du denkst, dass ich es nicht bemerke.",
+      "Mit dir fühlt sich selbst ein langweiliger Tag wie ein Abenteuer an.",
+      "Du verstehst mich auch ohne Worte.",
+      "Ich liebe deinen unverwechselbaren Geruch, der mir immer ein Gefühl von Zuhause gibt.",
+      "Du hast die schönste Lache, die ich je gehört habe.",
+      "Du glaubst immer an mich, selbst wenn ich selbst mal zweifle.",
+      "Deine Umarmungen sind der sicherste Ort der Welt für mich.",
+      "Du kümmerst dich so liebevoll um die Menschen, die dir wichtig sind.",
+      "Ich liebe es, wie wir zusammen über die albernsten Dinge lachen können.",
+      "Du forderst mich heraus und hilfst mir, eine bessere Version meiner selbst zu werden.",
+      "Deine Augen strahlen so wunderschön, wenn du dich über etwas freust.",
+      "Ich liebe die Art, wie du schläfst und wie friedlich du dabei aussiehst.",
+      "Du bist unglaublich klug und ich liebe unsere tiefen Gespräche.",
+      "Du weißt immer genau, was ich brauche, um mich besser zu fühlen.",
+      "Ich liebe es, Pläne für unsere gemeinsame Zukunft zu schmieden.",
+      "Du bist mein Ruhepol in dieser oft so hektischen Welt.",
+      "Ich liebe deine kleinen Macken, die dich einfach so einzigartig machen.",
+      "Du gibst mir jeden Tag das Gefühl, bedingungslos geliebt zu werden.",
+      "Ich bewundere deine Leidenschaft und Hingabe für das, was du tust.",
+      "Du bist das Puzzleteil, das mir immer gefehlt hat.",
+      "Ich liebe unsere kleinen Insider-Witze, die nur wir beide verstehen.",
+      "Du bist einfach du – und genau so bist du perfekt für mich."
+    ];
     days.forEach(d => {
       d.contentType = "text";
-      d.content = { message: `Grund #${d.day}, warum ich dich liebe...`, sender: "Dein Schatz" };
+      const reason = reasons[(d.day - 1) % reasons.length];
+      d.content = { message: `Grund #${d.day}, warum ich dich liebe:\n\n${reason}`, sender: "Dein Schatz" };
     });
   } else if (templateId === "mindful") {
     days.forEach(d => {
@@ -323,9 +350,36 @@ function applyTemplate(days, templateId) {
       d.content = { images: [], desc: `Unsere schönste Erinnerung #${d.day} (Bitte Bild hochladen)` };
     });
   } else if (templateId === "escape_room") {
+    const escapeRiddles = [
+      { q: "Ich spreche ohne Mund und höre ohne Ohren. Ich habe keinen Körper, aber ich werde lebendig mit dem Wind. Was bin ich?", o: ["Ein Geist", "Ein Echo", "Ein Traum", "Ein Schatten"], a: 1 },
+      { q: "Wenn du mich hast, willst du mich teilen. Wenn du mich teilst, hast du mich nicht mehr. Was bin ich?", o: ["Ein Apfel", "Ein Geheimnis", "Geld", "Liebe"], a: 1 },
+      { q: "Du befindest dich in einem dunklen Raum und hast nur ein Streichholz. Es gibt eine Öllampe, eine Kerze und ein Kaminfeuer. Was zündest du zuerst an?", o: ["Die Kerze", "Das Kaminfeuer", "Das Streichholz", "Die Öllampe"], a: 2 },
+      { q: "Ich bin immer hungrig, ich muss immer gefüttert werden. Der Finger, den ich berühre, wird bald rot. Was bin ich?", o: ["Ein Vampir", "Das Feuer", "Ein Kaktus", "Ein Tiger"], a: 1 },
+      { q: "Wer macht es, hat es nicht. Wer es kauft, braucht es nicht. Wer es benutzt, weiß es nicht. Was ist das?", o: ["Ein Sarg", "Ein Geschenk", "Ein Diamant", "Ein Kissen"], a: 0 },
+      { q: "Ich laufe, aber habe keine Beine. Ich murmle, aber habe keine Stimme. Was bin ich?", o: ["Ein Fluss", "Ein Baum", "Der Wind", "Eine Schlange"], a: 0 },
+      { q: "Was gehört dir, aber andere Leute benutzen es mehr als du?", o: ["Dein Haus", "Dein Name", "Dein Auto", "Dein Geld"], a: 1 },
+      { q: "Ich habe Städte, aber keine Häuser. Ich habe Berge, aber keine Bäume. Ich habe Wasser, aber keine Fische. Was bin ich?", o: ["Eine Wüste", "Eine Landkarte", "Ein Planet", "Ein Traum"], a: 1 },
+      { q: "Was wird nasser, je mehr es trocknet?", o: ["Ein Schwamm", "Ein Handtuch", "Ein See", "Die Haut"], a: 1 },
+      { q: "Ich habe Schlüssel, öffne aber keine Türen. Ich habe Platz, aber keine Räume. Du kannst eintreten, aber nicht hineingehen. Was bin ich?", o: ["Eine Tastatur", "Ein Safe", "Ein Auto", "Ein Buch"], a: 0 },
+      { q: "Was kann man fangen, aber nicht werfen?", o: ["Einen Ball", "Einen Fisch", "Eine Erkältung", "Einen Bumerang"], a: 2 },
+      { q: "Was hat ein Auge, kann aber nicht sehen?", o: ["Ein Zyklop", "Ein Hurrikan", "Ein Kartoffel", "Eine Nähnadel"], a: 3 },
+      { q: "Was muss gebrochen werden, bevor man es benutzen kann?", o: ["Ein Rekord", "Ein Versprechen", "Ein Ei", "Ein Schloss"], a: 2 },
+      { q: "Je mehr es davon gibt, desto weniger siehst du. Was ist es?", o: ["Licht", "Nebel", "Wasser", "Dunkelheit"], a: 3 },
+      { q: "Was ist leicht wie eine Feder, aber nicht einmal der stärkste Mensch kann es lange halten?", o: ["Der Atem", "Ein Gedanke", "Ein Geheimnis", "Ein Wassertropfen"], a: 0 },
+      { q: "Welcher Monat hat 28 Tage?", o: ["Nur der Februar", "Keiner", "Alle Monate", "Der Dezember"], a: 2 },
+      { q: "Was kommt einmal in einer Minute vor, zweimal in einem Moment, aber nie in tausend Jahren?", o: ["Der Buchstabe M", "Die Zeit", "Die Zahl 1", "Ein Wimpernschlag"], a: 0 },
+      { q: "Was hat Hände, kann aber nicht klatschen?", o: ["Eine Puppe", "Eine Uhr", "Ein Roboter", "Ein Handschuh"], a: 1 },
+      { q: "Was geht durch Städte und Felder, bewegt sich aber nie?", o: ["Der Wind", "Ein Fluss", "Eine Straße", "Die Sonne"], a: 2 },
+      { q: "Ich habe einen Kopf und einen Schwanz, aber keinen Körper. Was bin ich?", o: ["Eine Schlange", "Eine Münze", "Ein Komet", "Ein Pfeil"], a: 1 },
+      { q: "Welches Wort wird im Wörterbuch immer falsch buchstabiert?", o: ["Richtig", "Falsch", "Fehler", "Schlecht"], a: 1 },
+      { q: "Was kann man brechen, ohne es überhaupt anzufassen?", o: ["Ein Glas", "Ein Versprechen", "Einen Rekord", "Beides, Versprechen & Rekord"], a: 3 },
+      { q: "Vor mir bist du sicher, doch wenn ich vor dir bin, ist die Gefahr groß. Ich wende mich immer ab. Was bin ich?", o: ["Dein Schatten", "Die Zukunft", "Dein Rücken", "Ein Schild"], a: 2 },
+      { q: "CODEKNACKER: Du hast 3 Kisten. Auf Kiste 1 steht 'Gold'. Auf Kiste 2 steht 'Kein Gold'. Auf Kiste 3 steht 'Das Gold ist nicht in Kiste 1'. Nur EINE Aussage stimmt! Wo ist das Gold?", o: ["Kiste 1", "Kiste 2", "Kiste 3", "Es gibt kein Gold"], a: 1 }
+    ];
     days.forEach(d => {
       d.contentType = "quiz";
-      d.content = { question: `Rätsel #${d.day}:\nLöse den Code...`, options: ["123", "456", "789", "000"], correctIndex: 0, successMessage: "Tür entriegelt!", failureMessage: "Falscher Code.", prizeText: "Hinweis gefunden!", prizeCoins: 0 };
+      const q = escapeRiddles[(d.day - 1) % escapeRiddles.length];
+      d.content = { question: `Rätsel #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Code geknackt! Tür geöffnet.", failureMessage: "Falsche Antwort. Das Schloss klemmt...", prizeText: "Nächster Hinweis", prizeCoins: 10 };
     });
   }
   return days;
