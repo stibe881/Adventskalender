@@ -34,12 +34,14 @@ app.use(
   })
 );
 
-// Payment Webhook must be parsed as raw body before global express.json()
+app.use(cookieParser());
+
+// Payment routes must be mounted AFTER cookieParser (so requireAuth has cookies)
+// but BEFORE express.json (so Stripe Webhook can read the raw body)
 const paymentRoutes = require("./routes/payment");
 app.use("/api/payment", paymentRoutes);
 
 app.use(express.json({ limit: "2mb" }));
-app.use(cookieParser());
 
 // Start cron
 startCron();
