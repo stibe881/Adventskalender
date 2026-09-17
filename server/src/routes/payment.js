@@ -24,7 +24,6 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
     }
 
     const session = await stripeClient.checkout.sessions.create({
-      payment_method_types: ["card", "paypal"],
       mode: "payment",
       line_items: [
         {
