@@ -62,9 +62,36 @@ function applyTemplate(days, templateId) {
       d.content = { task: `Achtsamkeitsübung: ${mindfulTasks[d.day - 1]}`, btnText: "Erledigt!", successMessage: "Gut gemacht!" };
     });
   } else if (templateId === "jokes") {
+    const jokesList = [
+      "Was sagt der große Stift zum kleinen Stift? Wachs-mal-stift!",
+      "Warum können Geister so schlecht lügen? Weil man durch sie hindurchsehen kann!",
+      "Was ist orange und geht über die Berge? Eine Wanderine!",
+      "Treffen sich zwei Magnete. Sagt der eine: 'Was soll ich heute anziehen?'",
+      "Was ist braun, knusprig und schwimmt unter Wasser? Ein U-Brot!",
+      "Warum summen Bienen? Weil sie den Text nicht kennen!",
+      "Wie nennt man ein verschwundenes Rind? Oxford!",
+      "Was passiert, wenn man Cola und Bier gleichzeitig trinkt? Man colabiert!",
+      "Was macht ein Clown im Büro? Faxen!",
+      "Wie nennt man einen Bumerang, der nicht zurückkommt? Stock.",
+      "Welches ist das lustigste Tier? Das Scherz-entier!",
+      "Warum fressen Eisbären keine Pinguine? Weil sie an entgegengesetzten Polen leben!",
+      "Was ist ein Keks unter einem Baum? Ein schattiges Plätzchen!",
+      "Was sagt der Hai, wenn er einen Surfer sieht? 'Oh, Frühstück auf dem Brettchen!'",
+      "Warum gehen Ameisen nicht in die Kirche? Weil sie in-sekten sind!",
+      "Was ist grün, glücklich und hüpft über die Wiese? Eine Freuschrecke!",
+      "Warum hat der Mathematiker ein dickes Auge? Er hat sich verrechnet!",
+      "Was ist gelb und kann nicht schwimmen? Ein Bagger. Und warum? Weil er nur einen Arm hat!",
+      "Wie nennt man ein helles Mammut? Hellmut!",
+      "Treffen sich zwei unsichtbare Menschen. Sagt der eine: 'Lange nicht gesehen!'",
+      "Was sitzt auf dem Baum und winkt? Ein Huhu!",
+      "Warum weint der Geometrie-Lehrer? Weil seine Klasse völlig formlos ist!",
+      "Was essen Autos am liebsten? Parkplätzchen!",
+      "Warum legen Hühner Eier? Wenn sie sie werfen würden, gingen sie kaputt!"
+    ];
     days.forEach(d => {
       d.contentType = "text";
-      d.content = { message: `Witz des Tages #${d.day}:\n\n(Hier Witz einfügen)`, sender: "Spaßvogel" };
+      const joke = jokesList[(d.day - 1) % jokesList.length];
+      d.content = { message: `Witz des Tages #${d.day}:\n\n${joke}`, sender: "Spaßvogel" };
     });
   } else if (templateId === "quotes") {
     days.forEach(d => {
