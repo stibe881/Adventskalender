@@ -1268,6 +1268,9 @@ document.getElementById("modal-save").addEventListener("click", async () => {
     const rd = parseInt(document.getElementById("f-reqChoiceDay").value, 10);
     content.reqChoiceDay = isNaN(rd) ? null : rd;
     content.reqChoiceOpt = document.getElementById("f-reqChoiceOpt").value;
+    
+    content.isScratchable = document.getElementById("f-isScratchable").checked;
+    content.scratchLabel = document.getElementById("f-scratchLabel").value.trim();
   }
 
   try {
