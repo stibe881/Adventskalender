@@ -1654,12 +1654,12 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "choice",
         "Wähle weise...",
-        `<p class="modal-muted mb-6 text-lg">${escapeHtml(c.question)}</p>
+        `<p class="modal-muted mb-6 text-lg" style="text-align: center; margin-bottom: 24px; font-size: 1.1rem;">${escapeHtml(c.question)}</p>
          ${alreadyChosen ? 
-            `<div class="bg-emerald-900/40 border border-emerald-500/30 p-4 rounded-xl text-center">Du hast dich für <b>Option ${alreadyChosen}</b> entschieden.</div>` :
-            `<div class="flex flex-col gap-3">
-               <button onclick="submitChoice(${dayNum}, 'A')" class="bg-slate-800 hover:bg-emerald-600 border border-white/10 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors text-left flex items-center gap-3"><span class="bg-black/30 rounded-full w-8 h-8 flex items-center justify-center">A</span> ${escapeHtml(c.optionA)}</button>
-               <button onclick="submitChoice(${dayNum}, 'B')" class="bg-slate-800 hover:bg-emerald-600 border border-white/10 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors text-left flex items-center gap-3"><span class="bg-black/30 rounded-full w-8 h-8 flex items-center justify-center">B</span> ${escapeHtml(c.optionB)}</button>
+            `<div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 12px; text-align: center; color: var(--modal-text);">Du hast dich für <b>Option ${alreadyChosen}</b> entschieden.</div>` :
+            `<div style="display: flex; flex-direction: column; gap: 12px;">
+               <button onclick="submitChoice(${dayNum}, 'A')" style="width: 100%; text-align: left; background: rgba(128,128,128,0.05); border: 2px solid rgba(128,128,128,0.2); color: var(--modal-text); font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 16px; font-size: 1.1rem;" onmouseover="this.style.background='var(--modal-accent)'; this.style.color='var(--modal-bg)'; this.style.borderColor='var(--modal-accent)'" onmouseout="this.style.background='rgba(128,128,128,0.05)'; this.style.color='var(--modal-text)'; this.style.borderColor='rgba(128,128,128,0.2)'"><span style="background: rgba(128,128,128,0.2); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">A</span> ${escapeHtml(c.optionA)}</button>
+               <button onclick="submitChoice(${dayNum}, 'B')" style="width: 100%; text-align: left; background: rgba(128,128,128,0.05); border: 2px solid rgba(128,128,128,0.2); color: var(--modal-text); font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 16px; font-size: 1.1rem;" onmouseover="this.style.background='var(--modal-accent)'; this.style.color='var(--modal-bg)'; this.style.borderColor='var(--modal-accent)'" onmouseout="this.style.background='rgba(128,128,128,0.05)'; this.style.color='var(--modal-text)'; this.style.borderColor='rgba(128,128,128,0.2)'"><span style="background: rgba(128,128,128,0.2); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">B</span> ${escapeHtml(c.optionB)}</button>
              </div>`
          }`
       );
