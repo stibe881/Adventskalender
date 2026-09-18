@@ -496,6 +496,12 @@ function initPet(streak = calendarMeta?.streak || 0) {
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
     status.textContent = `On Fire! 🔥 ${activityText}`;
   }
+
+  // Shrink the emoji row when Rudi wears a lot so he still fits in the stall.
+  const glyphs = Array.from(emoji.textContent.replace(/[‍️]/g, "")).length;
+  const wrap = emoji.parentElement;
+  wrap.classList.toggle("is-crowded", glyphs >= 3 && glyphs < 5);
+  wrap.classList.toggle("is-packed", glyphs >= 5);
 }
 
 // ---------- Shop ----------
