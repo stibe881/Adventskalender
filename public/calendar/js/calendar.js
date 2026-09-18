@@ -118,7 +118,26 @@ async function init() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
       
-      const data = await fetchJson(`/api/calendar/${routeId}`);
+      const user = localStorage.getItem(`adventskalender_user_${routeId}`) || "";
+      const data = await fetchJson(`/api/calendar/${routeId}?user=${encodeURIComponent(user)}`);
+      
+      if (data.companyMode && !user) {
+        showCorporateLoginModal();
+        return;
+      }
+      
+      if (data.companyMode && user) {
+        // Add a small logout button to the top right
+        const logoutBtn = document.createElement("button");
+        logoutBtn.className = "fixed top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-full z-50 backdrop-blur-sm border border-white/10";
+        logoutBtn.innerHTML = `Als ${user} abmelden`;
+        logoutBtn.onclick = () => {
+          localStorage.removeItem(`adventskalender_user_${routeId}`);
+          window.location.reload();
+        };
+        document.body.appendChild(logoutBtn);
+      }
+      
       calendarMeta = data;
       days = data.days;
     }
@@ -181,10 +200,6 @@ async function init() {
   
   updateCoinDisplay();
   
-  document.getElementById("btn-leaderboard")?.addEventListener("click", () => {
-    openLeaderboardModal();
-  });
-
   field = new ParticleField(canvas);
   field.setAmbient(theme.ambient);
   field.start();
@@ -196,8 +211,8 @@ async function init() {
       const flake = document.createElement("div");
       flake.className = "snow";
       flake.style.left = `${Math.random() * 100}vw`;
-      flake.style.animationDuration = `${Math.random() * 3 + 2}s`;
-      flake.style.animationDelay = `${Math.random() * 2}s`;
+      flake.style.animationDuration = `${Math.random() * 6 + 6}s`;
+      flake.style.animationDelay = `${Math.random() * 8}s`;
       flake.style.opacity = Math.random() * 0.5 + 0.3;
       snowContainer.appendChild(flake);
     }
@@ -621,6 +636,32 @@ function leafFrontHtml(door, cols, rows, house) {
   return `${number}${lock}`;
 }
 
+function showCorporateLoginModal() {
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md";
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+      <div class="text-5xl mb-4">🏢</div>
+      <h2 class="text-2xl font-black text-white mb-2">Willkommen!</h2>
+      <p class="text-slate-300 mb-6 text-sm">Dies ist ein Firmen-Kalender. Bitte gib deine E-Mail-Adresse oder dein Kürzel ein, um deinen ganz persönlichen Fortschritt zu speichern.</p>
+      <form id="corp-login-form" class="space-y-4">
+        <input type="text" id="corp-email" required placeholder="E-Mail oder Kürzel..." class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors">
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">Speichern & Loslegen</button>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById("corp-login-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = document.getElementById("corp-email").value.trim();
+    if (val) {
+      localStorage.setItem(`adventskalender_user_${routeId}`, val);
+      window.location.reload();
+    }
+  });
+}
 function renderDoorGrid() {
   doorGrid.innerHTML = "";
   let order = theme.order || days.map((d) => d.day);
@@ -1039,6 +1080,18 @@ async function promptCameraLock(doorEl, colorGoal) {
 
 async function promptGeoAR(doorEl, lat, lon) {
   return new Promise((resolve) => {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      showLockToast("Dein Browser unterstützt keine Standortabfrage.");
+      return resolve(false);
+    }
+
+    // HTTPS is required for geolocation on most browsers
+    if (location.protocol !== "https:" && location.hostname !== "localhost") {
+      showLockToast("Standortabfrage erfordert eine sichere Verbindung (HTTPS).");
+      return resolve(false);
+    }
+
     // Phase 1: GPS Check
     showLockToast("Prüfe GPS-Koordinaten...");
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -1105,9 +1158,18 @@ async function promptGeoAR(doorEl, lat, lon) {
       };
       
     }, (err) => {
-      showLockToast("GPS-Zugriff verweigert oder nicht verfügbar.");
+      // Detailed error messages
+      if (err.code === 1) {
+        showLockToast("GPS-Zugriff wurde verweigert. Bitte erlaube den Standortzugriff in deinen Browser-Einstellungen.");
+      } else if (err.code === 2) {
+        showLockToast("Standort konnte nicht ermittelt werden. Bitte aktiviere GPS und versuche es erneut.");
+      } else if (err.code === 3) {
+        showLockToast("Zeitüberschreitung bei der GPS-Abfrage. Bitte versuche es nochmals.");
+      } else {
+        showLockToast("GPS-Zugriff nicht verfügbar: " + err.message);
+      }
       resolve(false);
-    }, { enableHighAccuracy: true });
+    }, { enableHighAccuracy: true, timeout: 15000 });
   });
 }
 
@@ -1131,12 +1193,16 @@ async function tryOpenDoor(dayNum, sceneEl, body = {}) {
   sceneEl.dataset.waiting = "false";
   
   try {
+    // Inject current user (for corporate mode) into the request body
+    const currentUser = localStorage.getItem(`adventskalender_user_${routeId}`) || null;
+    const finalBody = currentUser ? { ...body, user: currentUser } : body;
+
     const result = isPreview
       ? { contentType: door.contentType || "empty", content: door.content }
       : await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/open`, { 
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
+          body: JSON.stringify(finalBody)
         });
     const idx = days.findIndex((d) => d.day === dayNum);
     if (idx !== -1) {
@@ -1149,9 +1215,6 @@ async function tryOpenDoor(dayNum, sceneEl, body = {}) {
       socket.emit("door_opened_sync", { calendarId: routeId, day: dayNum, result });
     }
     
-    document.getElementById("btn-leaderboard")?.addEventListener("click", () => {
-      openLeaderboardModal();
-    });
     currentDoor.opened = true;
     currentDoor.contentType = result.contentType;
     currentDoor.content = result.content;
@@ -1746,7 +1809,7 @@ function renderContent(type, c, dayNum) {
     }
 
     case "spotify-collab": {
-      const playlist = calendarMetaObj.playlist || [];
+      const playlist = calendarMeta.playlist || [];
       const hasAdded = localStorage.getItem(`spotify_${routeId}_${dayNum}`) === "true";
       
       let html = `<div style="background: rgba(0,0,0,0.5); padding: 24px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); color: #fff;">
@@ -2499,8 +2562,8 @@ window.addSpotifySong = async function(day, title, artist) {
     localStorage.setItem(`spotify_${routeId}_${day}`, "true");
     
     // Update local meta and re-render
-    if (!calendarMetaObj.playlist) calendarMetaObj.playlist = [];
-    calendarMetaObj.playlist.push({ day, title, artist });
+    if (!calendarMeta.playlist) calendarMeta.playlist = [];
+    calendarMeta.playlist.push({ day, title, artist });
     
     const door = days.find((d) => d.day === day);
     openContentModal(door);

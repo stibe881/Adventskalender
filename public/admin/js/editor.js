@@ -122,6 +122,7 @@ async function loadCalendar() {
   document.getElementById("strictMode").checked = calendar.strictMode;
   document.getElementById("randomLayout").checked = calendar.randomLayout;
   document.getElementById("syncOpen").checked = calendar.syncOpen || false;
+  document.getElementById("companyMode").checked = calendar.companyMode || false;
   
   const metaCheckbox = document.getElementById("metaPuzzle");
   const metaConfig = document.getElementById("metaPuzzleConfig");
@@ -1402,6 +1403,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     syncOpen: document.getElementById("syncOpen").checked,
     metaPuzzle: document.getElementById("metaPuzzle").checked,
     metaPassword: document.getElementById("metaPassword").value,
+    companyMode: document.getElementById("companyMode").checked,
     customConfig: calendar.customConfig,
   });
   await loadCalendar();

@@ -13,11 +13,19 @@ const tokenLimiter = rateLimit({
 });
 router.use(tokenLimiter);
 
-function publicDayView(calendar, door) {
+function publicDayView(calendar, door, user = null) {
   const unlocked = calendar.strictMode ? isDayUnlocked(calendar.year, door.day) : true;
   const isLocked = door.content?.lockPassword ? true : false;
   
-  if (door.opened) {
+  let isOpened = door.opened;
+  if (calendar.companyMode && user) {
+    const userState = calendar.userStates && calendar.userStates[user];
+    isOpened = userState && userState.openedDays && userState.openedDays.includes(door.day);
+  } else if (calendar.companyMode && !user) {
+    isOpened = false;
+  }
+  
+  if (isOpened) {
     return {
       day: door.day,
       unlockDate: unlockDateISO(calendar.year, door.day),
@@ -64,7 +72,9 @@ router.get("/:token", async (req, res) => {
     }
   }
 
-  // Calculate streak based on openedAt
+  const user = req.query.user || null;
+
+  // Calculate streak based on openedAt or user state
   let streak = 0;
   const todayNum = getTodayParts().day;
   const month = getTodayParts().month;
@@ -73,7 +83,15 @@ router.get("/:token", async (req, res) => {
     let currentDay = todayNum;
     while (currentDay > 0) {
       const door = calendar.days.find(d => d.day === currentDay);
-      if (door && door.opened) {
+      let isOpened = door && door.opened;
+      if (calendar.companyMode && user) {
+        const userState = calendar.userStates && calendar.userStates[user];
+        isOpened = userState && userState.openedDays && userState.openedDays.includes(currentDay);
+      } else if (calendar.companyMode && !user) {
+        isOpened = false;
+      }
+
+      if (isOpened) {
         streak++;
         currentDay--;
       } else if (currentDay === todayNum) {
@@ -95,13 +113,14 @@ router.get("/:token", async (req, res) => {
     customConfig: calendar.customConfig,
     randomLayout: calendar.randomLayout,
     syncOpen: calendar.syncOpen,
+    companyMode: calendar.companyMode || false,
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
     year: calendar.year,
     today: getTodayParts(),
     streak: streak,
     leaderboard: calendar.leaderboard || [],
-    days: calendar.days.map((d) => publicDayView(calendar, d)),
+    days: calendar.days.map((d) => publicDayView(calendar, d, user)),
   });
 });
 
@@ -143,12 +162,22 @@ router.post("/:token/days/:day/open", async (req, res) => {
     }
   }
 
+  const user = req.body.user || null;
+
   const updated = await db.updateCalendar(calendar.id, (cal) => {
-    const d = cal.days.find((x) => x.day === dayNum);
-    if (d) {
-      d.opened = true;
-      if (!d.openedAt) {
-        d.openedAt = new Date().toISOString();
+    if (cal.companyMode && user) {
+      if (!cal.userStates) cal.userStates = {};
+      if (!cal.userStates[user]) cal.userStates[user] = { openedDays: [] };
+      if (!cal.userStates[user].openedDays.includes(dayNum)) {
+        cal.userStates[user].openedDays.push(dayNum);
+      }
+    } else {
+      const d = cal.days.find((x) => x.day === dayNum);
+      if (d) {
+        d.opened = true;
+        if (!d.openedAt) {
+          d.openedAt = new Date().toISOString();
+        }
       }
     }
     return cal;
