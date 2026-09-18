@@ -481,6 +481,12 @@ function initPet(streak = calendarMeta?.streak || 0) {
     petEl.title = `Rudi: On Fire! 🔥 ${activityText}`;
   }
 
+  // Shrink the row when Rudi wears several things so he still fits in the stall.
+  const glyphs = Array.from(emoji.textContent.replace(/[‍️]/g, "")).length;
+  const wrap = emoji.parentElement;
+  wrap.classList.toggle("is-crowded", glyphs === 3);
+  wrap.classList.toggle("is-packed", glyphs >= 4);
+
   renderPetItems();
 }
 
