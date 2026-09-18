@@ -887,3 +887,9 @@ body {
   .stable-status { max-width: 140px; font-size: 0.68rem; }
 }
 #pet-emoji { display: inline-block; }
+
+/* Keep the footer (referral hint, closing line) clear of Rudi's fixed stable. */
+.calendar-footer { padding-bottom: 60px; }
+@media (max-width: 900px) {
+  .calendar-footer { padding-bottom: 230px; }
+}
