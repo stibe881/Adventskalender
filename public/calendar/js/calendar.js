@@ -266,11 +266,11 @@ async function init() {
     });
   }
   
+  initPet(calendarMeta.streak || 0);
+  initPixelArt();
+  initGlobalAudioPlayer();
+
   if (!isPreview) {
-    initPet(calendarMeta.streak || 0);
-    initPixelArt();
-    initGlobalAudioPlayer();
-    
     // Request Notification Permission and Web Push
     if ("serviceWorker" in navigator && "PushManager" in window) {
       if (Notification.permission === "default" || Notification.permission === "granted") {
@@ -496,10 +496,11 @@ function initPixelArt() {
   const ctx = canvas.getContext("2d");
   const countEl = document.getElementById("pixel-count");
 
-  // Calculate available pixels (10 per opened door minus used)
+  // Calculate available pixels (10 per opened door minus used); the admin
+  // preview gets a generous budget so the canvas can be tried out.
   const openedDoors = days.filter(d => d.opened).length;
   const usedPixels = parseInt(localStorage.getItem(`pixels_${routeId}`) || "0", 10);
-  pixelCount = Math.max(0, openedDoors * 10 - usedPixels);
+  pixelCount = isPreview ? 500 : Math.max(0, openedDoors * 10 - usedPixels);
   countEl.textContent = pixelCount;
 
   // Active color selection
