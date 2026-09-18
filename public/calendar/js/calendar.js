@@ -1594,12 +1594,12 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "giveaway",
         c.title,
-        `<p class="modal-muted mb-4">${escapeHtml(c.description)}</p>
-         <div id="giveaway-form" class="space-y-3">
-           <input type="email" id="giveaway-email" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Deine E-Mail Adresse" />
-           <button id="giveaway-btn" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 transition-colors">Am Gewinnspiel teilnehmen</button>
+        `<p class="modal-muted mb-4" style="text-align: center; margin-bottom: 24px;">${escapeHtml(c.description)}</p>
+         <div id="giveaway-form" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; margin: 0 auto;">
+           <input type="email" id="giveaway-email" placeholder="Deine E-Mail Adresse" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 2px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--modal-text); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--modal-accent)'" onblur="this.style.borderColor='rgba(128,128,128,0.2)'" />
+           <button id="giveaway-btn" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--modal-text, #333); color: var(--modal-bg, #fff); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Am Gewinnspiel teilnehmen</button>
          </div>
-         <p id="giveaway-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+         <p id="giveaway-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold; text-align: center;">${escapeHtml(c.successMessage)}</p>`
       );
 
     case "puzzle":
