@@ -1615,7 +1615,7 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "ar",
         c.title,
-        `<p class="modal-muted mb-4">Tippe auf das AR-Symbol unten rechts, um das Modell im echten Raum zu platzieren!</p>
+        `<p class="modal-muted mb-4" style="text-align: center;">Tippe auf das AR-Symbol unten rechts, um das Modell im echten Raum zu platzieren!<br><span style="font-size: 0.85em; opacity: 0.8;">(Hinweis: Das AR-Symbol erscheint nur auf Smartphones und Tablets)</span></p>
          <div style="width:100%;height:300px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,0.1)">
            <model-viewer src="${escapeHtml(c.modelUrl)}" ar ar-modes="webxr scene-viewer quick-look" camera-controls auto-rotate style="width:100%;height:100%;"></model-viewer>
          </div>`
