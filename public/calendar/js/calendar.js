@@ -1675,23 +1675,26 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "coins",
         "Münz-Schatz gefunden!",
-        `<div class="text-center p-8 bg-amber-500/10 rounded-2xl border border-amber-500/30">
-          <div class="text-6xl mb-4 animate-bounce">🪙</div>
-          <h3 class="text-2xl font-black text-amber-500 mb-2">+${escapeHtml(c.coinAmount || 50)} Münzen</h3>
-          <p class="text-slate-300">Du kannst diese Münzen oben rechts im Nordpol-Shop ausgeben!</p>
+        `<div style="text-align: center; padding: 32px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.3);">
+          <div style="font-size: 3.75rem; margin-bottom: 16px;">🪙</div>
+          <h3 style="font-size: 1.5rem; font-weight: 900; color: #f59e0b; margin-bottom: 8px;">+${escapeHtml(c.coinAmount || 50)} Münzen</h3>
+          <p class="modal-muted">Du kannst diese Münzen oben rechts im Nordpol-Shop ausgeben!</p>
          </div>`
       );
     }
     
     case "diary": {
       const savedAns = localStorage.getItem(`diary_${routeId}_${dayNum}`) || "";
-      let html = `<p class="modal-muted mb-4 font-serif text-lg italic text-emerald-100">${escapeHtml(c.diaryQuestion)}</p>
-         <textarea id="diary-ans-${dayNum}" rows="4" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500" placeholder="Deine Antwort...">${escapeHtml(savedAns)}</textarea>
-         <button onclick="saveDiary(${dayNum})" class="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors">Eintrag speichern 📝</button>`;
+      let html = `<p class="modal-muted mb-4" style="text-align: center; margin-bottom: 24px; font-size: 1.1rem; font-style: italic;">${escapeHtml(c.diaryQuestion)}</p>
+         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; margin: 0 auto;">
+           <textarea id="diary-ans-${dayNum}" rows="4" placeholder="Deine Antwort..." style="width: 100%; padding: 16px; border-radius: 12px; border: 2px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--modal-text); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--modal-accent)'" onblur="this.style.borderColor='rgba(128,128,128,0.2)'">${escapeHtml(savedAns)}</textarea>
+           <button onclick="saveDiary(${dayNum})" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Eintrag speichern ✍🏽</button>`;
       
       if (dayNum === 24) {
-        html += `<button onclick="printDiaryPdf()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"><span>🖨️</span> Gesamtes Tagebuch drucken</button>`;
+        html += `<button onclick="printDiaryPdf()" style="width: 100%; padding: 16px; border-radius: 12px; border: 2px dashed var(--modal-accent); background: transparent; color: var(--modal-text); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='transparent'"><span>🖨️</span> Gesamtes Tagebuch drucken</button>`;
       }
+      
+      html += `</div>`;
       return cardWrap("diary", "Dein Advents-Tagebuch", html);
     }
 
@@ -1731,11 +1734,11 @@ function renderContent(type, c, dayNum) {
     case "iot-box": {
       return cardWrap(
         "iot-box",
-        "Die physische Schatztruhe 🧰",
-        `<div id="iot-ui" class="text-center p-6 bg-slate-900/50 rounded-2xl border border-slate-500/30">
-          <p class="mb-4 text-slate-300">Dieser Inhalt ist an eine echte Bluetooth-Schatzkiste gekoppelt!</p>
-          <div class="text-6xl mb-6">🔒</div>
-          <button onclick="connectIotBox()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
+        "Die physische Schatztruhe 📦",
+        `<div id="iot-ui" style="text-align: center; padding: 24px; background: rgba(128,128,128,0.1); border-radius: 16px; border: 1px solid rgba(128,128,128,0.2);">
+          <p class="modal-muted" style="margin-bottom: 16px;">Dieser Inhalt ist an eine echte Bluetooth-Schatzkiste gekoppelt!</p>
+          <div style="font-size: 3.75rem; margin-bottom: 24px;">🧲</div>
+          <button onclick="connectIotBox()" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: #0ea5e9; color: #fff; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             <span>Bluetooth Scanner starten</span>
           </button>
         </div>`
@@ -1746,25 +1749,25 @@ function renderContent(type, c, dayNum) {
       const playlist = calendarMetaObj.playlist || [];
       const hasAdded = localStorage.getItem(`spotify_${routeId}_${dayNum}`) === "true";
       
-      let html = `<div class="bg-black/50 p-6 rounded-2xl border border-green-500/30 text-white">
-        <h3 class="text-xl font-bold text-green-400 mb-4 flex items-center gap-2"><span>🎵</span> Familien-Playlist</h3>`;
+      let html = `<div style="background: rgba(0,0,0,0.5); padding: 24px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); color: #fff;">
+        <h3 style="font-size: 1.25rem; font-weight: bold; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span>🎵</span> Familien-Playlist</h3>`;
         
       if (!hasAdded && !isPreview) {
-        html += `<div class="mb-6">
-          <p class="text-sm text-slate-300 mb-2">Suche einen Weihnachtssong und füge ihn zur gemeinsamen Playlist hinzu!</p>
-          <div class="flex gap-2">
-            <input type="text" id="spotify-search" placeholder="z.B. Last Christmas..." class="flex-1 bg-slate-800 border border-white/10 rounded-full px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
-            <button onclick="searchSpotify(${dayNum})" class="bg-green-500 hover:bg-green-400 text-black font-bold px-4 py-2 rounded-full">Suchen</button>
+        html += `<div style="margin-bottom: 24px;">
+          <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 8px;">Suche einen Weihnachtssong und füge ihn zur gemeinsamen Playlist hinzu!</p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="spotify-search" placeholder="z.B. Last Christmas..." style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 8px 16px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='rgba(255,255,255,0.2)'">
+            <button onclick="searchSpotify(${dayNum})" style="background: #10b981; color: #000; font-weight: bold; padding: 8px 16px; border-radius: 9999px; border: none; cursor: pointer;">Suchen</button>
           </div>
-          <div id="spotify-results" class="mt-3 flex flex-col gap-2"></div>
+          <div id="spotify-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
         </div>`;
       } else {
         html += `<p class="text-sm text-green-300 mb-6 font-bold">Du hast bereits einen Song beigetragen!</p>`;
       }
       
       if (c.playlistUrl) {
-        html += `<a href="${escapeHtml(c.playlistUrl)}" target="_blank" class="block w-full bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-center py-3 rounded-full mb-6 shadow-lg flex items-center justify-center gap-2">
-           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.47-.077-.334.132-.67.47-.745 3.808-.87 7.076-.496 9.712 1.115.293.18.386.563.207.856zm1.2-3.15c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.13-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-.973 3.632-1.1 8.147-.568 11.234 1.328.366.226.48.706.256 1.072zm.106-3.297C14.67 8 10.513 7.784 7.234 8.78c-.487.148-1-.13-1.148-.616-.148-.488.13-1 .616-1.15C10.457 5.88 15.115 6.13 18.733 8.275c.427.25.57.81.318 1.237-.253.427-.81.57-1.238.318z"/></svg>
+        html += `<a href="${escapeHtml(c.playlistUrl)}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #1DB954; color: #000; font-weight: bold; text-align: center; padding: 12px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+           <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.47-.077-.334.132-.67.47-.745 3.808-.87 7.076-.496 9.712 1.115.293.18.386.563.207.856zm1.2-3.15c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.13-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-.973 3.632-1.1 8.147-.568 11.234 1.328.366.226.48.706.256 1.072zm.106-3.297C14.67 8 10.513 7.784 7.234 8.78c-.487.148-1-.13-1.148-.616-.148-.488.13-1 .616-1.15C10.457 5.88 15.115 6.13 18.733 8.275c.427.25.57.81.318 1.237-.253.427-.81.57-1.238.318z"/></svg>
            Playlist auf Spotify öffnen
          </a>`;
       }
