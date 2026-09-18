@@ -203,6 +203,7 @@ async function loadCalendar() {
 
   const firmaSettings = document.getElementById("firma-settings");
   firmaSettings.classList.toggle("hidden", calendar.theme !== "firma");
+  document.getElementById("company-mode-block").classList.toggle("hidden", calendar.theme !== "firma");
 
   // Keep reference to customConfig
   if (!calendar.customConfig) calendar.customConfig = {};
@@ -668,7 +669,10 @@ document.getElementById("f-isScratchable").addEventListener("change", (e) => {
 
 
 themeSelect.addEventListener("change", (e) => {
-  document.getElementById("firma-settings").classList.toggle("hidden", e.target.value !== "firma");
+  const isFirma = e.target.value === "firma";
+  document.getElementById("firma-settings").classList.toggle("hidden", !isFirma);
+  document.getElementById("company-mode-block").classList.toggle("hidden", !isFirma);
+  if (!isFirma) document.getElementById("companyMode").checked = false;
 });
 
 document.getElementById("firma-bg").addEventListener("change", async (e) => {

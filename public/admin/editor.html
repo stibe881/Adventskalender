@@ -121,12 +121,12 @@
               <input type="text" id="metaPassword" name="metaPassword" placeholder="Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
             </div>
           </div>
-          <div class="sm:col-span-4 mt-2">
+          <div class="sm:col-span-4 mt-2 hidden" id="company-mode-block">
             <div class="flex items-center gap-2">
               <input type="checkbox" id="companyMode" name="companyMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
               <label for="companyMode" class="text-sm text-slate-300">🏢 Firmenmodus (Jeder Mitarbeitende hat seinen eigenen Fortschritt)</label>
             </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Mitarbeitende melden sich beim ersten Besuch mit ihrer E-Mail-Adresse oder einem Kürzel an. Der Fortschritt wird geräteübergreifend in der Datenbank gespeichert – nicht lokal.</p>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Mitarbeitende melden sich beim ersten Besuch mit ihrer E-Mail-Adresse an. Der Fortschritt wird geräteübergreifend in der Datenbank gespeichert – nicht lokal. Angezeigt werden das Logo und der Firmenname aus deinen Kontoeinstellungen.</p>
           </div>
           <div class="sm:col-span-4 hidden" id="firma-settings">
             <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl relative">

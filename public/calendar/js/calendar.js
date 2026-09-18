@@ -122,7 +122,7 @@ async function init() {
       const data = await fetchJson(`/api/calendar/${routeId}?user=${encodeURIComponent(user)}`);
       
       if (data.companyMode && !user) {
-        showCorporateLoginModal();
+        showCorporateLoginModal(data);
         return;
       }
       
@@ -636,20 +636,26 @@ function leafFrontHtml(door, cols, rows, house) {
   return `${number}${lock}`;
 }
 
-function showCorporateLoginModal() {
+function showCorporateLoginModal(meta = {}) {
   // Styled inline on purpose: this gate must be usable even if the Tailwind
   // bundle is missing or stale on the server.
+  const accent = meta.customConfig?.firmaColor || "#10b981";
+  const logo = meta.customConfig?.logo;
+  const company = meta.companyName || meta.recipientName || "";
   const modal = document.createElement("div");
   modal.style.cssText = "position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);padding:16px;backdrop-filter:blur(8px);font-family:Inter,system-ui,sans-serif;";
   modal.innerHTML = `
-    <div style="background:#0f172a;border:1px solid rgba(16,185,129,0.3);border-radius:18px;padding:32px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6);position:relative;overflow:hidden;color:#fff;">
-      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#10b981,#2dd4bf);"></div>
-      <div style="font-size:3rem;margin-bottom:12px;">🏢</div>
+    <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:32px;max-width:420px;width:100%;box-sizing:border-box;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6);position:relative;overflow:hidden;color:#fff;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:${escapeHtml(accent)};"></div>
+      ${logo
+        ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(company)}" style="max-height:72px;max-width:220px;object-fit:contain;margin:4px auto 18px;display:block;">`
+        : `<div style="font-size:3rem;margin-bottom:12px;">🏢</div>`}
       <h2 style="font-size:1.5rem;font-weight:900;margin:0 0 8px;">Willkommen!</h2>
-      <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist ein Firmen-Kalender. Bitte gib deine E-Mail-Adresse oder dein Kürzel ein, um deinen ganz persönlichen Fortschritt zu speichern.</p>
-      <form id="corp-login-form" style="display:flex;flex-direction:column;gap:12px;">
-        <input type="text" id="corp-email" required autocomplete="email" placeholder="E-Mail oder Kürzel…" style="width:100%;box-sizing:border-box;background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px 16px;color:#fff;font-size:1rem;outline:none;">
-        <button type="submit" style="width:100%;background:#059669;color:#fff;font-weight:700;padding:12px;border-radius:12px;border:0;font-size:1rem;cursor:pointer;">Speichern &amp; Loslegen</button>
+      <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist der Firmen-Adventskalender${company ? ` von <strong style="color:#fff;">${escapeHtml(company)}</strong>` : ""}. Melde dich mit deiner E-Mail-Adresse an, damit dein Fortschritt auf allen Geräten gespeichert wird.</p>
+      <form id="corp-login-form" novalidate style="display:flex;flex-direction:column;gap:12px;">
+        <input type="email" id="corp-email" required autocomplete="email" inputmode="email" placeholder="vorname.nachname@firma.ch" style="width:100%;box-sizing:border-box;background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px 16px;color:#fff;font-size:1rem;outline:none;">
+        <p id="corp-email-error" style="display:none;margin:-4px 0 0;color:#fda4af;font-size:0.85rem;">Bitte eine gültige E-Mail-Adresse eingeben.</p>
+        <button type="submit" style="width:100%;background:${escapeHtml(accent)};color:#fff;font-weight:700;padding:12px;border-radius:12px;border:0;font-size:1rem;cursor:pointer;">Speichern &amp; Loslegen</button>
       </form>
     </div>
   `;
@@ -658,11 +664,14 @@ function showCorporateLoginModal() {
 
   document.getElementById("corp-login-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const val = document.getElementById("corp-email").value.trim();
-    if (val) {
-      localStorage.setItem(`adventskalender_user_${routeId}`, val);
-      window.location.reload();
-    }
+    const input = document.getElementById("corp-email");
+    const val = input.value.trim().toLowerCase();
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+    document.getElementById("corp-email-error").style.display = valid ? "none" : "block";
+    input.style.borderColor = valid ? "#475569" : "#f43f5e";
+    if (!valid) return;
+    localStorage.setItem(`adventskalender_user_${routeId}`, val);
+    window.location.reload();
   });
 }
 function renderDoorGrid() {

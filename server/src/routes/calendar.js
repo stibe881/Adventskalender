@@ -78,7 +78,9 @@ router.get("/:token", async (req, res) => {
     }
   }
 
-  const user = req.query.user || null;
+  // Company mode identifies employees by e-mail only; anything else is ignored.
+  const rawUser = String(req.query.user || "").trim().toLowerCase();
+  const user = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(rawUser) ? rawUser : null;
 
   // Calculate streak based on openedAt or user state
   let streak = 0;
@@ -120,6 +122,7 @@ router.get("/:token", async (req, res) => {
     randomLayout: calendar.randomLayout,
     syncOpen: calendar.syncOpen,
     companyMode: calendar.companyMode || false,
+    companyName: calendar.companyMode ? await require("../utils/access").resolveCompanyName(calendar) : null,
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
@@ -169,7 +172,11 @@ router.post("/:token/days/:day/open", async (req, res) => {
     }
   }
 
-  const user = req.body.user || null;
+  const rawUser = String(req.body.user || "").trim().toLowerCase();
+  const user = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(rawUser) ? rawUser : null;
+  if (calendar.companyMode && !user) {
+    return res.status(400).json({ error: "Bitte melde dich mit deiner E-Mail-Adresse an." });
+  }
 
   const updated = await db.updateCalendar(calendar.id, (cal) => {
     if (cal.companyMode && user) {

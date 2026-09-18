@@ -138,6 +138,16 @@ async function getUserByEmail(email) {
   return u;
 }
 
+async function getUserById(id) {
+  const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+  if (!rows.length) return null;
+  const u = rows[0].data;
+  u.id = rows[0].id;
+  u.email = rows[0].email;
+  u.isPro = Boolean(rows[0].isPro);
+  return u;
+}
+
 async function getUserByUsername(username) {
   const [rows] = await pool.query("SELECT * FROM users WHERE LOWER(JSON_UNQUOTE(JSON_EXTRACT(data, '$.username'))) = ?", [username.toLowerCase()]);
   return rows.length ? rows[0].data : null;
@@ -228,6 +238,7 @@ module.exports = {
   updateCalendar,
   deleteCalendar,
   getUserByEmail,
+  getUserById,
   getUserByUsername,
   getUserByCompany,
   getUserByVerificationToken,

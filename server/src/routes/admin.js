@@ -457,7 +457,7 @@ router.post("/dev-toggle-pro", async (req, res) => {
   }
 });
 
-const { hasAccess } = require("../utils/access");
+const { hasAccess, resolveCompanyName } = require("../utils/access");
 const spotify = require("../services/spotify");
 
 // ---------- Calendars ----------
@@ -522,6 +522,8 @@ router.put("/calendars/:id", async (req, res) => {
   const updated = await db.updateCalendar(req.params.id, (cal) => {
     if (syncOpen !== undefined) cal.syncOpen = Boolean(syncOpen);
     if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
+    // Company mode is a feature of the "firma" template only.
+    if ((theme && THEMES.includes(theme) ? theme : cal.theme) !== "firma") cal.companyMode = false;
     if (metaPuzzle !== undefined) cal.metaPuzzle = Boolean(metaPuzzle);
     if (metaPassword !== undefined) cal.metaPassword = metaPassword ? String(metaPassword).trim() : "";
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
@@ -683,6 +685,8 @@ router.get("/calendars/:id/preview", async (req, res) => {
     randomLayout: calendar.randomLayout,
     syncOpen: calendar.syncOpen,
     metaPuzzle: calendar.metaPuzzle,
+    companyMode: calendar.companyMode || false,
+    companyName: await resolveCompanyName(calendar),
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     year: calendar.year,
