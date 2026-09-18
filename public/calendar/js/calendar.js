@@ -586,7 +586,8 @@ function rudiTravel(vehicle, mode) {
       { transform: `translate(${1.1 * W}px, ${0.1 * H}px) rotate(-10deg)` },
     ],
   }[mode];
-  const duration = mode === "fly" ? 4200 : 3400;
+  // Flying is a leisurely glide; the sleigh and skis stay brisk.
+  const duration = mode === "fly" ? 11000 : 3400;
 
   if (window.atmosphere) {
     if (mode === "sleigh") [0, 350, 700, 1050, 1400].forEach((d) => window.atmosphere.playTone(880 + (d % 700), "sine", 0.15, 0.03, d / 1000));
