@@ -57,6 +57,7 @@ async function init() {
   typeListContainer.appendChild(emptyBtn);
 
   Object.entries(CONTENT_TYPE_META).forEach(([key, meta]) => {
+    if (meta.hidden) return;
     const btn = document.createElement("button");
     btn.className = "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-white/10 hover:bg-slate-800 transition-colors bg-slate-900/50";
     btn.innerHTML = `<span class="text-2xl">${meta.icon}</span><span class="text-xs font-semibold text-center leading-tight text-slate-300">${meta.label}</span>`;
@@ -608,6 +609,10 @@ function openModal(day) {
   document.getElementById("f-reqChoiceDay").value = currentContent.reqChoiceDay || "";
   document.getElementById("f-reqChoiceOpt").value = currentContent.reqChoiceOpt || "";
   
+  document.getElementById("f-isScratchable").checked = currentContent.isScratchable || false;
+  document.getElementById("f-scratchLabel").value = currentContent.scratchLabel || "";
+  document.getElementById("scratch-settings").classList.toggle("hidden", !currentContent.isScratchable);
+  
   // Feedback
   const section = document.getElementById("feedback-section");
   if (door.feedback && (door.feedback.reactions?.length || door.feedback.replies?.length)) {
@@ -633,9 +638,16 @@ function closeModal() {
 
 document.getElementById("modal-close").addEventListener("click", closeModal);
 document.getElementById("modal-cancel").addEventListener("click", closeModal);
+
 modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeModal();
 });
+
+document.getElementById("f-isScratchable").addEventListener("change", (e) => {
+  document.getElementById("scratch-settings").classList.toggle("hidden", !e.target.checked);
+});
+
+
 
 themeSelect.addEventListener("change", (e) => {
   document.getElementById("firma-settings").classList.toggle("hidden", e.target.value !== "firma");

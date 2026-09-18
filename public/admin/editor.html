@@ -229,6 +229,18 @@
       <div id="type-fields" class="space-y-3"></div>
 
       <div class="mt-6 pt-4 border-t border-white/10 space-y-3">
+        <h4 class="text-sm font-semibold text-slate-300">✨ Überraschungs-Effekte</h4>
+        <div class="flex items-center gap-2 mb-2">
+          <input type="checkbox" id="f-isScratchable" class="w-4 h-4 rounded bg-slate-800 border-white/10 text-emerald-500 focus:ring-emerald-500" />
+          <label for="f-isScratchable" class="text-sm text-slate-300 cursor-pointer">Aufrubbel-Effekt aktivieren (Inhalt ist verdeckt)</label>
+        </div>
+        <div id="scratch-settings" class="hidden">
+          <input type="text" id="f-scratchLabel" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Rubbel-Hinweistext (z.B. 'Hier rubbeln!')" />
+          <p class="text-[11px] text-slate-400 mt-1">Der Nutzer muss die graue Schicht mit dem Finger oder der Maus freirubbeln, bevor er den eigentlichen Inhalt sieht.</p>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-white/10 space-y-3">
         <h4 class="text-sm font-semibold text-slate-300">🔒 Escape Room (Passwortschutz)</h4>
         <div>
           <label class="block text-sm text-slate-300 mb-1">Passwort-Schutz (optional)</label>

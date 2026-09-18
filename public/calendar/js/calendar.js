@@ -1224,6 +1224,17 @@ function openContentModal(door) {
       <div class="text-3xl font-black text-white drop-shadow-md">${escapeHtml(door.content.metaLetter)}</div>
     </div>`;
   }
+  
+  if (door.content?.isScratchable) {
+    html = `
+      <div class="scratch-wrap">
+        <div class="scratch-under">${html}</div>
+        <canvas id="scratch-canvas"></canvas>
+      </div>
+      <p class="modal-muted" style="margin-top:10px">${escapeHtml(door.content.scratchLabel || "Hier rubbeln!")}</p>
+    `;
+  }
+  
   modalBody.innerHTML = html;
   contentModal.classList.remove("hidden");
   
@@ -1782,7 +1793,11 @@ function wireContentInteractions(door) {
       img.addEventListener("click", () => window.open(img.src, "_blank"));
     });
   }
-  if (door.contentType === "scratchcard") setupScratchcard();
+  
+  if (c.isScratchable || door.contentType === "scratchcard") {
+    setupScratchcard();
+  }
+  
   if (door.contentType === "quiz") setupQuiz(c, door);
   if (door.contentType === "challenge") setupChallenge(door);
   if (door.contentType === "memory") setupMemory();

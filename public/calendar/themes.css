@@ -400,8 +400,8 @@ body {
 .media-frame iframe { width: 100%; height: 100%; border: 0; }
 .gallery-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .gallery-img { width: 100%; height: 160px; object-fit: cover; border-radius: 12px; cursor: zoom-in; }
-.scratch-wrap { position: relative; height: 200px; border-radius: 12px; overflow: hidden; background: #e2e8f0; border: 2px solid rgba(0,0,0,0.1); }
-.scratch-under { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; color: #1e293b; padding: 20px; text-align: center; }
+.scratch-wrap { position: relative; min-height: 200px; border-radius: 12px; overflow: hidden; background: transparent; }
+.scratch-under { position: relative; width: 100%; height: 100%; }
 #scratch-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
 .quiz-option { display: block; width: 100%; text-align: left; padding: 16px 20px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: inherit; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
 .quiz-option:hover:not(:disabled) { background: rgba(128,128,128,0.1); transform: translateY(-2px); }
