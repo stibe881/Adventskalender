@@ -774,7 +774,9 @@ function renderTypeFields(type, content) {
 }
 
 function renderSpotifyCollabFields(c) {
-  typeFields.innerHTML = `<p class="text-sm text-slate-300">Der Nutzer kann hier einen Song suchen und der Familien-Playlist hinzufügen.</p>`;
+  typeFields.innerHTML = 
+    `<p class="text-sm text-slate-300 mb-4">Der Nutzer kann hier einen Song suchen und der Familien-Playlist hinzufügen.</p>` +
+    fieldWrap("Link zur echten Spotify-Playlist (wird für Nutzer verlinkt)", `<input id="f-playlistUrl" value="${escapeHtml(c.playlistUrl || '')}" placeholder="https://open.spotify.com/playlist/..." class="${inputClass}" />`);
 }
 
 function renderIotBoxFields(c) {
@@ -1283,6 +1285,7 @@ function collectFieldsData(type) {
     case "coins": return { coinAmount: parseInt(val("f-coinAmount"), 10) || 50 };
     case "diary": return { diaryQuestion: val("f-diaryQuestion") };
     case "printplay": return { ppTitle: val("f-ppTitle"), ppImage: currentContent.ppImage || null };
+    case "spotify-collab": return { playlistUrl: val("f-playlistUrl") };
     case "duel":
     case "timecapsule":
       return {};

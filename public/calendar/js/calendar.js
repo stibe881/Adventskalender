@@ -1195,6 +1195,7 @@ function openDoorAnimation(sceneEl, door) {
   // Apply door state in next frame to ensure any previous DOM updates don't swallow the CSS transition
   requestAnimationFrame(() => {
     applyDoorState(sceneEl, door);
+    updateProgress();
     
     if (window.atmosphere) window.atmosphere.playMagicChime();
     if (effectsEnabled) setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
@@ -1491,7 +1492,8 @@ function renderContent(type, c, dayNum) {
           "audio",
           c.title,
           embed
-            ? `<iframe src="${embed}" width="100%" height="152" style="border:0;border-radius:12px" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`
+            ? `<iframe src="${embed}" width="100%" height="152" style="border:0;border-radius:12px;margin-bottom:8px" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+               <a href="${escapeHtml(c.spotifyUrl)}" target="_blank" class="text-xs text-green-400 hover:text-green-300 underline flex items-center justify-center gap-1">Auf Spotify öffnen</a>`
             : `<p class="modal-muted">Spotify-Link konnte nicht eingebettet werden.</p>`
         );
       }
@@ -1548,9 +1550,11 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "challenge",
         "Tages-Aufgabe",
-        `<p class="modal-text" style="font-weight: 600; margin-bottom: 20px;">${escapeHtml(c.task)}</p>
-         <button id="challenge-btn" class="challenge-btn">${escapeHtml(c.btnText || "Erledigt!")}</button>
-         <p id="challenge-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+        `<div style="background: var(--modal-accent, rgba(128,128,128,0.1)); color: var(--modal-bg, #fff); padding: 24px; border-radius: 12px; margin-bottom: 24px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+           <p class="modal-text" style="font-weight: 700; font-size: 1.25rem; margin: 0;">${escapeHtml(c.task)}</p>
+         </div>
+         <button id="challenge-btn" class="challenge-btn" style="width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; background: var(--modal-text, #333); color: var(--modal-bg, #fff); border: none; font-size: 1.1rem; transition: transform 0.2s; cursor: pointer;">${escapeHtml(c.btnText || "Erledigt!")}</button>
+         <p id="challenge-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold; text-align: center; font-size: 1.1rem;">${escapeHtml(c.successMessage)}</p>`
       );
 
     case "memory": {
@@ -1756,6 +1760,13 @@ function renderContent(type, c, dayNum) {
         </div>`;
       } else {
         html += `<p class="text-sm text-green-300 mb-6 font-bold">Du hast bereits einen Song beigetragen!</p>`;
+      }
+      
+      if (c.playlistUrl) {
+        html += `<a href="${escapeHtml(c.playlistUrl)}" target="_blank" class="block w-full bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-center py-3 rounded-full mb-6 shadow-lg flex items-center justify-center gap-2">
+           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.47-.077-.334.132-.67.47-.745 3.808-.87 7.076-.496 9.712 1.115.293.18.386.563.207.856zm1.2-3.15c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.13-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-.973 3.632-1.1 8.147-.568 11.234 1.328.366.226.48.706.256 1.072zm.106-3.297C14.67 8 10.513 7.784 7.234 8.78c-.487.148-1-.13-1.148-.616-.148-.488.13-1 .616-1.15C10.457 5.88 15.115 6.13 18.733 8.275c.427.25.57.81.318 1.237-.253.427-.81.57-1.238.318z"/></svg>
+           Playlist auf Spotify öffnen
+         </a>`;
       }
       
       html += `<div class="border-t border-white/10 pt-4"><h4 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Aktuelle Playlist (${playlist.length} Songs)</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">`;
@@ -2247,7 +2258,9 @@ function toVideoEmbed(url) {
         const m = u.pathname.match(/\/(?:embed|shorts)\/([^/?]+)/);
         if (m) id = m[1];
       }
-      return id ? `https://www.youtube-nocookie.com/embed/${id}` : url;
+      const list = u.searchParams.get("list");
+      const listParam = list ? `?list=${list}` : "";
+      return id ? `https://www.youtube.com/embed/${id}${listParam}` : url;
     }
     if (u.hostname.includes("vimeo")) {
       const id = u.pathname.split("/").filter(Boolean).pop();
