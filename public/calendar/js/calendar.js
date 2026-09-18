@@ -413,8 +413,10 @@ function initPet(streak = calendarMeta?.streak || 0) {
     petEl.addEventListener("click", () => {
       emoji.style.transform = "translateY(-14px)";
       setTimeout(() => (emoji.style.transform = "translateY(0)"), 220);
-      const opened24 = days.find((d) => d.day === 24 && d.opened);
-      if (opened24) alert("AR Feature: Das Rentier wartet auf dich! (Feature in Entwicklung)");
+      // Rudi shows off one of his purchases; without any he just hops.
+      const owned = SHOP_ITEMS.filter((i) => userInventory.includes(i.id));
+      if (owned.length) useItem(owned[Math.floor(Math.random() * owned.length)].id);
+      else showLockToast("Rudi hüpft – kauf ihm im Nordpol-Shop etwas, dann zeigt er Kunststücke!");
     });
   }
 
@@ -443,19 +445,148 @@ function renderShop() {
   list.innerHTML = SHOP_ITEMS.map((item) => {
     const owned = userInventory.includes(item.id);
     const affordable = isPreview || userCoins >= item.price;
+    const action = RUDI_ACTIONS[item.id];
     return `
-      <button type="button" onclick="buyItem('${item.id}')" ${owned ? "disabled" : ""}
-        class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform ${owned ? "border-emerald-400 opacity-80 cursor-default" : "border-amber-300 hover:scale-[1.02] active:scale-95 hover:bg-amber-50"}">
+      <button type="button" onclick="${owned ? `useItem('${item.id}')` : `buyItem('${item.id}')`}"
+        class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform hover:scale-[1.02] active:scale-95 ${owned ? "border-emerald-400 hover:bg-emerald-50" : "border-amber-300 hover:bg-amber-50"}">
         <span class="flex items-center gap-3 min-w-0">
           <span class="text-3xl leading-none">${item.emoji}</span>
           <span class="min-w-0">
             <span class="block font-bold">${item.name}</span>
-            <span class="block text-xs text-amber-700/80 truncate">${item.desc}</span>
+            <span class="block text-xs text-amber-700/80 truncate">${owned && action ? action.label : item.desc}</span>
           </span>
         </span>
-        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? "✓ Im Besitz" : `${item.price} 🪙`}</span>
+        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? "▶ Benutzen" : `${item.price} 🪙`}</span>
       </button>`;
   }).join("");
+}
+
+// ---------- Rudi actions (what purchased items do) ----------
+
+const RUDI_ACTIONS = {
+  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel("🛷", "sleigh") },
+  skis: { label: "Slalom-Abfahrt über den Bildschirm", run: () => rudiTravel("🎿", "slalom") },
+  wings: { label: "Rundflug quer über den Kalender", run: () => rudiTravel("🪽", "fly") },
+  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel("🌟", "fly") },
+  lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
+  bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },
+  hat: { label: "Hut ziehen und posieren", run: () => rudiPose("Rudi zieht den Zylinder!") },
+  santahat: { label: "Ho-ho-ho posieren", run: () => rudiPose("Ho ho ho! Rudi in Weihnachtsstimmung.") },
+  crown: { label: "Königlich posieren", run: () => rudiPose("Seine Majestät Rudi I. grüsst huldvoll.") },
+  glasses: { label: "Cool posieren", run: () => rudiPose("Rudi: zu cool für Schnee.") },
+  scarf: { label: "Kuscheln", run: () => rudiPose("Rudi kuschelt sich in seinen Schal.") },
+  bow: { label: "Sich hübsch machen", run: () => rudiPose("Rudi zupft seine Schleife zurecht.") },
+};
+
+window.useItem = function(itemId) {
+  if (!userInventory.includes(itemId)) return;
+  const action = RUDI_ACTIONS[itemId];
+  document.getElementById("shop-modal")?.classList.add("hidden");
+  if (action) action.run();
+  else rudiPose("Rudi freut sich über sein neues Stück.");
+};
+
+let rudiBusy = false;
+
+// Rudi leaves his card and crosses the screen with the given vehicle.
+function rudiTravel(vehicle, mode) {
+  if (rudiBusy) return;
+  rudiBusy = true;
+  const petEmoji = document.getElementById("pet-emoji");
+  const outfit = petOutfit();
+  const traveller = document.createElement("div");
+  traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
+  traveller.textContent = `${outfit.text}${vehicle}`;
+  document.body.appendChild(traveller);
+  const originalEmoji = petEmoji.textContent;
+  petEmoji.textContent = "💨";
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const frames = {
+    sleigh: [
+      { transform: `translate(${-0.25 * W}px, ${0.05 * H}px) rotate(-12deg)` },
+      { transform: `translate(${0.3 * W}px, ${0.32 * H}px) rotate(-18deg)`, offset: 0.4 },
+      { transform: `translate(${0.6 * W}px, ${0.55 * H}px) rotate(-10deg)`, offset: 0.7 },
+      { transform: `translate(${1.05 * W}px, ${0.82 * H}px) rotate(-14deg)` },
+    ],
+    slalom: [
+      { transform: `translate(${1.05 * W}px, ${0.02 * H}px) rotate(15deg) scaleX(-1)` },
+      { transform: `translate(${0.65 * W}px, ${0.22 * H}px) rotate(-15deg) scaleX(-1)`, offset: 0.25 },
+      { transform: `translate(${0.55 * W}px, ${0.42 * H}px) rotate(15deg) scaleX(-1)`, offset: 0.5 },
+      { transform: `translate(${0.2 * W}px, ${0.62 * H}px) rotate(-15deg) scaleX(-1)`, offset: 0.75 },
+      { transform: `translate(${-0.3 * W}px, ${0.85 * H}px) rotate(10deg) scaleX(-1)` },
+    ],
+    fly: [
+      { transform: `translate(${-0.25 * W}px, ${0.8 * H}px) rotate(-20deg)` },
+      { transform: `translate(${0.25 * W}px, ${0.35 * H}px) rotate(-8deg)`, offset: 0.35 },
+      { transform: `translate(${0.55 * W}px, ${0.2 * H}px) rotate(0deg)`, offset: 0.55 },
+      { transform: `translate(${0.8 * W}px, ${0.3 * H}px) rotate(8deg)`, offset: 0.75 },
+      { transform: `translate(${1.1 * W}px, ${0.1 * H}px) rotate(-10deg)` },
+    ],
+  }[mode];
+  const duration = mode === "fly" ? 4200 : 3400;
+
+  if (window.atmosphere) {
+    if (mode === "sleigh") [0, 350, 700, 1050, 1400].forEach((d) => window.atmosphere.playTone(880 + (d % 700), "sine", 0.15, 0.03, d / 1000));
+    else window.atmosphere.playMagicChime();
+  }
+  const spray = setInterval(() => {
+    if (!effectsEnabled || !field) return;
+    const r = traveller.getBoundingClientRect();
+    field.burst(r.left + r.width * 0.2, r.top + r.height * 0.9, ["#ffffff", "#e0f2fe", "#bae6fd"], 6);
+  }, 140);
+
+  const anim = traveller.animate(frames, { duration, easing: mode === "sleigh" ? "cubic-bezier(0.45,0,0.85,0.6)" : "ease-in-out", fill: "forwards" });
+  anim.onfinish = () => {
+    clearInterval(spray);
+    traveller.remove();
+    petEmoji.textContent = originalEmoji;
+    petEmoji.style.transform = "translateY(-14px)";
+    setTimeout(() => (petEmoji.style.transform = "translateY(0)"), 220);
+    rudiBusy = false;
+  };
+}
+
+function rudiSparkle(rounds) {
+  const petEl = document.getElementById("digital-pet");
+  const emoji = document.getElementById("pet-emoji");
+  let i = 0;
+  const tick = () => {
+    const r = petEl.getBoundingClientRect();
+    if (effectsEnabled && field) field.burst(r.left + r.width / 2, r.top + r.height / 2, ["#fde047", "#fb7185", "#4ade80", "#60a5fa", "#ffffff"], 30);
+    emoji.style.filter = i % 2 ? "" : "drop-shadow(0 0 16px rgba(253,224,71,0.95)) brightness(1.2)";
+    if (++i < rounds * 2) setTimeout(tick, 350);
+    else setTimeout(() => initPet(), 400);
+  };
+  if (window.atmosphere) window.atmosphere.playMagicChime();
+  tick();
+}
+
+function rudiJingle() {
+  const emoji = document.getElementById("pet-emoji");
+  if (window.atmosphere) {
+    window.atmosphere.initAudio();
+    [1318, 1318, 1318, 1318, 1568, 1046, 1174, 1318].forEach((f, i) => window.atmosphere.playTone(f, "triangle", 0.25, 0.05, i * 0.18));
+  }
+  emoji.animate(
+    [{ transform: "rotate(0)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(14deg)" }, { transform: "rotate(-10deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0)" }],
+    { duration: 900, iterations: 2, easing: "ease-in-out" }
+  );
+  showLockToast("Kling, Glöckchen, klingelingeling!");
+}
+
+function rudiPose(message) {
+  const petEl = document.getElementById("digital-pet");
+  const emoji = document.getElementById("pet-emoji");
+  emoji.animate(
+    [{ transform: "scale(1) rotate(0)" }, { transform: "scale(1.35) rotate(-8deg)" }, { transform: "scale(1.35) rotate(8deg)" }, { transform: "scale(1) rotate(0)" }],
+    { duration: 900, easing: "ease-in-out" }
+  );
+  const r = petEl.getBoundingClientRect();
+  if (effectsEnabled && field) field.burst(r.left + r.width / 2, r.top + r.height / 2, ["#f59e0b", "#fbbf24", "#ffffff", "#f472b6"], 36);
+  if (window.atmosphere) window.atmosphere.playClickSound();
+  showLockToast(message);
 }
 
 document.getElementById("shop-btn").onclick = () => {
@@ -489,8 +620,8 @@ window.buyItem = function(itemId) {
   updateCoinDisplay();
   renderShop();
   initPet(calendarMeta?.streak || 0);
-  if (window.atmosphere) window.atmosphere.playMagicChime();
-  if (effectsEnabled && field) field.burst(window.innerWidth / 2, window.innerHeight / 2, ["#f59e0b", "#fbbf24", "#fff", "#22c55e"]);
+  // Show the new purchase in action right away.
+  useItem(item.id);
 };
 
 // ---------- Pixel Art ----------
