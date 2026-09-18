@@ -874,10 +874,22 @@ async function handleDoorClick(dayNum, sceneEl) {
   }
 
   if (door.requiresLocation && !isPreview) {
+    if (!navigator.geolocation) {
+      shakeDoor(sceneEl);
+      showLockToast("Dein Browser unterstützt keine Standortabfrage.");
+      return;
+    }
+
+    if (location.protocol !== "https:" && location.hostname !== "localhost") {
+      shakeDoor(sceneEl);
+      showLockToast("Standortabfrage erfordert eine sichere Verbindung (HTTPS).");
+      return;
+    }
+
     showLockToast("Prüfe deinen Standort... Bitte erlaube den GPS-Zugriff.");
     try {
       const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
       });
       const userLat = pos.coords.latitude;
       const userLng = pos.coords.longitude;
@@ -901,7 +913,15 @@ async function handleDoorClick(dayNum, sceneEl) {
       }
     } catch (err) {
       shakeDoor(sceneEl);
-      showLockToast("Standort konnte nicht ermittelt werden. Ohne GPS bleibt das Türchen zu!");
+      if (err.code === 1) {
+        showLockToast("GPS-Zugriff wurde verweigert. Bitte erlaube den Standortzugriff in deinen Browser-Einstellungen.");
+      } else if (err.code === 2) {
+        showLockToast("Standort konnte nicht ermittelt werden. Bitte aktiviere GPS und versuche es erneut.");
+      } else if (err.code === 3) {
+        showLockToast("Zeitüberschreitung bei der GPS-Abfrage. Bitte versuche es nochmals.");
+      } else {
+        showLockToast("Standort konnte nicht ermittelt werden: " + err.message);
+      }
       return;
     }
   }
