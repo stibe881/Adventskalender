@@ -81,20 +81,35 @@ async function loadCalendar() {
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
   document.getElementById("cal-subtitle").textContent = `Dezember ${calendar.year} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
 
-  if (!calendar.isPro && !currentUser.isPro) {
-    document.querySelectorAll(".pro-feature-input").forEach(el => {
-      el.disabled = true;
-      el.classList.add("opacity-50", "cursor-not-allowed");
-      el.title = "Nur in der PRO Version verfügbar";
-    });
+    if (!calendar.isPro && !currentUser.isPro) {
+      document.querySelectorAll(".pro-feature-input").forEach(el => {
+        el.disabled = true;
+        el.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+        el.title = "Nur in der PRO Version verfügbar";
+      });
     // Add click listeners to wrappers or the inputs themselves
     document.querySelectorAll(".pro-feature-input").forEach(el => {
-      el.addEventListener("click", (e) => {
-        if (el.disabled) {
-          e.preventDefault();
-          alert("Diese Funktion (White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar. Bitte führe ein Upgrade im Dashboard durch.");
-        }
-      });
+      // Wrapper click to intercept since disabled inputs don't always fire click reliably
+      const wrapper = el.parentElement;
+      if (wrapper) {
+        wrapper.classList.add("cursor-pointer");
+        wrapper.addEventListener("click", async (e) => {
+          if (el.disabled) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm("Diese Funktion (z. B. White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar.\n\nMöchtest du diesen Kalender jetzt auf PRO upgraden?")) {
+              try {
+                const res = await api.checkout(calendar.id);
+                if (res.url) {
+                  window.location.href = res.url;
+                }
+              } catch(err) {
+                alert("Fehler beim Checkout: " + err.message);
+              }
+            }
+          }
+        }, true);
+      }
     });
   }
 
