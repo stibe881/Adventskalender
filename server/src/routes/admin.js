@@ -819,4 +819,23 @@ router.post("/calendars/:id/push", async (req, res) => {
   res.json({ success: true, sent });
 });
 
+// Playlist-Eintrag im Admin/Vorschau-Modus (per Kalender-ID)
+router.post("/calendars/:id/playlist", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
+  if (!calendar || !hasAccess(calendar, req.user)) {
+    return res.status(404).json({ error: "Kalender nicht gefunden." });
+  }
+
+  const { day, title, artist } = req.body;
+  if (!day || !title || !artist) return res.status(400).json({ error: "Missing fields" });
+
+  await db.updateCalendar(calendar.id, (cal) => {
+    if (!cal.playlist) cal.playlist = [];
+    cal.playlist.push({ day, title, artist, addedAt: new Date().toISOString() });
+    return cal;
+  });
+
+  res.json({ success: true });
+});
+
 module.exports = router;

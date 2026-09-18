@@ -2571,7 +2571,10 @@ window.searchSpotify = function(day) {
 
 window.addSpotifySong = async function(day, title, artist) {
   try {
-    const res = await fetch(`/api/calendar/${routeId}/playlist`, {
+    const playlistUrl = isPreview
+      ? `/api/admin/calendars/${routeId}/playlist`
+      : `/api/calendar/${routeId}/playlist`;
+    const res = await fetch(playlistUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ day, title, artist })
