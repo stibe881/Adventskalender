@@ -32,6 +32,12 @@ class ParticleField {
     requestAnimationFrame((t) => this.loop(t));
   }
 
+  stop() {
+    this.running = false;
+    this.particles = [];
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
   spawnAmbient() {
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -92,6 +98,7 @@ class ParticleField {
   }
 
   loop(t) {
+    if (!this.running) return;
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;

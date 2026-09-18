@@ -28,18 +28,20 @@
     <button id="pixel-art-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-2 backdrop-blur transition-colors" title="Community Leinwand">
       🎨
     </button>
-    <button id="print-pdf-btn" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white rounded-full p-2 backdrop-blur transition-colors" title="Als PDF speichern">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-    </button>
     <button id="toggle-effects-btn" class="bg-black/40 hover:bg-black/60 text-white rounded-full p-2 backdrop-blur transition-colors" title="Effekte an/ausschalten (Batterie sparen)">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/><path d="m4.93 19.07 14.14-14.14"/></svg>
     </button>
   </div>
 
   <!-- Digital Pet -->
-  <div id="digital-pet" class="fixed bottom-4 left-4 z-40 hidden cursor-pointer transition-transform hover:scale-110">
-    <div id="pet-emoji" class="text-6xl drop-shadow-lg filter transition-all duration-500">🦌</div>
-    <div id="pet-status" class="bg-black/50 text-white text-xs px-2 py-1 rounded-full mt-1 text-center backdrop-blur-sm opacity-0 transition-opacity">Schläft...</div>
+  <div id="digital-pet" class="fixed bottom-4 left-4 z-40 hidden cursor-pointer select-none transition-transform hover:scale-105" title="Dein Rentier – kaufe Outfits im Nordpol-Shop">
+    <div class="flex items-center gap-3 rounded-2xl pl-3 pr-4 py-2" style="background:rgba(15,23,42,0.86);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.45);">
+      <div id="pet-emoji" class="text-5xl leading-none transition-transform duration-200">🦌</div>
+      <div class="leading-tight">
+        <div class="text-white text-sm font-bold">Rudi</div>
+        <div id="pet-status" class="text-slate-200 text-xs">Schläft…</div>
+      </div>
+    </div>
   </div>
 
   <div id="app-root">
@@ -111,23 +113,14 @@
 
   <!-- Shop Modal -->
   <div id="shop-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true">
-    <div class="bg-amber-100 border border-amber-500/50 rounded-2xl w-full max-w-md overflow-hidden relative text-amber-900">
-      <div class="p-6">
+    <div class="bg-amber-100 border border-amber-500/50 rounded-2xl w-full max-w-md relative text-amber-900" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="p-6" style="display:flex;flex-direction:column;min-height:0;">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-black">Nordpol-Shop 🎪</h2>
+          <h2 class="text-2xl font-black">Nordpol-Shop</h2>
           <button id="shop-close" class="text-amber-700 hover:text-amber-900 text-xl font-bold">✕</button>
         </div>
-        <p class="text-sm mb-4">Kaufe Outfits für dein Tamagotchi-Rentier! (Dein Guthaben: <b id="shop-balance">0</b> 🪙)</p>
-        <div class="flex flex-col gap-3">
-          <button onclick="buyItem('hat', 50)" class="bg-white hover:bg-amber-50 p-4 rounded-xl border border-amber-300 shadow-sm flex justify-between items-center transition-transform hover:scale-105 active:scale-95">
-            <span class="font-bold text-lg">🎩 Zylinder</span>
-            <span class="bg-amber-500 text-white px-3 py-1 rounded-full font-bold">50 🪙</span>
-          </button>
-          <button onclick="buyItem('glasses', 100)" class="bg-white hover:bg-amber-50 p-4 rounded-xl border border-amber-300 shadow-sm flex justify-between items-center transition-transform hover:scale-105 active:scale-95">
-            <span class="font-bold text-lg">🕶️ Sonnenbrille</span>
-            <span class="bg-amber-500 text-white px-3 py-1 rounded-full font-bold">100 🪙</span>
-          </button>
-        </div>
+        <p class="text-sm mb-4">Kaufe Outfits für dein Tamagotchi-Rentier! Pro Kategorie (Kopf, Gesicht, Hals, Gefährt, Aura) trägt es das wertvollste Stück. Dein Guthaben: <b id="shop-balance">0</b> 🪙</p>
+        <div id="shop-items" class="slim-scroll flex flex-col gap-2 pr-1" style="overflow-y:auto;min-height:0;max-height:55vh;"></div>
       </div>
     </div>
   </div>

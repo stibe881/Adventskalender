@@ -219,25 +219,11 @@ async function init() {
     document.body.appendChild(snowContainer);
   }
 
-  if (isPreview || calendarMeta.today?.day > 24 || (calendarMeta.today?.month !== 12 && calendarMeta.today?.day !== undefined)) {
-    const printBtn = document.getElementById("print-pdf-btn");
-    if (printBtn) {
-      printBtn.classList.remove("hidden");
-      printBtn.addEventListener("click", () => window.print());
-    }
-  }
+  applyEffects(localStorage.getItem(`effects_${routeId}`) !== "0");
+  document.getElementById("toggle-effects-btn").addEventListener("click", () => applyEffects(!effectsEnabled));
 
-  document.getElementById("toggle-effects-btn").addEventListener("click", () => {
-    effectsEnabled = !effectsEnabled;
-    if (effectsEnabled) {
-      canvas.classList.remove("hidden");
-      field.start();
-    } else {
-      canvas.classList.add("hidden");
-      field.stop();
-    }
-    document.getElementById("toggle-effects-btn").style.opacity = effectsEnabled ? "1" : "0.5";
-  });
+  // The shop only makes sense when the calendar hands out coins somewhere.
+  document.getElementById("shop-btn").classList.toggle("hidden", !calendarMeta.hasCoins);
   
   if (typeof io !== "undefined") {
     socket = io();
@@ -353,74 +339,143 @@ function renderFatalError(err) {
   `;
 }
 
+function applyEffects(enabled) {
+  effectsEnabled = enabled;
+  if (enabled) {
+    canvas.classList.remove("hidden");
+    field.start();
+  } else {
+    canvas.classList.add("hidden");
+    field.stop();
+  }
+  document.querySelectorAll(".snow-container").forEach((el) => el.classList.toggle("hidden", !enabled));
+  const btn = document.getElementById("toggle-effects-btn");
+  if (btn) {
+    btn.style.opacity = enabled ? "1" : "0.45";
+    btn.title = enabled ? "Effekte ausschalten (Batterie sparen)" : "Effekte einschalten";
+    btn.setAttribute("aria-pressed", String(!enabled));
+  }
+  localStorage.setItem(`effects_${routeId}`, enabled ? "1" : "0");
+}
+
+// ---------- Tamagotchi reindeer ----------
+
+const SHOP_ITEMS = [
+  { id: "bow", name: "Schleife", emoji: "🎀", slot: "neck", price: 20, desc: "Hübsch verpackt." },
+  { id: "scarf", name: "Kuschelschal", emoji: "🧣", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
+  { id: "santahat", name: "Weihnachtsmütze", emoji: "🎅", slot: "head", price: 40, desc: "Der Klassiker." },
+  { id: "hat", name: "Zylinder", emoji: "🎩", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
+  { id: "bell", name: "Glöckchen", emoji: "🔔", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
+  { id: "skis", name: "Skier", emoji: "🎿", slot: "ride", price: 90, desc: "Ab auf die Piste." },
+  { id: "glasses", name: "Sonnenbrille", emoji: "🕶️", slot: "face", price: 100, desc: "Cool bleiben, auch bei Schnee." },
+  { id: "lights", name: "Lichterkette", emoji: "✨", slot: "aura", price: 120, desc: "Funkelt bei jedem Schritt." },
+  { id: "sleigh", name: "Schlitten", emoji: "🛷", slot: "ride", price: 150, desc: "Rentiere ziehen, Rentiere fahren." },
+  { id: "wings", name: "Engelsflügel", emoji: "🪽", slot: "aura", price: 180, desc: "Fast schon himmlisch." },
+  { id: "crown", name: "Krone", emoji: "👑", slot: "head", price: 200, desc: "König der Weihnachtswiese." },
+  { id: "star", name: "Weihnachtsstern", emoji: "🌟", slot: "aura", price: 250, desc: "Das seltenste Stück im Shop." },
+];
+
+// The most valuable owned item per slot is worn.
+function petOutfit() {
+  const worn = {};
+  SHOP_ITEMS.filter((i) => userInventory.includes(i.id)).forEach((i) => {
+    if (!worn[i.slot] || worn[i.slot].price < i.price) worn[i.slot] = i;
+  });
+  const e = (slot) => (worn[slot] ? worn[slot].emoji : "");
+  return { text: `${e("head")}${e("face")}🦌${e("neck")}${e("ride")}${e("aura")}`, hasAura: Boolean(worn.aura) };
+}
+
 function initPet(streak) {
   const petEl = document.getElementById("digital-pet");
   const emoji = document.getElementById("pet-emoji");
   const status = document.getElementById("pet-status");
-  
   if (!petEl) return;
   petEl.classList.remove("hidden");
-  
+
   let petState = "sleepy";
   if (streak > 0 && streak <= 5) petState = "happy";
   if (streak > 5) petState = "glowing";
-  
-  petEl.addEventListener("mouseenter", () => status.classList.remove("opacity-0"));
-  petEl.addEventListener("mouseleave", () => status.classList.add("opacity-0"));
-  
-  petEl.addEventListener("click", () => {
-    // bounce animation
-    emoji.style.transform = "translateY(-20px)";
-    setTimeout(() => emoji.style.transform = "translateY(0)", 200);
-    
-    // Day 24 AR unlock?
-    const opened24 = days.find(d => d.day === 24 && d.opened);
-    if (opened24) {
-      alert("AR Feature: Das Rentier wartet auf dich! (Feature in Entwicklung)");
-    }
-  });
 
+  if (!petEl.dataset.wired) {
+    petEl.dataset.wired = "1";
+    petEl.addEventListener("click", () => {
+      emoji.style.transform = "translateY(-14px)";
+      setTimeout(() => (emoji.style.transform = "translateY(0)"), 220);
+      const opened24 = days.find((d) => d.day === 24 && d.opened);
+      if (opened24) alert("AR Feature: Das Rentier wartet auf dich! (Feature in Entwicklung)");
+    });
+  }
+
+  const outfit = petOutfit();
+  emoji.style.filter = "";
+  emoji.style.opacity = "1";
   if (petState === "sleepy") {
-    emoji.textContent = "🦌💤";
-    emoji.classList.add("grayscale", "opacity-70");
-    status.textContent = "Schläft... Öffne ein Türchen!";
+    emoji.textContent = `${outfit.text}💤`;
+    emoji.style.filter = "grayscale(0.45)";
+    status.textContent = "Schläft – öffne ein Türchen!";
   } else if (petState === "happy") {
-    emoji.textContent = userInventory.includes("hat") ? "🎩🦌🎅" : "🦌🎅";
-    status.textContent = `Glücklich! (${streak} Tage Streak)`;
+    emoji.textContent = outfit.text;
+    status.textContent = `Glücklich · ${streak} Tage Streak`;
   } else {
-    emoji.textContent = userInventory.includes("glasses") ? "🕶️🦌✨" : (userInventory.includes("hat") ? "🎩🦌✨" : "🦌✨");
-    emoji.classList.add("drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]");
-    status.textContent = `On Fire! 🔥 (${streak} Tage Streak)`;
+    emoji.textContent = outfit.hasAura ? outfit.text : `${outfit.text}✨`;
+    emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
+    status.textContent = `On Fire! 🔥 ${streak} Tage Streak`;
   }
 }
 
 // ---------- Shop ----------
 
+function renderShop() {
+  const list = document.getElementById("shop-items");
+  if (!list) return;
+  list.innerHTML = SHOP_ITEMS.map((item) => {
+    const owned = userInventory.includes(item.id);
+    const affordable = userCoins >= item.price;
+    return `
+      <button type="button" onclick="buyItem('${item.id}')" ${owned ? "disabled" : ""}
+        class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform ${owned ? "border-emerald-400 opacity-80 cursor-default" : "border-amber-300 hover:scale-[1.02] active:scale-95 hover:bg-amber-50"}">
+        <span class="flex items-center gap-3 min-w-0">
+          <span class="text-3xl leading-none">${item.emoji}</span>
+          <span class="min-w-0">
+            <span class="block font-bold">${item.name}</span>
+            <span class="block text-xs text-amber-700/80 truncate">${item.desc}</span>
+          </span>
+        </span>
+        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? "✓ Im Besitz" : `${item.price} 🪙`}</span>
+      </button>`;
+  }).join("");
+}
+
 document.getElementById("shop-btn").onclick = () => {
   document.getElementById("shop-modal").classList.remove("hidden");
   updateCoinDisplay();
+  renderShop();
 };
 
 document.getElementById("shop-close").onclick = () => {
   document.getElementById("shop-modal").classList.add("hidden");
 };
 
-window.buyItem = function(item, cost) {
-  if (userInventory.includes(item)) {
+window.buyItem = function(itemId) {
+  const item = SHOP_ITEMS.find((i) => i.id === itemId);
+  if (!item) return;
+  if (userInventory.includes(item.id)) {
     alert("Du besitzt dieses Item bereits!");
     return;
   }
-  if (userCoins < cost) {
-    alert("Nicht genug Münzen!");
+  if (userCoins < item.price) {
+    alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} 🪙.`);
     return;
   }
-  userCoins -= cost;
-  userInventory.push(item);
+  userCoins -= item.price;
+  userInventory.push(item.id);
   saveUserCoins();
   localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
   updateCoinDisplay();
+  renderShop();
   initPet(calendarMeta?.streak || 0);
-  alert("Gekauft! Das Rentier hat sich sofort umgezogen.");
+  if (window.atmosphere) window.atmosphere.playMagicChime();
+  if (effectsEnabled && field) field.burst(window.innerWidth / 2, window.innerHeight / 2, ["#f59e0b", "#fbbf24", "#fff", "#22c55e"]);
 };
 
 // ---------- Pixel Art ----------
@@ -651,7 +706,7 @@ function showCorporateLoginModal(meta = {}) {
         ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(company)}" style="max-height:72px;max-width:220px;object-fit:contain;margin:4px auto 18px;display:block;">`
         : `<div style="font-size:3rem;margin-bottom:12px;">🏢</div>`}
       <h2 style="font-size:1.5rem;font-weight:900;margin:0 0 8px;">Willkommen!</h2>
-      <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist der Firmen-Adventskalender${company ? ` von <strong style="color:#fff;">${escapeHtml(company)}</strong>` : ""}. Melde dich mit deiner E-Mail-Adresse an, damit dein Fortschritt auf allen Geräten gespeichert wird.</p>
+      <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist der Firmen-Adventskalender${company ? ` von <strong style="color:#fff;">${escapeHtml(company)}</strong>` : ""}. Melde dich mit deiner E-Mail-Adresse an um mitzumachen.<br>Wir wünschen dir eine besinnliche Adventszeit.</p>
       <form id="corp-login-form" novalidate style="display:flex;flex-direction:column;gap:12px;">
         <input type="email" id="corp-email" required autocomplete="email" inputmode="email" placeholder="vorname.nachname@firma.ch" style="width:100%;box-sizing:border-box;background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px 16px;color:#fff;font-size:1rem;outline:none;">
         <p id="corp-email-error" style="display:none;margin:-4px 0 0;color:#fda4af;font-size:0.85rem;">Bitte eine gültige E-Mail-Adresse eingeben.</p>

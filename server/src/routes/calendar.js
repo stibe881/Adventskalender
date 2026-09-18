@@ -126,6 +126,7 @@ router.get("/:token", async (req, res) => {
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
+    hasCoins: calendar.days.some((d) => d.contentType === "coins"),
     year: calendar.year,
     today: getTodayParts(),
     streak: streak,

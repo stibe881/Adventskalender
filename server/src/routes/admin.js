@@ -689,6 +689,7 @@ router.get("/calendars/:id/preview", async (req, res) => {
     companyName: await resolveCompanyName(calendar),
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
+    hasCoins: calendar.days.some((d) => d.contentType === "coins"),
     year: calendar.year,
     today: getTodayParts(),
     preview: true,
