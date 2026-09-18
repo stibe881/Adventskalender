@@ -192,6 +192,7 @@ async function init() {
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
+  initNextDoorCountdown();
   if (isPreview) {
     document.getElementById("preview-banner").classList.remove("hidden");
   }
@@ -343,6 +344,67 @@ function renderFatalError(err) {
       </div>
     </div>
   `;
+}
+
+// ---------- Countdown to the next door ----------
+// Shown under the header while the next door is still locked. If today's
+// door hasn't been opened yet, the countdown waits until it is – the door
+// of the day should get the attention first.
+
+let countdownTimer = null;
+let serverClockOffset = 0; // client clock minus server clock
+
+function initNextDoorCountdown() {
+  const header = document.getElementById("calendar-header");
+  if (!header || document.getElementById("next-door-countdown")) return;
+  serverClockOffset = calendarMeta.serverNow ? Date.now() - calendarMeta.serverNow : 0;
+  const el = document.createElement("div");
+  el.id = "next-door-countdown";
+  el.className = "hidden";
+  el.style.cssText = "display:none;margin:14px auto 0;width:max-content;max-width:92vw;padding:8px 16px;border-radius:999px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(6px);color:#fff;font-size:0.9rem;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.25);";
+  header.appendChild(el);
+  updateNextDoorCountdown();
+}
+
+function nextDoorTarget() {
+  if (isPreview) return null;
+  const today = calendarMeta.today;
+  const todaysDoor = today && today.month === 12 && today.year === calendarMeta.year
+    ? days.find((d) => d.day === today.day)
+    : null;
+  if (todaysDoor && todaysDoor.unlocked && !todaysDoor.opened) return null;
+  const next = days.filter((d) => !d.unlocked && d.unlockAt).sort((a, b) => a.day - b.day)[0];
+  return next || null;
+}
+
+function updateNextDoorCountdown() {
+  const el = document.getElementById("next-door-countdown");
+  if (!el) return;
+  clearInterval(countdownTimer);
+  const next = nextDoorTarget();
+  if (!next) {
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "block";
+  const pad = (n) => String(n).padStart(2, "0");
+  const tick = () => {
+    const diff = next.unlockAt - (Date.now() - serverClockOffset);
+    if (diff <= 0) {
+      el.innerHTML = `Türchen ${next.day} ist jetzt offen – <a href="javascript:location.reload()" style="color:#fde047;font-weight:700;">neu laden</a>`;
+      clearInterval(countdownTimer);
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const time = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    const when = d > 0 ? `${d} ${d === 1 ? "Tag" : "Tage"} ${time}` : time;
+    el.innerHTML = `Nächstes Türchen <b>${next.day}</b> öffnet in <span style="font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:0.04em;">${when}</span>`;
+  };
+  tick();
+  countdownTimer = setInterval(tick, 1000);
 }
 
 function applyEffects(enabled) {
@@ -1495,6 +1557,7 @@ function openDoorAnimation(sceneEl, door) {
     applyDoorState(sceneEl, door);
     updateProgress();
     initPet();
+    updateNextDoorCountdown();
 
     if (window.atmosphere) window.atmosphere.playMagicChime();
     if (effectsEnabled) setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);

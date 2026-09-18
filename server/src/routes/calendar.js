@@ -1,7 +1,7 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
 const db = require("../db");
-const { isDayUnlocked, unlockDateISO, getTodayParts } = require("../utils/time");
+const { isDayUnlocked, unlockDateISO, unlockAtMs, getTodayParts } = require("../utils/time");
 
 const router = express.Router();
 
@@ -53,6 +53,7 @@ function publicDayView(calendar, door, user = null) {
   return {
     day: door.day,
     unlockDate: unlockDateISO(calendar.year, door.day),
+    unlockAt: unlockAtMs(calendar.year, door.day),
     unlocked,
     opened: false,
     filled: Boolean(door.contentType),
@@ -130,6 +131,7 @@ router.get("/:token", async (req, res) => {
     hasCoins: calendar.days.some((d) => d.contentType === "coins"),
     year: calendar.year,
     today: getTodayParts(),
+    serverNow: Date.now(),
     streak: streak,
     leaderboard: calendar.leaderboard || [],
     days: calendar.days.map((d) => publicDayView(calendar, d, user)),
