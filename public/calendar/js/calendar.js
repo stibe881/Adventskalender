@@ -86,7 +86,7 @@ function updateProgress() {
   const progressText = document.getElementById("progress-text");
   const progressBar = document.getElementById("progress-bar");
   
-  if (!progressContainer || !days || days.length === 0) return;
+  if (!progressContainer) return; // progress bar removed from the page on purpose
   
   // Show it once we have data
   progressContainer.classList.remove("hidden");
@@ -435,23 +435,9 @@ const SHOP_ITEMS = [
   { id: "star", name: "Weihnachtsstern", emoji: "🌟", slot: "aura", price: 250, desc: "Das seltenste Stück im Shop." },
 ];
 
-// The most valuable owned item per slot is worn.
-function petOutfit(excludeSlot = null) {
-  const worn = {};
-  SHOP_ITEMS.filter((i) => userInventory.includes(i.id) && i.slot !== excludeSlot).forEach((i) => {
-    if (!worn[i.slot] || worn[i.slot].price < i.price) worn[i.slot] = i;
-  });
-  const e = (slot) => (worn[slot] ? worn[slot].emoji : "");
-  return { text: `${e("head")}${e("face")}🦌${e("neck")}${e("ride")}${e("aura")}`, hasAura: Boolean(worn.aura) };
-}
-
-// Rudi's mood follows what the visitor has actually done: any opened door
-// wakes him up, a long streak (or many opened doors) makes him glow. The
-// server only counts streaks in December, so opened doors are the fallback.
 function initPet(streak = calendarMeta?.streak || 0) {
   const petEl = document.getElementById("digital-pet");
   const emoji = document.getElementById("pet-emoji");
-  const status = document.getElementById("pet-status");
   if (!petEl) return;
   petEl.classList.remove("hidden");
 
@@ -464,7 +450,7 @@ function initPet(streak = calendarMeta?.streak || 0) {
 
   if (!petEl.dataset.wired) {
     petEl.dataset.wired = "1";
-    petEl.addEventListener("click", () => {
+    petEl.querySelector(".rudi-stable").addEventListener("click", () => {
       emoji.style.transform = "translateY(-14px)";
       setTimeout(() => (emoji.style.transform = "translateY(0)"), 220);
       // Rudi shows off one of his purchases; without any he just hops.
@@ -474,27 +460,42 @@ function initPet(streak = calendarMeta?.streak || 0) {
     });
   }
 
-  const outfit = petOutfit();
   emoji.style.filter = "";
-  emoji.style.opacity = "1";
   if (petState === "sleepy") {
-    emoji.textContent = `${outfit.text}💤`;
+    emoji.textContent = "🦌💤";
     emoji.style.filter = "grayscale(0.45)";
-    status.textContent = "Schläft – öffne ein Türchen!";
+    petEl.title = "Rudi schläft – öffne ein Türchen!";
   } else if (petState === "happy") {
-    emoji.textContent = outfit.text;
-    status.textContent = `Glücklich · ${activityText}`;
+    emoji.textContent = "🦌";
+    petEl.title = `Rudi ist glücklich · ${activityText}`;
   } else {
-    emoji.textContent = outfit.hasAura ? outfit.text : `${outfit.text}✨`;
+    emoji.textContent = "🦌✨";
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
-    status.textContent = `On Fire! 🔥 ${activityText}`;
+    petEl.title = `Rudi: On Fire! 🔥 ${activityText}`;
   }
 
-  // Shrink the emoji row when Rudi wears a lot so he still fits in the stall.
-  const glyphs = Array.from(emoji.textContent.replace(/[‍️]/g, "")).length;
-  const wrap = emoji.parentElement;
-  wrap.classList.toggle("is-crowded", glyphs >= 3 && glyphs < 5);
-  wrap.classList.toggle("is-packed", glyphs >= 5);
+  renderPetItems();
+}
+
+// Purchased items sit under the stable; each one can be used with a tap.
+function renderPetItems() {
+  const bar = document.getElementById("pet-items");
+  if (!bar) return;
+  const owned = SHOP_ITEMS.filter((i) => userInventory.includes(i.id));
+  bar.innerHTML = owned
+    .map((item) => {
+      const action = RUDI_ACTIONS[item.id];
+      return `<button type="button" class="stable-item" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}" aria-label="${escapeHtml(item.name)}">${item.emoji}</button>`;
+    })
+    .join("");
+  bar.style.display = owned.length ? "flex" : "none";
+  bar.querySelectorAll(".stable-item").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }], { duration: 300 });
+      useItem(btn.dataset.item);
+    });
+  });
 }
 
 // ---------- Shop ----------
@@ -530,20 +531,21 @@ const RUDI_ACTIONS = {
   star: { label: "Sternschnuppen-Flug", run: () => rudiTravel("🌟", "fly") },
   lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
   bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },
-  hat: { label: "Hut ziehen und posieren", run: () => rudiPose("Rudi zieht den Zylinder!") },
-  santahat: { label: "Ho-ho-ho posieren", run: () => rudiPose("Ho ho ho! Rudi in Weihnachtsstimmung.") },
-  crown: { label: "Königlich posieren", run: () => rudiPose("Seine Majestät Rudi I. grüsst huldvoll.") },
-  glasses: { label: "Cool posieren", run: () => rudiPose("Rudi: zu cool für Schnee.") },
-  scarf: { label: "Kuscheln", run: () => rudiPose("Rudi kuschelt sich in seinen Schal.") },
-  bow: { label: "Sich hübsch machen", run: () => rudiPose("Rudi zupft seine Schleife zurecht.") },
+  hat: { label: "Zylinder aufsetzen", run: (item) => rudiPose(item, "Rudi zieht den Zylinder!") },
+  santahat: { label: "Weihnachtsmütze aufsetzen", run: (item) => rudiPose(item, "Ho ho ho! Rudi in Weihnachtsstimmung.") },
+  crown: { label: "Krone aufsetzen", run: (item) => rudiPose(item, "Seine Majestät Rudi I. grüsst huldvoll.") },
+  glasses: { label: "Sonnenbrille aufsetzen", run: (item) => rudiPose(item, "Rudi: zu cool für Schnee.") },
+  scarf: { label: "Schal umlegen", run: (item) => rudiPose(item, "Rudi kuschelt sich in seinen Schal.") },
+  bow: { label: "Schleife anlegen", run: (item) => rudiPose(item, "Rudi zupft seine Schleife zurecht.") },
 };
 
 window.useItem = function(itemId) {
-  if (!userInventory.includes(itemId)) return;
+  const item = SHOP_ITEMS.find((i) => i.id === itemId);
+  if (!item || !userInventory.includes(itemId)) return;
   const action = RUDI_ACTIONS[itemId];
   document.getElementById("shop-modal")?.classList.add("hidden");
-  if (action) action.run();
-  else rudiPose("Rudi freut sich über sein neues Stück.");
+  if (action) action.run(item);
+  else rudiPose(item, "Rudi freut sich über sein neues Stück.");
 };
 
 let rudiBusy = false;
@@ -553,11 +555,9 @@ function rudiTravel(vehicle, mode) {
   if (rudiBusy) return;
   rudiBusy = true;
   const petEmoji = document.getElementById("pet-emoji");
-  // The vehicle is added explicitly, so leave the worn ride/aura item out of the outfit.
-  const outfit = petOutfit(mode === "fly" ? "aura" : "ride");
   const traveller = document.createElement("div");
   traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
-  traveller.textContent = `${outfit.text}${vehicle}`;
+  traveller.textContent = `🦌${vehicle}`;
   document.body.appendChild(traveller);
   const originalEmoji = petEmoji.textContent;
   petEmoji.textContent = "💨";
@@ -637,9 +637,14 @@ function rudiJingle() {
   showLockToast("Kling, Glöckchen, klingelingeling!");
 }
 
-function rudiPose(message) {
+function rudiPose(item, message) {
   const petEl = document.getElementById("digital-pet");
   const emoji = document.getElementById("pet-emoji");
+  if (rudiBusy) return;
+  rudiBusy = true;
+  emoji.textContent = `${item.emoji}🦌`;
+  emoji.style.filter = "";
+  setTimeout(() => { rudiBusy = false; initPet(); }, 2600);
   emoji.animate(
     [{ transform: "scale(1) rotate(0)" }, { transform: "scale(1.35) rotate(-8deg)" }, { transform: "scale(1.35) rotate(8deg)" }, { transform: "scale(1) rotate(0)" }],
     { duration: 900, easing: "ease-in-out" }

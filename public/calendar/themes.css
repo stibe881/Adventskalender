@@ -900,3 +900,35 @@ body {
   box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.55), 0 0 22px rgba(253, 224, 71, 0.55) !important;
 }
 .door-scene[data-day="25"] .door-number { color: #fde047 !important; }
+
+/* Purchased items under the stable, each usable with a tap */
+.stable-items {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 190px;
+}
+.stable-item {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.stable-item:hover { transform: translateY(-2px) scale(1.08); border-color: #fde047; }
+@media (max-width: 640px) {
+  .stable-items { max-width: 140px; gap: 4px; }
+  .stable-item { width: 28px; height: 28px; font-size: 1rem; border-radius: 8px; }
+}
