@@ -176,8 +176,13 @@ window.upgradeCalendar = async (id) => {
   }
 };
 
-window.deleteCalendar = async (id) => {
-  if (!confirm("Kalender wirklich löschen?")) return;
+window.deleteCalendar = async (id, isPro) => {
+  let msg = "Möchtest du diesen Kalender wirklich löschen?\n\n⚠️ Achtung: Dieser Schritt kann nicht rückgängig gemacht werden!";
+  if (isPro) {
+    msg += "\n\nWICHTIG: Dieser Kalender hat PRO-Status. Wenn du ihn löschst, verfällt das Upgrade unwiderruflich!";
+  }
+  
+  if (!confirm(msg)) return;
   try {
     await api.deleteCalendar(id);
     await loadCalendars();
@@ -300,7 +305,7 @@ function renderTableRow(cal) {
           ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-500 font-bold border-t border-white/10">⭐ PRO Upgrade</button>` : ``}
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
           <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
-          <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
+          <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
         </div>
       </div>
     </td>
@@ -328,7 +333,7 @@ function renderCard(cal) {
           <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>
           <a href="/api/admin/calendars/${cal.id}/export-giveaway" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 flex items-center gap-2" download>Leads Exportieren</a>
           <button onclick="promptImport('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-blue-400 flex items-center gap-2">CSV Import</button>
-          <button onclick="deleteCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-500 flex items-center gap-2">Löschen</button>
+          <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-500 flex items-center gap-2">Löschen</button>
         </div>
       </div>
     </div>
