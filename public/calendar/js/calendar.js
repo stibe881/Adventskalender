@@ -382,9 +382,9 @@ const SHOP_ITEMS = [
 ];
 
 // The most valuable owned item per slot is worn.
-function petOutfit() {
+function petOutfit(excludeSlot = null) {
   const worn = {};
-  SHOP_ITEMS.filter((i) => userInventory.includes(i.id)).forEach((i) => {
+  SHOP_ITEMS.filter((i) => userInventory.includes(i.id) && i.slot !== excludeSlot).forEach((i) => {
     if (!worn[i.slot] || worn[i.slot].price < i.price) worn[i.slot] = i;
   });
   const e = (slot) => (worn[slot] ? worn[slot].emoji : "");
@@ -493,7 +493,8 @@ function rudiTravel(vehicle, mode) {
   if (rudiBusy) return;
   rudiBusy = true;
   const petEmoji = document.getElementById("pet-emoji");
-  const outfit = petOutfit();
+  // The vehicle is added explicitly, so leave the worn ride/aura item out of the outfit.
+  const outfit = petOutfit(mode === "fly" ? "aura" : "ride");
   const traveller = document.createElement("div");
   traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
   traveller.textContent = `${outfit.text}${vehicle}`;
