@@ -8,6 +8,13 @@
     errorMsg.classList.replace("bg-rose-950/40", "bg-emerald-950/40");
     errorMsg.classList.replace("border-rose-900", "border-emerald-900");
   }
+  
+  if (urlParams.get("mode") === "register") {
+    setTimeout(() => {
+      const toggleBtn = document.getElementById("toggle-mode-btn");
+      if (toggleBtn) toggleBtn.click();
+    }, 50);
+  }
 
   // Already logged in? Skip straight to dashboard.
   try {

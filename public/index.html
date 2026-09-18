@@ -8,162 +8,371 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/styles.css" />
+  <style>
+    /* Custom styles to guarantee layout and a professional look */
+    body {
+      background-color: #0f172a; /* slate-900 */
+      color: #f8fafc; /* slate-50 */
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navigation */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .nav-link {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-link:hover {
+      color: #fff;
+    }
+    .btn-primary {
+      background-color: #059669; /* emerald-600 */
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: background-color 0.2s;
+      display: inline-block;
+    }
+    .btn-primary:hover {
+      background-color: #047857; /* emerald-700 */
+    }
+    .btn-secondary {
+      background-color: #1e293b; /* slate-800 */
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      border: 1px solid #334155;
+      transition: background-color 0.2s;
+      display: inline-block;
+    }
+    .btn-secondary:hover {
+      background-color: #334155;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 40px 0;
+      }
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    .hero-title span {
+      color: #34d399; /* emerald-400 */
+    }
+    @media (max-width: 900px) {
+      .hero-title { font-size: 2.5rem; }
+    }
+    .hero-text {
+      color: #94a3b8; /* slate-400 */
+      font-size: 1.125rem;
+      margin-bottom: 40px;
+      max-width: 500px;
+    }
+    @media (max-width: 900px) {
+      .hero-text { margin-left: auto; margin-right: auto; }
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .hero-buttons { justify-content: center; }
+    }
+    .hero-image {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .hero-image-header {
+      background: #0f172a;
+      border-bottom: 1px solid #334155;
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .hero-image-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+    .hero-image-body {
+      padding: 32px;
+      background: #1e293b;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .hero-door {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 1.25rem;
+    }
+
+    /* Features Section */
+    .features {
+      background: #0b1120;
+      padding: 80px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .features-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .features-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin: 0 0 16px 0;
+    }
+    .features-subtitle {
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      padding: 32px;
+      border-radius: 8px;
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(52, 211, 153, 0.1);
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+    .feature-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.25rem;
+    }
+    .feature-card p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.9375rem;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 60px 0;
+      text-align: center;
+    }
+    .footer-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      display: inline-block;
+      padding: 24px 32px;
+      border-radius: 8px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .footer-box h4 {
+      margin: 0 0 8px 0;
+      color: #f8fafc;
+    }
+    .footer-box p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    .footer-links a {
+      color: #64748b;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    .footer-links a:hover {
+      color: #94a3b8;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30">
+<body>
   
   <!-- Navigation -->
-  <nav class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <span class="text-2xl">🎄</span>
-      <span class="font-display font-bold text-xl tracking-tight text-white hidden sm:inline-block">Mein Adventskalender</span>
+  <nav class="nav-bar container">
+    <div class="nav-logo">
+      <span>🎄</span>
+      <span>Adventskalender</span>
     </div>
-    <div class="flex gap-2 sm:gap-4 items-center">
-      <a href="/admin/" class="text-sm font-medium text-slate-300 hover:text-white transition-colors px-2 py-2">Login</a>
-      <a href="/admin/" class="text-sm font-semibold bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors">Registrieren</a>
+    <div class="nav-links">
+      <a href="/admin/" class="nav-link">Login</a>
+      <a href="/admin/?mode=register" class="btn-primary" style="padding: 8px 16px;">Registrieren</a>
     </div>
   </nav>
 
   <!-- Hero Section -->
-  <main class="max-w-7xl mx-auto px-6 pt-12 pb-24 lg:pt-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-24 overflow-hidden">
-    
-    <div class="flex-1 text-center lg:text-left z-10">
-      <div class="inline-block bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium text-sm px-4 py-1.5 rounded-full mb-6">
-        ✨ Mache deinen Liebsten eine Freude
-      </div>
-      <h1 class="font-display text-4xl lg:text-6xl font-bold leading-tight mb-6 text-white">
+  <main class="hero container">
+    <div>
+      <h1 class="hero-title">
         Gestalte deinen <br/>
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">digitalen Adventskalender</span>
+        <span>digitalen Adventskalender</span>
       </h1>
-      <p class="text-lg text-slate-400 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-        Kreiere in wenigen Minuten einen einzigartigen, persönlichen Adventskalender. Befülle die 24 Türchen mit eigenen Fotos, Videos, liebevollen Textnachrichten oder interaktiven Rätseln.
+      <p class="hero-text">
+        Kreiere in wenigen Minuten einen persönlichen Adventskalender. Befülle 24 Türchen mit eigenen Fotos, Videos, Nachrichten oder Rätseln.
       </p>
       
-      <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-        <a href="/admin/" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 text-center">
-          Jetzt kostenlos starten
-        </a>
-        <a href="#how-it-works" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white font-medium text-lg px-8 py-4 rounded-xl transition-all text-center">
-          So funktioniert's
-        </a>
-      </div>
-      
-      <div class="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-slate-500">
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-          Einfache Bedienung
-        </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-          Keine App-Installation nötig
-        </div>
+      <div class="hero-buttons">
+        <a href="/admin/?mode=register" class="btn-primary" style="padding: 14px 28px; font-size: 1rem;">Kalender erstellen</a>
+        <a href="#anleitung" class="btn-secondary" style="padding: 14px 28px; font-size: 1rem;">So funktioniert's</a>
       </div>
     </div>
     
-    <div class="flex-1 relative w-full max-w-lg mx-auto lg:max-w-none">
-      <!-- Decorative background glow -->
-      <div class="absolute -inset-4 bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-20 blur-3xl rounded-[3rem]"></div>
-      
-      <!-- Mockup Window -->
-      <div class="relative bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl transform rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
-        <div class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-rose-500"></div>
-          <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-          <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-          <div class="ml-4 bg-slate-900 text-slate-400 text-xs px-3 py-1.5 rounded-md w-full max-w-xs truncate flex items-center gap-2">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            mein-adventskalender.ch/lisa
-          </div>
+    <div>
+      <div class="hero-image">
+        <div class="hero-image-header">
+          <div class="hero-image-dot dot-red"></div>
+          <div class="hero-image-dot dot-yellow"></div>
+          <div class="hero-image-dot dot-green"></div>
         </div>
-        <div class="p-6 sm:p-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 to-slate-950 aspect-[4/3] flex flex-col">
-          <h3 class="text-center font-display text-2xl font-bold text-white mb-6">Für Lisa ❄️</h3>
-          <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3 flex-1">
-            <div class="bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[-2deg]">1</div>
-            <div class="bg-rose-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[1deg]">2</div>
-            <div class="bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md opacity-70">3</div>
-            <div class="bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[-1deg]">4</div>
-            <div class="bg-amber-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">5</div>
-            <div class="bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[3deg]">6</div>
-            <div class="bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md opacity-70">7</div>
-            <div class="bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">8</div>
-            <div class="bg-rose-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[-2deg]">9</div>
-            <div class="bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md opacity-70">10</div>
-            <div class="bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md rotate-[1deg]">11</div>
-            <div class="bg-amber-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md">12</div>
-            <div class="bg-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex">13</div>
-            <div class="bg-slate-700 rounded-lg items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex opacity-70">14</div>
-            <div class="bg-emerald-600 rounded-lg items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex">15</div>
-            <div class="bg-rose-600 rounded-lg items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex rotate-[-1deg]">16</div>
-            <div class="bg-slate-700 rounded-lg items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex opacity-70">17</div>
-            <div class="bg-amber-500 rounded-lg items-center justify-center text-white font-bold text-lg shadow-md hidden sm:flex rotate-[2deg]">18</div>
+        <div class="hero-image-body">
+          <h3 style="text-align: center; font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-top: 0; margin-bottom: 24px;">Für Lisa</h3>
+          <div class="hero-grid">
+            <!-- Simulated doors -->
+            <div class="hero-door" style="background: #059669;">1</div>
+            <div class="hero-door" style="background: #dc2626;">2</div>
+            <div class="hero-door" style="background: #334155;">3</div>
+            <div class="hero-door" style="background: #4f46e5;">4</div>
+            <div class="hero-door" style="background: #d97706;">5</div>
+            <div class="hero-door" style="background: #0284c7;">6</div>
+            <div class="hero-door" style="background: #334155;">7</div>
+            <div class="hero-door" style="background: #059669;">8</div>
+            <div class="hero-door" style="background: #e11d48;">9</div>
+            <div class="hero-door" style="background: #334155;">10</div>
+            <div class="hero-door" style="background: #6366f1;">11</div>
+            <div class="hero-door" style="background: #d97706;">12</div>
           </div>
         </div>
       </div>
     </div>
-
   </main>
 
-  <!-- Info Section -->
-  <section id="how-it-works" class="bg-slate-900 border-y border-white/5 py-24">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="text-center mb-16">
-        <h2 class="font-display text-3xl font-bold text-white mb-4">In 3 einfachen Schritten</h2>
-        <p class="text-slate-400 max-w-2xl mx-auto">Dein persönlicher Adventskalender ist im Handumdrehen fertiggestellt und bereit, jeden Tag im Dezember Freude zu bereiten.</p>
+  <!-- Features Section -->
+  <section id="anleitung" class="features">
+    <div class="container">
+      <div class="features-header">
+        <h2 class="features-title">In 3 einfachen Schritten</h2>
+        <p class="features-subtitle">Dein persönlicher Adventskalender ist im Handumdrehen fertiggestellt und bereit, jeden Tag im Dezember Freude zu bereiten.</p>
       </div>
       
-      <div class="grid md:grid-cols-3 gap-8">
-        <!-- Step 1 -->
-        <div class="bg-slate-950 border border-white/5 p-8 rounded-2xl relative overflow-hidden group">
-          <div class="text-[8rem] font-black text-slate-800/30 absolute -top-8 -right-4 pointer-events-none group-hover:scale-110 transition-transform duration-500">1</div>
-          <div class="relative z-10">
-            <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">Konto erstellen</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">Registriere dich mit wenigen Klicks und lege sofort deinen ersten Adventskalender für eine Person deiner Wahl an.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
           </div>
+          <h3>1. Konto erstellen</h3>
+          <p>Registriere dich mit wenigen Klicks und lege sofort deinen ersten Adventskalender an.</p>
         </div>
         
-        <!-- Step 2 -->
-        <div class="bg-slate-950 border border-white/5 p-8 rounded-2xl relative overflow-hidden group">
-          <div class="text-[8rem] font-black text-slate-800/30 absolute -top-8 -right-4 pointer-events-none group-hover:scale-110 transition-transform duration-500">2</div>
-          <div class="relative z-10">
-            <div class="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">Türchen befüllen</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">Lade Fotos hoch, füge Youtube-Links ein, schreibe liebevolle Nachrichten oder erstelle sogar kleine Escape-Room Rätsel.</p>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
           </div>
+          <h3>2. Türchen befüllen</h3>
+          <p>Lade Fotos hoch, füge Youtube-Links ein, schreibe Texte oder erstelle Rätsel.</p>
         </div>
         
-        <!-- Step 3 -->
-        <div class="bg-slate-950 border border-white/5 p-8 rounded-2xl relative overflow-hidden group">
-          <div class="text-[8rem] font-black text-slate-800/30 absolute -top-8 -right-4 pointer-events-none group-hover:scale-110 transition-transform duration-500">3</div>
-          <div class="relative z-10">
-            <div class="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">Link teilen</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">Verschicke den generierten Link per WhatsApp oder E-Mail. Ab dem 1. Dezember kann das erste Türchen geöffnet werden!</p>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
           </div>
+          <h3>3. Link teilen</h3>
+          <p>Verschicke den Link. Ab dem 1. Dezember kann das erste Türchen geöffnet werden.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="max-w-7xl mx-auto px-6 py-12 text-center">
-    <div class="inline-flex items-center justify-center p-4 bg-slate-900 border border-slate-800 rounded-2xl mb-8 shadow-sm">
-      <div class="text-left">
-        <p class="text-slate-300 font-medium mb-1">Du hast einen Kalender geschenkt bekommen?</p>
-        <p class="text-slate-500 text-sm">Öffne einfach den persönlichen Link in deinem Browser, den du erhalten hast. Keine Anmeldung erforderlich.</p>
-      </div>
+  <footer class="footer container">
+    <div class="footer-box">
+      <h4>Du hast einen Kalender erhalten?</h4>
+      <p>Öffne einfach den Link in deinem Browser. Keine Anmeldung erforderlich.</p>
     </div>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-slate-500 text-sm">
-      <a href="/admin/" class="hover:text-emerald-400 transition-colors">Admin-Login</a>
-      <span class="hidden sm:inline">&middot;</span>
-      <a href="#" class="hover:text-emerald-400 transition-colors">Datenschutz</a>
-      <span class="hidden sm:inline">&middot;</span>
-      <a href="#" class="hover:text-emerald-400 transition-colors">Impressum</a>
+    
+    <div class="footer-links">
+      <a href="/admin/">Admin-Login</a>
+      <a href="#">Datenschutz</a>
+      <a href="#">Impressum</a>
     </div>
   </footer>
 
