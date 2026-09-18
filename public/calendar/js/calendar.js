@@ -1606,9 +1606,9 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "puzzle",
         "Schiebepuzzle",
-        `<p class="modal-muted mb-4">Löse das Puzzle, um das ganze Bild zu sehen!</p>
-         <div id="puzzle-container" class="mx-auto bg-white/10 p-2 rounded-lg" style="width: 280px; height: 280px; position: relative;"></div>
-         <p id="puzzle-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">${escapeHtml(c.successMessage)}</p>`
+        `<p class="modal-muted mb-4 text-center" style="text-align: center;">Löse das Puzzle, um das ganze Bild zu sehen!</p>
+         <div id="puzzle-container" style="width: 280px; height: 280px; position: relative; margin: 0 auto; background: rgba(128,128,128,0.1); padding: 8px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);"></div>
+         <p id="puzzle-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold; text-align: center;">${escapeHtml(c.successMessage)}</p>`
       );
 
     case "ar":
