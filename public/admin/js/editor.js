@@ -176,6 +176,9 @@ async function loadCalendar() {
   if (calendar.customConfig?.firmaColor) {
     document.getElementById("firma-color").value = calendar.customConfig.firmaColor;
   }
+  if (calendar.customConfig?.doorStyle) {
+    document.getElementById("firma-door-style").value = calendar.customConfig.doorStyle;
+  }
 
   document.getElementById("preview-link").href = `/c/preview/${calendarId}`;
 
@@ -1264,6 +1267,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
   if (fd.get("theme") === "firma") {
     if (!calendar.customConfig) calendar.customConfig = {};
     calendar.customConfig.firmaColor = document.getElementById("firma-color").value;
+    calendar.customConfig.doorStyle = document.getElementById("firma-door-style").value;
   }
   
   // Subdomain is disabled for now on Hetzner Webhosting

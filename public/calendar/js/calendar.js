@@ -669,11 +669,32 @@ function renderDoorGrid() {
     }
     const [cols, rows] = spanSize(span);
 
+    const cfg = calendarMeta.customConfig || {};
+    let leafFrontStyle = "";
+    let logoHtml = "";
+    
+    if (themeKey === "firma") {
+      const doorStyle = cfg.doorStyle || "white"; // "white", "color", "logo", "color-logo"
+      
+      if (doorStyle === "color" || doorStyle === "color-logo") {
+        const c = cfg.firmaColor || "#3b82f6";
+        // Override the CSS variables explicitly so that children (like .door-number) pick them up
+        leafFrontStyle = `background: ${c}; border-color: ${c}; --number-color: #ffffff; --lock-color: rgba(255,255,255,0.7);`;
+      }
+      
+      if ((doorStyle === "logo" || doorStyle === "color-logo") && cfg.logo) {
+        logoHtml = `<img src="${cfg.logo}" class="door-logo" style="position:absolute; width:60%; height:60%; object-fit:contain; top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.15; pointer-events:none;" />`;
+      }
+    }
+
     scene.innerHTML = `
       <div class="door-body">
         <div class="door-interior"><span class="interior-icon"></span></div>
         <div class="door-leaf">
-          <div class="leaf-front">${leafFrontHtml(door, cols, rows, house)}</div>
+          <div class="leaf-front" style="${leafFrontStyle}">
+            ${logoHtml}
+            ${leafFrontHtml(door, cols, rows, house)}
+          </div>
           <div class="leaf-back"></div>
         </div>
       </div>
