@@ -391,16 +391,22 @@ function petOutfit() {
   return { text: `${e("head")}${e("face")}🦌${e("neck")}${e("ride")}${e("aura")}`, hasAura: Boolean(worn.aura) };
 }
 
-function initPet(streak) {
+// Rudi's mood follows what the visitor has actually done: any opened door
+// wakes him up, a long streak (or many opened doors) makes him glow. The
+// server only counts streaks in December, so opened doors are the fallback.
+function initPet(streak = calendarMeta?.streak || 0) {
   const petEl = document.getElementById("digital-pet");
   const emoji = document.getElementById("pet-emoji");
   const status = document.getElementById("pet-status");
   if (!petEl) return;
   petEl.classList.remove("hidden");
 
+  const openedCount = days.filter((d) => d.opened).length;
+  const activity = Math.max(streak, openedCount);
   let petState = "sleepy";
-  if (streak > 0 && streak <= 5) petState = "happy";
-  if (streak > 5) petState = "glowing";
+  if (activity > 0) petState = "happy";
+  if (streak > 5 || openedCount >= 10) petState = "glowing";
+  const activityText = streak > 0 ? `${streak} Tage Streak` : `${openedCount} Türchen geöffnet`;
 
   if (!petEl.dataset.wired) {
     petEl.dataset.wired = "1";
@@ -421,11 +427,11 @@ function initPet(streak) {
     status.textContent = "Schläft – öffne ein Türchen!";
   } else if (petState === "happy") {
     emoji.textContent = outfit.text;
-    status.textContent = `Glücklich · ${streak} Tage Streak`;
+    status.textContent = `Glücklich · ${activityText}`;
   } else {
     emoji.textContent = outfit.hasAura ? outfit.text : `${outfit.text}✨`;
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
-    status.textContent = `On Fire! 🔥 ${streak} Tage Streak`;
+    status.textContent = `On Fire! 🔥 ${activityText}`;
   }
 }
 
@@ -1356,7 +1362,8 @@ function openDoorAnimation(sceneEl, door) {
   requestAnimationFrame(() => {
     applyDoorState(sceneEl, door);
     updateProgress();
-    
+    initPet();
+
     if (window.atmosphere) window.atmosphere.playMagicChime();
     if (effectsEnabled) setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
     
