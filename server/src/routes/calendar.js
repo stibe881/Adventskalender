@@ -45,7 +45,8 @@ function publicDayView(calendar, door, user = null) {
     locationData = {
       requiresLocation: true,
       targetLat: door.content.lat,
-      targetLng: door.content.lng
+      targetLng: door.content.lng,
+      locationHint: door.content.hint || ""
     };
   }
 
@@ -57,7 +58,12 @@ function publicDayView(calendar, door, user = null) {
     filled: Boolean(door.contentType),
     ...locationData,
     isLocked,
-    lockHint: door.content?.lockHint || null
+    lockHint: door.content?.lockHint || null,
+    sensorLock: door.content?.sensorLock || null,
+    geoLat: door.content?.geoLat || null,
+    geoLon: door.content?.geoLon || null,
+    reqChoiceDay: door.content?.reqChoiceDay || null,
+    reqChoiceOpt: door.content?.reqChoiceOpt || null
   };
 }
 

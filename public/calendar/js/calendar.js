@@ -684,9 +684,9 @@ function renderDoorGrid() {
     if (!door) return;
     
     // Check choice requirement
-    if (door.content && door.content.reqChoiceDay && door.content.reqChoiceOpt) {
-      const requiredDay = door.content.reqChoiceDay;
-      const requiredOpt = door.content.reqChoiceOpt;
+    if (door.reqChoiceDay && door.reqChoiceOpt) {
+      const requiredDay = door.reqChoiceDay;
+      const requiredOpt = door.reqChoiceOpt;
       if (!calendarMeta.choices || calendarMeta.choices[requiredDay] !== requiredOpt) {
         return; // Don't render this door
       }
@@ -851,15 +851,15 @@ async function handleDoorClick(dayNum, sceneEl) {
     requestBody.metaPassword = pwd;
   }
 
-  if (door.isLocked && door.content?.lockPassword) {
+  if (door.isLocked) {
     const pwd = prompt(`🔒 Dieses Türchen ist durch ein Passwort geschützt!\n\nHinweis: ${door.lockHint || 'Kein Hinweis'}\n\nPasswort eingeben:`);
     if (!pwd) return;
     requestBody.password = pwd;
   }
   
   // Sensor Locks (Voice & Camera)
-  if (door.content?.sensorLock && !isPreview) {
-    const sl = door.content.sensorLock;
+  if (door.sensorLock && !isPreview) {
+    const sl = door.sensorLock;
     if (sl === "voice") {
       const success = await promptVoiceLock(sceneEl);
       if (!success) return;
@@ -868,7 +868,7 @@ async function handleDoorClick(dayNum, sceneEl) {
       const success = await promptCameraLock(sceneEl, color);
       if (!success) return;
     } else if (sl === "geoAR") {
-      const success = await promptGeoAR(doorEl, door.content.geoLat, door.content.geoLon);
+      const success = await promptGeoAR(sceneEl, door.geoLat, door.geoLon);
       if (!success) return;
     }
   }
@@ -893,8 +893,8 @@ async function handleDoorClick(dayNum, sceneEl) {
       });
       const userLat = pos.coords.latitude;
       const userLng = pos.coords.longitude;
-      const targetLat = door.content.lat;
-      const targetLng = door.content.lng;
+      const targetLat = door.targetLat;
+      const targetLng = door.targetLng;
       
       // Calculate distance using Haversine
       const R = 6371e3; // metres
@@ -908,7 +908,7 @@ async function handleDoorClick(dayNum, sceneEl) {
 
       if (distance > 50) { // 50 meters radius
         shakeDoor(sceneEl);
-        showLockToast(`Du bist noch zu weit weg! (ca. ${Math.round(distance)}m). Hinweis: ${door.content.hint}`);
+        showLockToast(`Du bist noch zu weit weg! (ca. ${Math.round(distance)}m). Hinweis: ${door.locationHint}`);
         return;
       }
     } catch (err) {
