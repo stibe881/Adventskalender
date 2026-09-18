@@ -794,3 +794,28 @@ body {
 /* Snowfall */
 .snow { position: absolute; top: -10px; width: 6px; height: 6px; background: white; border-radius: 50%; box-shadow: 0 0 4px white; animation: fall linear infinite; pointer-events: none; }
 @keyframes fall { 0% { transform: translateY(-10px) translateX(0); } 100% { transform: translateY(110vh) translateX(20px); } }
+
+/* ---------- Slim, translucent scrollbars for scrollable panels ---------- */
+.slim-scroll,
+#modal-card {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+.slim-scroll::-webkit-scrollbar,
+#modal-card::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.slim-scroll::-webkit-scrollbar-track,
+#modal-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+.slim-scroll::-webkit-scrollbar-thumb,
+#modal-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+.slim-scroll::-webkit-scrollbar-thumb:hover,
+#modal-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}

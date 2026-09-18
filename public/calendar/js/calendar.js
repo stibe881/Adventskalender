@@ -1852,7 +1852,7 @@ function renderContent(type, c, dayNum) {
       }
       
       if (c.playlistUrl) {
-        html += `<a href="${escapeHtml(c.playlistUrl)}" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #1DB954; color: #000; font-weight: bold; text-align: center; padding: 12px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+        html += `<a href="${escapeHtml(c.playlistUrl)}" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; width: 100%; margin: 0 auto; background: #1DB954; color: #000; font-weight: bold; text-align: center; padding: 12px 16px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
            <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.47-.077-.334.132-.67.47-.745 3.808-.87 7.076-.496 9.712 1.115.293.18.386.563.207.856zm1.2-3.15c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.13-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-.973 3.632-1.1 8.147-.568 11.234 1.328.366.226.48.706.256 1.072zm.106-3.297C14.67 8 10.513 7.784 7.234 8.78c-.487.148-1-.13-1.148-.616-.148-.488.13-1 .616-1.15C10.457 5.88 15.115 6.13 18.733 8.275c.427.25.57.81.318 1.237-.253.427-.81.57-1.238.318z"/></svg>
            Playlist auf Spotify öffnen
          </a>`;
@@ -1860,7 +1860,7 @@ function renderContent(type, c, dayNum) {
       
       html += `<div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
         <h4 style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.08em;">Aktuelle Playlist (${playlist.length} Songs)</h4>
-        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 6px;">`;
+        <div class="slim-scroll" style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 6px;">`;
 
       if (playlist.length === 0) {
         html += `<p style="color: #64748b; font-style: italic; font-size: 0.875rem; margin: 0;">Die Playlist ist noch leer.</p>`;
