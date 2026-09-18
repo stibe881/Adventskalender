@@ -147,6 +147,35 @@ window.upgradeCalendar = async (id) => {
   }
 };
 
+window.copyLink = async (url) => {
+  try {
+    await navigator.clipboard.writeText(url);
+    alert("Link kopiert!");
+  } catch(e) {
+    alert("Fehler beim Kopieren: " + e.message);
+  }
+};
+
+window.duplicateCalendar = async (id) => {
+  try {
+    await api.duplicateCalendar(id);
+    await loadCalendars();
+  } catch (err) {
+    alert("Fehler beim Duplizieren: " + err.message);
+  }
+};
+
+window.upgradeCalendar = async (id) => {
+  try {
+    const res = await api.checkout(id);
+    if (res.url) {
+      window.location.href = res.url;
+    }
+  } catch(e) { 
+    alert(e.message); 
+  }
+};
+
 window.deleteCalendar = async (id) => {
   if (!confirm("Kalender wirklich löschen?")) return;
   try {
