@@ -28,23 +28,70 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
-    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-4">Neuen Kalender erstellen</h2>
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display text-2xl font-semibold">Deine Kalender</h2>
+        <div class="flex items-center gap-3">
+          <div class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10">
+            <button id="view-grid-btn" class="p-1.5 rounded-md bg-emerald-600 text-white shadow" title="Kachel-Ansicht">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </button>
+            <button id="view-table-btn" class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400" title="Listen-Ansicht">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </button>
+          </div>
+          <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm">
+            + Neuer Kalender
+          </button>
+        </div>
+      </div>
+      
+      <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <div id="calendar-table-container" class="hidden overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
+            <tr>
+              <th class="px-4 py-3">Empfänger</th>
+              <th class="px-4 py-3">Theme</th>
+              <th class="px-4 py-3">Befüllt</th>
+              <th class="px-4 py-3">Geöffnet</th>
+              <th class="px-4 py-3 text-right">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="calendar-table-body" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl mt-4">
+        <div class="text-4xl mb-3">🎁</div>
+        <h3 class="text-lg font-semibold text-white mb-1">Noch keine Kalender</h3>
+        <p class="text-slate-400 text-sm mb-4">Erstelle deinen ersten Adventskalender, um loszulegen.</p>
+        <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">
+          Jetzt erstellen
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Create Modal -->
+  <div id="create-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
+      <button onclick="document.getElementById('create-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <h2 class="font-display text-xl font-semibold mb-6">Neuen Kalender erstellen</h2>
       <form id="create-form" class="grid sm:grid-cols-4 gap-4 items-end">
         <div class="sm:col-span-2">
           <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
           <input name="recipientName" required placeholder="z. B. Bine"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
         <div>
           <label class="block text-sm text-slate-300 mb-1">Jahr</label>
           <input name="year" type="number" required value="2026" min="2000" max="2200"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
         <div>
           <label class="block text-sm text-slate-300 mb-1">Theme</label>
           <select name="theme" required
-            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
             <option value="partner">Partner*in – Romantisch</option>
             <option value="kid">Kind – Verspielt &amp; bunt</option>
             <option value="parents">Eltern – Klassisch &amp; elegant</option>
@@ -55,11 +102,11 @@
         <div class="sm:col-span-4 mt-2">
           <label class="block text-sm text-slate-300 mb-1">E-Mail für tägliche Erinnerungen (Optional)</label>
           <input name="recipientEmail" type="email" placeholder="z. B. bine@beispiel.de"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
         <div class="sm:col-span-4">
           <label class="block text-sm text-slate-300 mb-1">Vorlage (Optional)</label>
-            <select name="template" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <select name="template" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <option value="">-- Keine (leer starten) --</option>
               <option value="romantic">Romantisch (Texte für Partner)</option>
               <option value="mindful">Achtsamkeit (24 versch. Aufgaben)</option>
@@ -76,52 +123,22 @@
             </select>
         </div>
         <div class="sm:col-span-4 flex items-center gap-2 mt-2">
-          <input type="checkbox" id="strictMode" name="strictMode" checked class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+          <input type="checkbox" id="strictMode" name="strictMode" checked class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-white/10 focus:ring-emerald-500 focus:ring-2">
           <label for="strictMode" class="text-sm text-slate-300">Strict Mode <span class="text-slate-500">(Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen)</span></label>
         </div>
         <div class="sm:col-span-4 flex items-center gap-2 mt-1">
-          <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+          <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-800 border-white/10 focus:ring-emerald-500 focus:ring-2">
           <label for="randomLayout" class="text-sm text-slate-300">Zahlen mischen <span class="text-slate-500">(Die Türchen werden im Raster durcheinander angeordnet)</span></label>
         </div>
-        <div class="sm:col-span-4 mt-2">
+        <div class="sm:col-span-4 mt-6 border-t border-white/10 pt-4 text-right">
           <button type="submit"
-            class="rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold px-5 py-2.5">
-            + Kalender anlegen
+            class="rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-semibold px-6 py-2.5">
+            Kalender anlegen
           </button>
         </div>
       </form>
-    </section>
-
-    <section>
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-display text-xl font-semibold">Deine Kalender</h2>
-        <div class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10">
-          <button id="view-grid-btn" class="p-1.5 rounded-md bg-emerald-600 text-white shadow" title="Kachel-Ansicht">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          </button>
-          <button id="view-table-btn" class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400" title="Listen-Ansicht">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-          </button>
-        </div>
-      </div>
-      <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
-      <div id="calendar-table-container" class="hidden overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
-        <table class="w-full text-left text-sm text-slate-300">
-          <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
-            <tr>
-              <th class="px-4 py-3">Empfänger</th>
-              <th class="px-4 py-3">Theme</th>
-              <th class="px-4 py-3">Befüllt</th>
-              <th class="px-4 py-3">Geöffnet</th>
-              <th class="px-4 py-3 text-right">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody id="calendar-table-body" class="divide-y divide-white/10"></tbody>
-        </table>
-      </div>
-      <p id="empty-state" class="hidden text-slate-500 text-sm">Noch kein Kalender erstellt – leg oben deinen ersten an.</p>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <!-- Analytics Modal -->
   <div id="analytics-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">

@@ -86,90 +86,79 @@
       background-color: #334155;
     }
 
-    /* Hero Section */
-    .hero {
-      padding: 80px 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
+    /* Full-Width Hero Section */
+    .hero-wrapper {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      min-height: 80vh;
+      display: flex;
       align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
-    @media (max-width: 900px) {
-      .hero {
-        grid-template-columns: 1fr;
-        text-align: center;
-        padding: 40px 0;
-      }
+    .hero-bg {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      background: #0f172a;
+    }
+    .hero-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.4;
+    }
+    .hero-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.4;
+      animation: kenburns 30s infinite alternate ease-in-out;
+    }
+    @keyframes kenburns {
+      0% { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.15) translate(-2%, -2%); }
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 800px;
+      padding: 40px 24px;
     }
     .hero-title {
       font-family: 'Playfair Display', serif;
-      font-size: 3.5rem;
+      font-size: 4rem;
       font-weight: 700;
       line-height: 1.1;
       margin-top: 0;
       margin-bottom: 24px;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.8);
     }
     .hero-title span {
       color: #34d399; /* emerald-400 */
     }
     @media (max-width: 900px) {
       .hero-title { font-size: 2.5rem; }
+      .hero-wrapper { min-height: 60vh; }
     }
     .hero-text {
-      color: #94a3b8; /* slate-400 */
-      font-size: 1.125rem;
+      color: #e2e8f0;
+      font-size: 1.25rem;
       margin-bottom: 40px;
-      max-width: 500px;
-    }
-    @media (max-width: 900px) {
-      .hero-text { margin-left: auto; margin-right: auto; }
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 600px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
     .hero-buttons {
       display: flex;
       gap: 16px;
-    }
-    @media (max-width: 900px) {
-      .hero-buttons { justify-content: center; }
-    }
-    .hero-image {
-      width: 100%;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-    .hero-image-header {
-      background: #0f172a;
-      border-bottom: 1px solid #334155;
-      padding: 12px 16px;
-      display: flex;
-      gap: 8px;
-    }
-    .hero-image-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-    }
-    .dot-red { background: #ef4444; }
-    .dot-yellow { background: #f59e0b; }
-    .dot-green { background: #10b981; }
-    .hero-image-body {
-      padding: 32px;
-      background: #1e293b;
-    }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-    .hero-door {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      font-weight: bold;
-      color: #fff;
-      border-radius: 4px;
-      font-size: 1.25rem;
+    }
+    @media (max-width: 600px) {
+      .hero-buttons { flex-direction: column; }
     }
 
     /* Showcase Section */
@@ -331,9 +320,21 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
-  <main class="hero container">
-    <div>
+  <!-- Full-Width Hero Section -->
+  <div class="hero-wrapper">
+    <div class="hero-bg">
+      <!-- 
+        Hinweis: Um ein echtes Video einzufügen, lade eine MP4 in /public/images/hero-video.mp4 
+        hoch und entkommentiere den folgenden Block (und lösche das img-Tag darunter):
+        
+        <video autoplay loop muted playsinline>
+          <source src="/images/hero-video.mp4" type="video/mp4">
+        </video>
+      -->
+      <img src="/images/hero-bg.jpg" alt="Weihnachtlicher Hintergrund" />
+    </div>
+    
+    <div class="hero-content">
       <h1 class="hero-title">
         Gestalte deinen <br/>
         <span>digitalen Adventskalender</span>
@@ -343,39 +344,11 @@
       </p>
       
       <div class="hero-buttons">
-        <a href="/admin/?mode=register" class="btn-primary" style="padding: 14px 28px; font-size: 1rem;">Kalender erstellen</a>
-        <a href="#anleitung" class="btn-secondary" style="padding: 14px 28px; font-size: 1rem;">So funktioniert's</a>
+        <a href="/admin/?mode=register" class="btn-primary" style="padding: 16px 32px; font-size: 1.125rem; box-shadow: 0 10px 25px -10px rgba(5,150,105,0.7);">Jetzt kostenlos starten</a>
+        <a href="#anleitung" class="btn-secondary" style="padding: 16px 32px; font-size: 1.125rem; background: rgba(30,41,59,0.7); backdrop-filter: blur(8px);">So funktioniert's</a>
       </div>
     </div>
-    
-    <div>
-      <div class="hero-image">
-        <div class="hero-image-header">
-          <div class="hero-image-dot dot-red"></div>
-          <div class="hero-image-dot dot-yellow"></div>
-          <div class="hero-image-dot dot-green"></div>
-        </div>
-        <div class="hero-image-body">
-          <h3 style="text-align: center; font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-top: 0; margin-bottom: 24px;">Für Lisa</h3>
-          <div class="hero-grid">
-            <!-- Simulated doors -->
-            <div class="hero-door" style="background: #059669;">1</div>
-            <div class="hero-door" style="background: #dc2626;">2</div>
-            <div class="hero-door" style="background: #334155;">3</div>
-            <div class="hero-door" style="background: #4f46e5;">4</div>
-            <div class="hero-door" style="background: #d97706;">5</div>
-            <div class="hero-door" style="background: #0284c7;">6</div>
-            <div class="hero-door" style="background: #334155;">7</div>
-            <div class="hero-door" style="background: #059669;">8</div>
-            <div class="hero-door" style="background: #e11d48;">9</div>
-            <div class="hero-door" style="background: #334155;">10</div>
-            <div class="hero-door" style="background: #6366f1;">11</div>
-            <div class="hero-door" style="background: #d97706;">12</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+  </div>
 
   <!-- Showcase Section -->
   <section class="showcase">

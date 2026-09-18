@@ -32,129 +32,144 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-8">
-    <section class="bg-white/5 border border-white/10 rounded-2xl p-5">
-      <h2 class="font-display text-lg font-semibold mb-3">Einstellungen</h2>
-      <form id="settings-form" class="grid sm:grid-cols-4 gap-4 items-end">
-        <div class="sm:col-span-2">
-          <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
-          <input name="recipientName" required class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-        </div>
-        <div>
-          <label class="block text-sm text-slate-300 mb-1">Jahr</label>
-          <input name="year" type="number" min="2000" max="2200" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-        </div>
-        <div>
-          <label class="block text-sm text-slate-300 mb-1">Theme</label>
-          <select name="theme" id="theme-select" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
-        </div>
-        
-        <div class="sm:col-span-2">
-          <label class="block text-sm text-slate-300 mb-1">Passwortschutz (Optional)</label>
-          <input type="text" id="calendarPassword" name="calendarPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Geheimwort..." />
-        </div>
-        
-        <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-            <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
+    
+    <details class="bg-white/5 border border-white/10 rounded-2xl group mb-4">
+      <summary class="p-5 font-display text-lg font-semibold cursor-pointer list-none flex justify-between items-center outline-none">
+        <span>⚙️ Kalender-Einstellungen einblenden</span>
+        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+      </summary>
+      <div class="p-5 pt-0 border-t border-white/10 mt-2 space-y-4">
+        <form id="settings-form" class="grid sm:grid-cols-4 gap-4 items-end mt-4">
+          <div class="sm:col-span-2">
+            <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
+            <input name="recipientName" required class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
-          <p class="text-xs text-slate-500 mt-1 ml-6">Lässt im Hintergrund des Kalenders dekorative Schneeflocken rieseln.</p>
-        </div>
+          <div>
+            <label class="block text-sm text-slate-300 mb-1">Jahr</label>
+            <input name="year" type="number" min="2000" max="2200" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-300 mb-1">Theme</label>
+            <select name="theme" id="theme-select" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+          </div>
+          
+          <div class="sm:col-span-2">
+            <label class="block text-sm text-slate-300 mb-1">Passwortschutz (Optional)</label>
+            <input type="text" id="calendarPassword" name="calendarPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Geheimwort..." />
+          </div>
+          
+          <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+              <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Lässt im Hintergrund des Kalenders dekorative Schneeflocken rieseln.</p>
+          </div>
 
-        <div class="sm:col-span-4 mt-2">
-          <label class="block text-sm text-slate-300 mb-1">
-            Eigenes Logo (White-Labeling)
-            <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-          </label>
-          <div class="flex items-center gap-4">
-            <input type="file" id="logoUpload" accept="image/*" class="pro-feature-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
-            <input type="hidden" id="calendarLogo" name="calendarLogo" />
-            <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
-              <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
-              <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+          <div class="sm:col-span-4 mt-2">
+            <label class="block text-sm text-slate-300 mb-1">
+              Eigenes Logo (White-Labeling)
+              <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+            </label>
+            <div class="flex items-center gap-4">
+              <input type="file" id="logoUpload" accept="image/*" class="pro-feature-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
+              <input type="hidden" id="calendarLogo" name="calendarLogo" />
+              <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
+                <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
+                <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-            <label for="strictMode" class="text-sm text-slate-300">Strict Mode</label>
-          </div>
-          <p class="text-xs text-slate-500 mt-1 ml-6">Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen. Verhindert vorzeitiges Spicken.</p>
-        </div>
-        
-        <div class="sm:col-span-2 mt-2">
-          <label class="block text-sm text-slate-300 mb-1">E-Mail (Erinnerungen)</label>
-          <input name="recipientEmail" type="email" placeholder="z. B. bine@beispiel.de" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-          <p class="text-xs text-slate-500 mt-1">Die Adresse erhält Benachrichtigungen, wenn Türchen geöffnet werden.</p>
-        </div>
-        
-        <div class="sm:col-span-2 mt-2 flex flex-col justify-end pb-1">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-            <label for="randomLayout" class="text-sm text-slate-300">Zahlen mischen</label>
-          </div>
-          <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
-        </div>
-        
-        <div class="sm:col-span-4 mt-2">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-            <label for="syncOpen" class="text-sm text-slate-300">Multiplayer: Synchronisiertes Öffnen</label>
-          </div>
-          <p class="text-xs text-slate-500 mt-1 ml-6">Zwei Personen (oder mehr) müssen gleichzeitig auf das Türchen klicken, damit es sich öffnet.</p>
-        </div>
-        
-        <div class="sm:col-span-4 mt-2">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-            <label for="metaPuzzle" class="text-sm text-slate-300">Meta-Rätsel aktivieren</label>
-          </div>
-          <p class="text-xs text-slate-500 mt-1 ml-6">Verteilt ein 23-stelliges Lösungswort automatisch über die ersten 23 Türchen. Das letzte Türchen fragt dieses Passwort ab.</p>
-          <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
-            <input type="text" id="metaPassword" name="metaPassword" placeholder="Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
-          </div>
-        </div>
-        <div class="sm:col-span-4 hidden" id="firma-settings">
-          <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl relative">
-            <div>
-              <label class="block text-sm text-slate-300 mb-1">
-                Corporate Farbe
-                <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-              </label>
-              <input type="color" id="firma-color" value="#3b82f6" class="pro-feature-input w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
+          
+          <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+              <label for="strictMode" class="text-sm text-slate-300">Strict Mode</label>
             </div>
-            <div>
-              <label class="block text-sm text-slate-300 mb-1">
-                Hintergrundbild
-                <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-              </label>
-              <input type="file" id="firma-bg" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+            <p class="text-xs text-slate-500 mt-1 ml-6">Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen. Verhindert vorzeitiges Spicken.</p>
+          </div>
+          
+          <div class="sm:col-span-2 mt-2">
+            <label class="block text-sm text-slate-300 mb-1">E-Mail (Erinnerungen)</label>
+            <input name="recipientEmail" type="email" placeholder="z. B. bine@beispiel.de" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <p class="text-xs text-slate-500 mt-1">Die Adresse erhält Benachrichtigungen, wenn Türchen geöffnet werden.</p>
+          </div>
+          
+          <div class="sm:col-span-2 mt-2 flex flex-col justify-end pb-1">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+              <label for="randomLayout" class="text-sm text-slate-300">Zahlen mischen</label>
             </div>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
+          </div>
+          
+          <div class="sm:col-span-4 mt-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+              <label for="syncOpen" class="text-sm text-slate-300">Multiplayer: Synchronisiertes Öffnen</label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Zwei Personen (oder mehr) müssen gleichzeitig auf das Türchen klicken, damit es sich öffnet.</p>
+          </div>
+          
+          <div class="sm:col-span-4 mt-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+              <label for="metaPuzzle" class="text-sm text-slate-300">Meta-Rätsel aktivieren</label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Verteilt ein 23-stelliges Lösungswort automatisch über die ersten 23 Türchen. Das letzte Türchen fragt dieses Passwort ab.</p>
+            <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
+              <input type="text" id="metaPassword" name="metaPassword" placeholder="Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
+            </div>
+          </div>
+          <div class="sm:col-span-4 hidden" id="firma-settings">
+            <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl relative">
+              <div>
+                <label class="block text-sm text-slate-300 mb-1">
+                  Corporate Farbe
+                  <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+                </label>
+                <input type="color" id="firma-color" value="#3b82f6" class="pro-feature-input w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-300 mb-1">
+                  Hintergrundbild
+                  <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+                </label>
+                <input type="file" id="firma-bg" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+              </div>
 
-          </div>
-        </div>
-        <div class="sm:col-span-4 mt-2">
-          <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl space-y-3">
-            <div class="flex items-center gap-3">
-              <input type="checkbox" id="dailyReminderEnabled" name="dailyReminderEnabled" class="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-white/10 focus:ring-indigo-500 focus:ring-2">
-              <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300">🔔 Automatische tägliche Push-Erinnerung</label>
-            </div>
-            <p class="text-xs text-slate-400 ml-7">Der Empfänger bekommt jeden Tag im Dezember (1–24) eine Push-Benachrichtigung, wenn das Türchen noch nicht geöffnet wurde. Nur aktiv, wenn der Empfänger Push-Benachrichtigungen erlaubt hat.</p>
-            <div class="ml-7 flex items-center gap-3" id="reminderTimeRow">
-              <label class="text-sm text-slate-300 shrink-0">Uhrzeit der Erinnerung:</label>
-              <input type="time" id="dailyReminderTime" name="dailyReminderTime" value="08:00" class="rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-              <span class="text-xs text-slate-500">(Server-Zeitzone: Europe/Berlin)</span>
             </div>
           </div>
-        </div>
-      </form>
+          <div class="sm:col-span-4 mt-2">
+            <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl space-y-3">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" id="dailyReminderEnabled" name="dailyReminderEnabled" class="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-white/10 focus:ring-indigo-500 focus:ring-2">
+                <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300">🔔 Automatische tägliche Push-Erinnerung</label>
+              </div>
+              <p class="text-xs text-slate-400 ml-7">Der Empfänger bekommt jeden Tag im Dezember (1–24) eine Push-Benachrichtigung, wenn das Türchen noch nicht geöffnet wurde. Nur aktiv, wenn der Empfänger Push-Benachrichtigungen erlaubt hat.</p>
+              <div class="ml-7 flex items-center gap-3" id="reminderTimeRow">
+                <label class="text-sm text-slate-300 shrink-0">Uhrzeit der Erinnerung:</label>
+                <input type="time" id="dailyReminderTime" name="dailyReminderTime" value="08:00" class="rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                <span class="text-xs text-slate-500">(Server-Zeitzone: Europe/Berlin)</span>
+              </div>
+            </div>
+          </div>
+        </form>
 
-      <!-- Push Notification Panel -->
-      <div class="bg-indigo-900/30 border border-indigo-500/50 rounded-xl p-4 mt-8">
-        <h3 class="text-indigo-400 font-bold mb-2">Live Web-Push senden 🔔</h3>
-        <p class="text-xs text-slate-300 mb-3">Sende eine sofortige System-Benachrichtigung an alle Nutzer, die diesen Kalender gerade geöffnet haben (oder abonniert haben).</p>
+        <div class="mt-8 pt-4 border-t border-white/10 flex items-center">
+          <button type="submit" form="settings-form" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 transition-colors">Speichern</button>
+          <span id="settings-saved" class="hidden text-sm text-emerald-400 ml-2">Gespeichert ✓</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="bg-indigo-900/30 border border-indigo-500/50 rounded-2xl group mb-8">
+      <summary class="p-5 font-display text-lg font-semibold text-indigo-300 cursor-pointer list-none flex justify-between items-center outline-none">
+        <span>Live Web-Push senden 🔔</span>
+        <span class="transform group-open:rotate-180 transition-transform">▼</span>
+      </summary>
+      <div class="p-5 pt-0 border-t border-indigo-500/50 mt-2">
+        <p class="text-xs text-slate-300 mb-3 mt-4">Sende eine sofortige System-Benachrichtigung an alle Nutzer, die diesen Kalender gerade geöffnet haben (oder abonniert haben).</p>
         <div class="flex gap-2">
           <input type="text" id="push-msg" placeholder="Ho ho ho! Türchen 14 ist bereit!" class="flex-1 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           <button type="button" onclick="sendPushBroadcast()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg">Senden</button>
