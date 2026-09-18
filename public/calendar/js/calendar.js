@@ -489,6 +489,9 @@ function renderPetItems() {
     })
     .join("");
   bar.style.display = owned.length ? "flex" : "none";
+  // The Christmas star crowns the stable roof once it has been bought.
+  const roofStar = document.getElementById("stable-star");
+  if (roofStar) roofStar.style.display = userInventory.includes("star") ? "" : "none";
   bar.querySelectorAll(".stable-item").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
