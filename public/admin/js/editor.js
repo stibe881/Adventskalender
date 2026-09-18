@@ -986,15 +986,58 @@ function renderAudioFields(c) {
 function renderGalleryFields(c) {
   currentContent.images = c.images || [];
   typeFields.innerHTML =
-    fieldWrap("Beschriftung", `<input id="f-caption" value="${escapeHtml(c.caption)}" class="${inputClass}" />`) +
-    fieldWrap("Bilder hochladen (Mehrfachauswahl möglich)", `<input id="f-images" type="file" accept="image/*" multiple class="${inputClass}" />`) +
-    `<div id="f-gallery-preview" class="flex flex-wrap gap-2 mt-2"></div>`;
+    fieldWrap("Beschriftung", `<input id="f-caption" value="${escapeHtml(c.caption || "")}" class="${inputClass}" />`) +
+    `<div class="mt-4">
+      <label class="block text-sm text-slate-300 mb-2">Bilder hochladen (Drag & Drop)</label>
+      <div id="gallery-dropzone" class="w-full border-2 border-dashed border-emerald-500/30 rounded-xl bg-slate-800/50 hover:bg-slate-800 hover:border-emerald-500/70 transition-all duration-200 p-8 flex flex-col items-center justify-center cursor-pointer text-center group">
+        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform">📸</div>
+        <p class="text-sm font-semibold text-white mb-1">Klicke hier oder ziehe Bilder in dieses Feld</p>
+        <p class="text-xs text-slate-400">Unterstützt JPG, PNG, GIF, WEBP</p>
+        <input id="f-images" type="file" accept="image/*" multiple class="hidden" />
+      </div>
+    </div>` +
+    `<div id="f-gallery-preview" class="flex flex-wrap gap-2 mt-4"></div>`;
 
   renderGalleryPreview();
 
-  document.getElementById("f-images").addEventListener("change", async (e) => {
-    const files = Array.from(e.target.files || []);
-    for (const file of files) {
+  const dropzone = document.getElementById("gallery-dropzone");
+  const input = document.getElementById("f-images");
+
+  dropzone.addEventListener("click", () => input.click());
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("border-emerald-500", "bg-slate-700");
+  });
+
+  dropzone.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
+  });
+
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  });
+
+  input.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  });
+
+  async function handleFiles(files) {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (fileArray.length === 0) return;
+    
+    const statusText = dropzone.querySelector("p.text-sm");
+    const prevText = statusText.textContent;
+    statusText.textContent = "Lade hoch... ⏳";
+    
+    for (const file of fileArray) {
       try {
         const { url } = await api.upload(file);
         currentContent.images.push(url);
@@ -1003,8 +1046,10 @@ function renderGalleryFields(c) {
         alert(`Upload fehlgeschlagen (${file.name}): ${err.message}`);
       }
     }
-    e.target.value = "";
-  });
+    
+    statusText.textContent = prevText;
+    input.value = "";
+  }
 }
 
 function renderGalleryPreview() {
