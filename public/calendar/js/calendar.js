@@ -1,4 +1,4 @@
-﻿const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", "TOKEN"] or ["c","preview","ID"]
+const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", "TOKEN"] or ["c","preview","ID"]
 const isPreview = pathParts[1] === "preview";
 // routeId is resolved either from the URL (/c/:token) or,
 // for custom-domain deployments, fetched from the server by Host header.
@@ -1844,9 +1844,6 @@ function renderContent(type, c, dayNum) {
           </div>
           <div id="spotify-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
         </div>`;
-        if (isPreview) {
-          html += `<p class="text-xs text-yellow-300 mt-[-10px] mb-4">Vorschau: Suchen funktioniert, Speichern ist aber deaktiviert.</p>`;
-        }
       } else {
         html += `<p class="text-sm text-green-300 mb-6 font-bold">Du hast bereits einen Song beigetragen!</p>`;
       }
@@ -2573,10 +2570,6 @@ window.searchSpotify = function(day) {
 };
 
 window.addSpotifySong = async function(day, title, artist) {
-  if (isPreview) {
-    alert(`Vorschau: Song "${title}" von "${artist}" würde jetzt hinzugefügt werden.`);
-    return;
-  }
   try {
     const res = await fetch(`/api/calendar/${routeId}/playlist`, {
       method: "POST",
