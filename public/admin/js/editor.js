@@ -812,8 +812,8 @@ function renderProductFields(c) {
   typeFields.innerHTML =
     fieldWrap("Produkt-Name", `<input id="f-title" value="${escapeHtml(c.title || '')}" class="${inputClass}" />`) +
     fieldWrap("Bild-URL", `<input id="f-image" value="${escapeHtml(c.image || '')}" class="${inputClass}" placeholder="https://..." />`) +
-    fieldWrap("Streichpreis (z.B. 49,99 €)", `<input id="f-oldPrice" value="${escapeHtml(c.oldPrice || '')}" class="${inputClass}" />`) +
-    fieldWrap("Aktionspreis (z.B. 29,99 €)", `<input id="f-newPrice" value="${escapeHtml(c.newPrice || '')}" class="${inputClass}" />`) +
+    fieldWrap("Streichpreis (z.B. 49,99 CHF)", `<input id="f-oldPrice" value="${escapeHtml(c.oldPrice || '')}" class="${inputClass}" />`) +
+    fieldWrap("Aktionspreis (z.B. 29,99 CHF)", `<input id="f-newPrice" value="${escapeHtml(c.newPrice || '')}" class="${inputClass}" />`) +
     fieldWrap("Rabattcode (optional)", `<input id="f-discount" value="${escapeHtml(c.discount || '')}" placeholder="XMAS20" class="${inputClass}" />`) +
     fieldWrap("Kaufen-Button Link", `<input id="f-url" value="${escapeHtml(c.url || '')}" placeholder="https://..." class="${inputClass}" />`);
 }
