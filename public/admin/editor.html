@@ -234,9 +234,10 @@
           <label class="block text-sm text-slate-300 mb-1">Passwort-Schutz (optional)</label>
           <input type="text" id="f-lockPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2" placeholder="Geheimes Lösungswort..." />
           <input type="text" id="f-lockHint" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Hinweis, z.B. 'Name des ersten Haustiers'" />
+          <p class="text-[11px] text-slate-400 mt-1">Der Empfänger muss das richtige Lösungswort eingeben, um dieses Türchen zu öffnen. Ideal für Rätsel!</p>
         </div>
         
-        <div>
+        <div class="pt-2">
           <label class="block text-sm text-slate-300 mb-1">Sensor-Schlösser (optional, erfordert https)</label>
           <select id="f-sensorLock" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2">
             <option value="">Kein Sensor-Schloss</option>
@@ -249,9 +250,10 @@
             <input type="text" id="f-geoLat" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Breitengrad (Lat)" />
             <input type="text" id="f-geoLon" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Längengrad (Lon)" />
           </div>
+          <p class="text-[11px] text-slate-400 mt-1">Verwandelt das Öffnen in ein Minispiel: Der Empfänger muss z.B. ins Mikrofon pusten oder etwas fotografieren, um das Türchen zu entsperren.</p>
         </div>
         
-        <div>
+        <div class="pt-2">
           <label class="block text-sm text-slate-300 mb-1">Bedingung: Interaktive Story (optional)</label>
           <div class="flex gap-2">
             <input type="number" id="f-reqChoiceDay" class="w-1/2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Tag (z.B. 5)" />
@@ -261,7 +263,7 @@
               <option value="B">Option B</option>
             </select>
           </div>
-          <p class="text-xs text-slate-500 mt-1">Dieses Türchen ist nur sichtbar, wenn am angegebenen Tag die entsprechende Option gewählt wurde.</p>
+          <p class="text-[11px] text-slate-400 mt-1">Für verzweigte Geschichten: Dieses Türchen bleibt unsichtbar, bis der Empfänger an dem angegebenen Tag die gewünschte Entscheidung (Option A oder B) getroffen hat.</p>
         </div>
       </div>
 
@@ -277,7 +279,8 @@
       </div>
       
       <div class="mt-4 pt-4 border-t border-white/10 text-center">
-        <button type="button" id="wichtel-link-btn" class="text-sm text-indigo-400 hover:text-indigo-300">Wichtel-Link für dieses Türchen generieren</button>
+        <button type="button" id="wichtel-link-btn" class="text-sm font-semibold text-indigo-400 hover:text-indigo-300">Wichtel-Link für dieses Türchen generieren</button>
+        <p class="text-[11px] text-slate-400 mt-2 leading-tight px-4">Erzeugt einen speziellen Gast-Link, den du verschicken kannst. Die Person kann damit exakt dieses eine Türchen befüllen – ganz ohne eigenes Konto oder Login.</p>
       </div>
     </div>
   </div>
