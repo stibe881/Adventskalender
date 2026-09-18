@@ -1834,6 +1834,11 @@ function renderContent(type, c, dayNum) {
       
       let html = `<div style="background: rgba(0,0,0,0.5); padding: 24px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); color: #fff;">
         <h3 style="font-size: 1.25rem; font-weight: bold; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span>🎵</span> Familien-Playlist</h3>`;
+
+      if (isPreview) {
+        html += `<div id="spotify-admin-status" style="font-size: 0.8rem; margin: -6px 0 14px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.08); color: #cbd5e1;">Spotify-Verbindung wird geprüft…</div>`;
+        setTimeout(() => loadSpotifyPreviewStatus(c), 0);
+      }
         
       if (!hasAdded || isPreview) {
         html += `<div style="margin-bottom: 24px;">
@@ -1855,24 +1860,28 @@ function renderContent(type, c, dayNum) {
          </a>`;
       }
       
-      html += `<div class="border-t border-white/10 pt-4"><h4 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Aktuelle Playlist (${playlist.length} Songs)</h4><div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">`;
-      
+      html += `<div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
+        <h4 style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.08em;">Aktuelle Playlist (${playlist.length} Songs)</h4>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; padding-right: 6px;">`;
+
       if (playlist.length === 0) {
-        html += `<p class="text-slate-500 italic text-sm">Die Playlist ist noch leer.</p>`;
+        html += `<p style="color: #64748b; font-style: italic; font-size: 0.875rem; margin: 0;">Die Playlist ist noch leer.</p>`;
       } else {
         playlist.forEach((song, i) => {
-          html += `<div class="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg">
-            <div class="text-slate-500 w-4 text-right text-xs font-mono">${i+1}</div>
-            ${song.image ? `<img src="${escapeHtml(song.image)}" alt="" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;">` : ""}
-            <div class="flex-1 min-w-0">
-              <div class="font-bold text-sm truncate">${song.url ? `<a href="${escapeHtml(song.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(song.title)}</a>` : escapeHtml(song.title)}</div>
-              <div class="text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</div>
+          html += `<div style="display: flex; align-items: center; gap: 12px; background: rgba(30,41,59,0.6); padding: 8px; border-radius: 10px;">
+            <div style="color: #64748b; width: 16px; text-align: right; font-size: 0.75rem; font-family: ui-monospace, monospace; flex-shrink: 0;">${i + 1}</div>
+            ${song.image
+              ? `<img src="${escapeHtml(song.image)}" alt="" style="width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+              : `<div style="width:36px;height:36px;border-radius:6px;background:#334155;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;">♪</div>`}
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.url ? `<a href="${escapeHtml(song.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(song.title)}</a>` : escapeHtml(song.title)}</div>
+              <div style="font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(song.artist)}</div>
             </div>
-            <div class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Tag ${song.day}</div>
+            <div style="font-size: 0.7rem; background: #334155; color: #cbd5e1; padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">Tag ${song.day}</div>
           </div>`;
         });
       }
-      
+
       html += `</div></div></div>`;
       return cardWrap("spotify-collab", "Gemeinsame Playlist", html);
     }
@@ -2599,13 +2608,40 @@ window.addSpotifySong = async function(day, index) {
     const door = days.find((d) => d.day === day);
     openContentModal(door);
 
-    if (data.spotify && !data.spotify.added && calendarMeta.spotifyConnected) {
-      showLockToast(`Gespeichert – aber nicht in Spotify eingetragen: ${data.spotify.reason}`);
+    const result = data.spotify || {};
+    if (result.added) {
+      if (isPreview) showLockToast("In die Spotify-Playlist eingetragen.");
+    } else if (isPreview || calendarMeta.spotifyConnected) {
+      showLockToast(`In der App gespeichert, aber nicht bei Spotify: ${result.reason || "unbekannter Fehler"}`);
     }
   } catch (err) {
     alert("Fehler: " + err.message);
   }
 };
+
+// Preview only: tell the calendar owner whether songs will actually reach Spotify.
+async function loadSpotifyPreviewStatus(content) {
+  const el = document.getElementById("spotify-admin-status");
+  if (!el) return;
+  const editorLink = `<a href="/admin/editor.html?id=${encodeURIComponent(routeId)}" style="color:#4ade80;font-weight:700;">im Editor</a>`;
+  try {
+    const status = await fetchJson(`/api/spotify/status?calendarId=${encodeURIComponent(routeId)}`);
+    if (!status.configured) {
+      el.innerHTML = `⚠️ Spotify ist auf dem Server nicht konfiguriert (SPOTIFY_CLIENT_ID / SECRET fehlen).`;
+    } else if (!status.connected) {
+      el.innerHTML = `⚠️ Kein Spotify-Account verbunden – Songs landen nur in der App. Verbinde deinen Account ${editorLink} bei diesem Türchen.`;
+    } else if (!content.playlistUrl) {
+      el.innerHTML = `⚠️ Verbunden als <b>${escapeHtml(status.displayName)}</b>, aber bei diesem Türchen ist keine Playlist hinterlegt – bitte ${editorLink} eine wählen.`;
+    } else if (status.error) {
+      el.innerHTML = `⚠️ Verbunden als <b>${escapeHtml(status.displayName)}</b>, aber Spotify meldet: ${escapeHtml(status.error)}. Bitte ${editorLink} trennen und neu verbinden.`;
+    } else {
+      el.innerHTML = `✅ Verbunden als <b>${escapeHtml(status.displayName)}</b> – neue Songs werden direkt in die Spotify-Playlist geschrieben.`;
+      el.style.color = "#bbf7d0";
+    }
+  } catch (err) {
+    el.innerHTML = `⚠️ Spotify-Status konnte nicht geladen werden: ${escapeHtml(err.message)}`;
+  }
+}
 
 // Bootstrap: resolve custom-domain token first, then initialise the calendar.
 (async () => {

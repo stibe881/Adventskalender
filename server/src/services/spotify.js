@@ -185,9 +185,10 @@ async function addTrackForCalendar(calendar, playlistUrl, trackUri) {
   try {
     const token = await getUserToken(calendar);
     await addTrackToPlaylist(token, playlistId, trackUri);
+    console.log(`[spotify] ${trackUri} → Playlist ${playlistId} (Kalender ${calendar.id})`);
     return { added: true };
   } catch (err) {
-    console.error("[spotify] Track konnte nicht hinzugefügt werden:", err.message);
+    console.error(`[spotify] Track ${trackUri} konnte nicht in Playlist ${playlistId} eingetragen werden (Kalender ${calendar.id}):`, err.message);
     return { added: false, reason: err.message };
   }
 }

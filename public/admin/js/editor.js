@@ -799,6 +799,10 @@ function renderSpotifyCollabFields(c) {
   loadSpotifyStatus();
 }
 
+function pendingSpotifyCount() {
+  return (calendar.playlist || []).filter((s) => s.trackUri && !s.spotifySynced).length;
+}
+
 async function loadSpotifyStatus() {
   const box = document.getElementById("spotify-connect-box");
   if (!box) return;
@@ -845,9 +849,28 @@ async function loadSpotifyStatus() {
       </select>
       <button type="button" id="spotify-create-playlist" class="rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium px-3 py-2 whitespace-nowrap">+ Neue Playlist</button>
     </div>
-    <p class="text-xs text-slate-500 mt-2">Neue Songs werden in die unten eingetragene Playlist geschrieben.</p>`;
+    <p class="text-xs text-slate-500 mt-2">Neue Songs werden in die unten eingetragene Playlist geschrieben.</p>
+    ${pendingSpotifyCount() > 0 ? `<button type="button" id="spotify-sync" class="mt-3 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium px-3 py-2">↻ ${pendingSpotifyCount()} gespeicherte Songs jetzt in die Playlist übertragen</button>` : ""}`;
 
   const urlInput = document.getElementById("f-playlistUrl");
+  const syncBtn = document.getElementById("spotify-sync");
+  if (syncBtn) {
+    syncBtn.addEventListener("click", async () => {
+      const playlistUrl = urlInput.value.trim();
+      if (!playlistUrl) return alert("Bitte zuerst eine Playlist auswählen.");
+      syncBtn.disabled = true;
+      syncBtn.textContent = "Übertrage…";
+      try {
+        const r = await api.spotifySync(calendarId, playlistUrl);
+        alert(`${r.synced} Songs übertragen${r.failed ? `, ${r.failed} fehlgeschlagen:\n${r.errors.join("\n")}` : "."}`);
+        await loadCalendar();
+        await loadSpotifyStatus();
+      } catch (err) {
+        alert(err.message);
+        syncBtn.disabled = false;
+      }
+    });
+  }
   const select = document.getElementById("spotify-playlist-select");
   if (urlInput.value) select.value = urlInput.value;
   select.addEventListener("change", () => {

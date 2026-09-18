@@ -68,6 +68,7 @@ const api = {
   spotifyStatus: (id) => request("GET", `/spotify/status?calendarId=${encodeURIComponent(id)}`),
   spotifyDisconnect: (id) => request("POST", "/spotify/disconnect", { calendarId: id }),
   spotifyCreatePlaylist: (id, name) => request("POST", "/spotify/playlists", { calendarId: id, name }),
+  spotifySync: (id, playlistUrl) => request("POST", "/spotify/sync", { calendarId: id, playlistUrl }),
 };
 
 async function requireAdminOrRedirect() {

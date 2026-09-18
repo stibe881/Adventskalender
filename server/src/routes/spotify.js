@@ -128,6 +128,51 @@ router.post("/playlists", requireConfigured, requireAuth, async (req, res) => {
   }
 });
 
+// Pushes every stored song wish that has a Spotify URI but was never
+// synced (e.g. added before the account was linked) into the playlist.
+router.post("/sync", requireConfigured, requireAuth, async (req, res) => {
+  const calendar = await loadOwnedCalendar(req, res);
+  if (!calendar) return;
+  if (!calendar.spotify?.refreshToken) return res.status(400).json({ error: "Kalender ist nicht mit Spotify verbunden." });
+  const playlistId = spotify.extractPlaylistId(req.body?.playlistUrl);
+  if (!playlistId) return res.status(400).json({ error: "Keine gültige Playlist angegeben." });
+
+  const pending = (calendar.playlist || []).filter((s) => s.trackUri && !s.spotifySynced);
+  if (pending.length === 0) return res.json({ synced: 0, failed: 0, skipped: (calendar.playlist || []).length });
+
+  let token;
+  try {
+    token = await spotify.getUserToken(calendar);
+  } catch (err) {
+    return res.status(502).json({ error: err.message });
+  }
+
+  const syncedUris = [];
+  const errors = [];
+  for (const song of pending) {
+    try {
+      await spotify.addTrackToPlaylist(token, playlistId, song.trackUri);
+      syncedUris.push(song.trackUri);
+    } catch (err) {
+      errors.push(`${song.title}: ${err.message}`);
+    }
+  }
+  if (syncedUris.length) {
+    await db.updateCalendar(calendar.id, (cal) => {
+      (cal.playlist || []).forEach((s) => {
+        if (syncedUris.includes(s.trackUri)) s.spotifySynced = true;
+      });
+      return cal;
+    });
+  }
+  res.json({
+    synced: syncedUris.length,
+    failed: errors.length,
+    skipped: (calendar.playlist || []).length - pending.length,
+    errors,
+  });
+});
+
 // ---------- Track search (recipients + admin preview) ----------
 
 const searchLimiter = rateLimit({ windowMs: 60 * 1000, limit: 40, standardHeaders: true, legacyHeaders: false });
