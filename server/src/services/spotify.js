@@ -164,6 +164,23 @@ async function addTrackToPlaylist(accessToken, playlistId, trackUri) {
   return apiRequest(accessToken, "POST", `/playlists/${encodeURIComponent(playlistId)}/tracks`, { uris: [trackUri] });
 }
 
+async function getPlaylist(accessToken, playlistId) {
+  return apiRequest(accessToken, "GET", `/playlists/${encodeURIComponent(playlistId)}?fields=id,name,owner(id,display_name),collaborative,public,tracks(total),external_urls`);
+}
+
+// Keeps the last attempts on the calendar so the owner can see in the
+// editor what Spotify actually answered.
+async function appendLog(calendarId, entry) {
+  try {
+    await db.updateCalendar(calendarId, (cal) => {
+      cal.spotifyLog = [{ at: new Date().toISOString(), ...entry }, ...(cal.spotifyLog || [])].slice(0, 15);
+      return cal;
+    });
+  } catch (err) {
+    console.error("[spotify] Log konnte nicht gespeichert werden:", err.message);
+  }
+}
+
 function extractPlaylistId(urlOrId) {
   if (!urlOrId) return null;
   const value = String(urlOrId).trim();
@@ -177,19 +194,24 @@ function extractPlaylistId(urlOrId) {
  * door. Never throws: the in-app playlist entry must succeed even when
  * Spotify is unavailable, so the caller gets a status object instead.
  */
-async function addTrackForCalendar(calendar, playlistUrl, trackUri) {
-  if (!trackUri) return { added: false, reason: "Kein Spotify-Track ausgewählt." };
-  if (!calendar.spotify?.refreshToken) return { added: false, reason: "Kalender ist nicht mit Spotify verbunden." };
+async function addTrackForCalendar(calendar, playlistUrl, trackUri, label = "") {
+  const fail = async (reason, extra = {}) => {
+    console.error(`[spotify] ${label || trackUri} nicht eingetragen (Kalender ${calendar.id}): ${reason}`);
+    await appendLog(calendar.id, { ok: false, track: label || trackUri, playlistUrl: playlistUrl || null, reason, ...extra });
+    return { added: false, reason };
+  };
+  if (!trackUri) return fail("Kein Spotify-Track ausgewählt (Song stammt noch aus der alten Suche).");
+  if (!calendar.spotify?.refreshToken) return fail("Kalender ist nicht mit Spotify verbunden.");
   const playlistId = extractPlaylistId(playlistUrl);
-  if (!playlistId) return { added: false, reason: "Im Türchen ist keine gültige Spotify-Playlist hinterlegt." };
+  if (!playlistId) return fail(`Im Türchen ist keine gültige Spotify-Playlist hinterlegt (Wert: "${playlistUrl || ""}").`);
   try {
     const token = await getUserToken(calendar);
-    await addTrackToPlaylist(token, playlistId, trackUri);
-    console.log(`[spotify] ${trackUri} → Playlist ${playlistId} (Kalender ${calendar.id})`);
-    return { added: true };
+    const res = await addTrackToPlaylist(token, playlistId, trackUri);
+    console.log(`[spotify] ${trackUri} → Playlist ${playlistId} (Kalender ${calendar.id}) snapshot=${res?.snapshot_id}`);
+    await appendLog(calendar.id, { ok: true, track: label || trackUri, playlistId, snapshot: res?.snapshot_id || null });
+    return { added: true, playlistId };
   } catch (err) {
-    console.error(`[spotify] Track ${trackUri} konnte nicht in Playlist ${playlistId} eingetragen werden (Kalender ${calendar.id}):`, err.message);
-    return { added: false, reason: err.message };
+    return fail(`${err.message}${err.status ? ` (HTTP ${err.status})` : ""}`, { playlistId, status: err.status || null });
   }
 }
 
@@ -204,6 +226,8 @@ module.exports = {
   listOwnPlaylists,
   createPlaylist,
   addTrackToPlaylist,
+  getPlaylist,
+  appendLog,
   extractPlaylistId,
   addTrackForCalendar,
 };

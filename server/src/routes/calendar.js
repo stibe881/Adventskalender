@@ -345,7 +345,7 @@ router.post("/:token/playlist", async (req, res) => {
   // Mirror the wish into the real Spotify playlist when the owner linked an account.
   const spotify = require("../services/spotify");
   const door = updated.days.find((d) => d.day === Number(day));
-  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri);
+  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri, `${title} – ${artist}`);
   if (result.added) {
     await db.updateCalendar(calendar.id, (cal) => {
       const entry = cal.playlist[cal.playlist.length - 1];

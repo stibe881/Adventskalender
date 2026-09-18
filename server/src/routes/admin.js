@@ -835,7 +835,7 @@ router.post("/calendars/:id/playlist", async (req, res) => {
   });
 
   const door = updated.days.find((d) => d.day === Number(day));
-  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri);
+  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri, `${title} – ${artist}`);
   if (result.added) {
     await db.updateCalendar(calendar.id, (cal) => {
       const entry = cal.playlist[cal.playlist.length - 1];

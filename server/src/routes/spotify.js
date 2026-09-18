@@ -94,13 +94,45 @@ router.get("/status", requireAuth, async (req, res) => {
   if (!spotify.isConfigured()) return res.json({ configured: false, connected: false });
   if (!link?.refreshToken) return res.json({ configured: true, connected: false });
 
+  const log = (calendar.spotifyLog || []).slice(0, 10);
   try {
     const token = await spotify.getUserToken(calendar);
     const playlists = await spotify.listOwnPlaylists(token, link.spotifyUserId);
-    res.json({ configured: true, connected: true, displayName: link.displayName, playlists });
+    res.json({ configured: true, connected: true, displayName: link.displayName, scope: link.scope || "", playlists, log });
   } catch (err) {
     console.error("[spotify] Status-Abfrage fehlgeschlagen:", err.message);
-    res.json({ configured: true, connected: true, displayName: link.displayName, playlists: [], error: err.message });
+    res.json({ configured: true, connected: true, displayName: link.displayName, scope: link.scope || "", playlists: [], log, error: err.message });
+  }
+});
+
+// Verifies that the linked account can actually write into the given playlist.
+router.get("/check", requireConfigured, requireAuth, async (req, res) => {
+  const calendar = await loadOwnedCalendar(req, res);
+  if (!calendar) return;
+  const link = calendar.spotify;
+  if (!link?.refreshToken) return res.json({ ok: false, problem: "Kalender ist nicht mit Spotify verbunden." });
+  const playlistId = spotify.extractPlaylistId(req.query.playlistUrl);
+  if (!playlistId) return res.json({ ok: false, problem: `Keine gültige Playlist-URL/ID: "${req.query.playlistUrl || ""}"` });
+
+  const scopes = String(link.scope || "").split(" ").filter(Boolean);
+  const missing = ["playlist-modify-public", "playlist-modify-private"].filter((s) => !scopes.includes(s));
+  try {
+    const token = await spotify.getUserToken(calendar);
+    const p = await spotify.getPlaylist(token, playlistId);
+    const ownerIsMe = p.owner?.id === link.spotifyUserId;
+    const problem = !ownerIsMe && !p.collaborative
+      ? `Die Playlist gehört "${p.owner?.display_name || p.owner?.id}", nicht dem verbundenen Account "${link.displayName}" – Spotify erlaubt das Schreiben nur in eigene oder kollaborative Playlists.`
+      : missing.length
+        ? `Der Spotify-Login hat die Rechte ${missing.join(", ")} nicht erteilt – bitte trennen und neu verbinden.`
+        : null;
+    res.json({
+      ok: !problem,
+      problem,
+      playlist: { id: p.id, name: p.name, owner: p.owner?.display_name || p.owner?.id, ownerIsMe, collaborative: p.collaborative, public: p.public, tracks: p.tracks?.total ?? null, url: p.external_urls?.spotify },
+      account: { displayName: link.displayName, spotifyUserId: link.spotifyUserId, scopes },
+    });
+  } catch (err) {
+    res.json({ ok: false, problem: `Spotify antwortet: ${err.message}${err.status ? ` (HTTP ${err.status})` : ""}`, account: { displayName: link.displayName, scopes } });
   }
 });
 
@@ -151,10 +183,13 @@ router.post("/sync", requireConfigured, requireAuth, async (req, res) => {
   const errors = [];
   for (const song of pending) {
     try {
-      await spotify.addTrackToPlaylist(token, playlistId, song.trackUri);
+      const r = await spotify.addTrackToPlaylist(token, playlistId, song.trackUri);
       syncedUris.push(song.trackUri);
+      await spotify.appendLog(calendar.id, { ok: true, track: `${song.title} – ${song.artist}`, playlistId, snapshot: r?.snapshot_id || null, via: "sync" });
     } catch (err) {
-      errors.push(`${song.title}: ${err.message}`);
+      const reason = `${err.message}${err.status ? ` (HTTP ${err.status})` : ""}`;
+      errors.push(`${song.title}: ${reason}`);
+      await spotify.appendLog(calendar.id, { ok: false, track: `${song.title} – ${song.artist}`, playlistId, reason, via: "sync" });
     }
   }
   if (syncedUris.length) {
