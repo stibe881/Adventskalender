@@ -127,15 +127,18 @@ async function init() {
       }
       
       if (data.companyMode && user) {
-        // Add a small logout button to the top right
+        // Logout lives inside the top-right control bar so it never overlaps the other buttons.
         const logoutBtn = document.createElement("button");
-        logoutBtn.className = "fixed top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-full z-50 backdrop-blur-sm border border-white/10";
-        logoutBtn.innerHTML = `Als ${user} abmelden`;
+        logoutBtn.className = "bg-slate-800/80 hover:bg-slate-700 text-white text-xs px-3 rounded-full backdrop-blur border border-white/10 flex items-center gap-1 whitespace-nowrap";
+        logoutBtn.title = `Angemeldet als ${user}`;
+        logoutBtn.innerHTML = `<span class="hidden sm:inline">${escapeHtml(user)}</span><span class="sm:hidden">Abmelden</span><span class="hidden sm:inline">· Abmelden</span>`;
         logoutBtn.onclick = () => {
           localStorage.removeItem(`adventskalender_user_${routeId}`);
           window.location.reload();
         };
-        document.body.appendChild(logoutBtn);
+        const controls = document.getElementById("controls");
+        if (controls) controls.prepend(logoutBtn);
+        else document.body.appendChild(logoutBtn);
       }
       
       calendarMeta = data;
