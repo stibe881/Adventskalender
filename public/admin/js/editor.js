@@ -75,6 +75,23 @@ async function init() {
   } catch(e) {
     alert("Editor Init Error: " + e.message);
   }
+
+  handleSpotifyReturn();
+}
+
+// After the Spotify OAuth round-trip we land back here with ?spotify=…&day=N.
+function handleSpotifyReturn() {
+  const state = params.get("spotify");
+  if (!state) return;
+  const day = parseInt(params.get("day"), 10);
+  window.history.replaceState({}, "", `/admin/editor.html?id=${encodeURIComponent(calendarId)}`);
+  if (state === "connected") {
+    if (day) openModal(day);
+  } else if (state === "denied") {
+    alert("Die Spotify-Verbindung wurde abgebrochen.");
+  } else {
+    alert("Die Spotify-Verbindung ist fehlgeschlagen. Bitte erneut versuchen.");
+  }
 }
 
 async function loadCalendar() {
@@ -775,9 +792,86 @@ function renderTypeFields(type, content) {
 }
 
 function renderSpotifyCollabFields(c) {
-  typeFields.innerHTML = 
-    `<p class="text-sm text-slate-300 mb-4">Der Nutzer kann hier einen Song suchen und der Familien-Playlist hinzufügen.</p>` +
-    fieldWrap("Link zur echten Spotify-Playlist (wird für Nutzer verlinkt)", `<input id="f-playlistUrl" value="${escapeHtml(c.playlistUrl || '')}" placeholder="https://open.spotify.com/playlist/..." class="${inputClass}" />`);
+  typeFields.innerHTML =
+    `<p class="text-sm text-slate-300 mb-4">Der Nutzer sucht einen Song auf Spotify und fügt ihn der gemeinsamen Playlist hinzu. Verbinde deinen Spotify-Account, damit die Songs automatisch in der echten Playlist landen.</p>` +
+    `<div id="spotify-connect-box" class="rounded-xl border border-white/10 bg-slate-900/60 p-4 mb-4 text-sm text-slate-300">Spotify-Status wird geladen…</div>` +
+    fieldWrap("Spotify-Playlist (Link oder ID)", `<input id="f-playlistUrl" value="${escapeHtml(c.playlistUrl || '')}" placeholder="https://open.spotify.com/playlist/..." class="${inputClass}" />`);
+  loadSpotifyStatus();
+}
+
+async function loadSpotifyStatus() {
+  const box = document.getElementById("spotify-connect-box");
+  if (!box) return;
+  const connectUrl = `/api/spotify/connect?calendarId=${encodeURIComponent(calendarId)}&day=${currentDay}`;
+  const btn = (label, extra = "") =>
+    `<a href="${connectUrl}" class="inline-flex items-center gap-2 rounded-full bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-sm px-4 py-2 transition-colors ${extra}">
+       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.434-5.305-1.76-8.786-.963-.335.077-.67-.133-.746-.47-.077-.334.132-.67.47-.745 3.808-.87 7.076-.496 9.712 1.115.293.18.386.563.207.856zm1.2-3.15c-.226.367-.706.482-1.072.257-2.687-1.652-6.785-2.13-9.965-1.166-.413.127-.848-.106-.973-.517-.125-.413.108-.848.52-.973 3.632-1.1 8.147-.568 11.234 1.328.366.226.48.706.256 1.072zm.106-3.297C14.67 8 10.513 7.784 7.234 8.78c-.487.148-1-.13-1.148-.616-.148-.488.13-1 .616-1.15C10.457 5.88 15.115 6.13 18.733 8.275c.427.25.57.81.318 1.237-.253.427-.81.57-1.238.318z"/></svg>
+       ${label}
+     </a>`;
+
+  let status;
+  try {
+    status = await api.spotifyStatus(calendarId);
+  } catch (err) {
+    box.innerHTML = `<p class="text-rose-300">Spotify-Status konnte nicht geladen werden: ${escapeHtml(err.message)}</p>`;
+    return;
+  }
+
+  if (!status.configured) {
+    box.innerHTML = `<p class="text-amber-300">Spotify ist auf dem Server nicht konfiguriert. Trage <code>SPOTIFY_CLIENT_ID</code> und <code>SPOTIFY_CLIENT_SECRET</code> in die <code>.env</code> ein.</p>`;
+    return;
+  }
+
+  if (!status.connected) {
+    box.innerHTML = `
+      <p class="mb-3">Noch kein Spotify-Account verbunden – Songwünsche werden dann nur in der App gespeichert.</p>
+      ${btn("Mit Spotify verbinden")}`;
+    return;
+  }
+
+  const options = (status.playlists || [])
+    .map((p) => `<option value="${escapeHtml(p.url)}">${escapeHtml(p.name)} (${p.tracks} Songs)</option>`)
+    .join("");
+  box.innerHTML = `
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <p>Verbunden als <span class="font-semibold text-emerald-400">${escapeHtml(status.displayName)}</span></p>
+      <button type="button" id="spotify-disconnect" class="text-xs text-slate-400 hover:text-rose-300 underline">Trennen</button>
+    </div>
+    ${status.error ? `<p class="text-rose-300 text-xs mb-2">Playlists konnten nicht geladen werden: ${escapeHtml(status.error)}</p>` : ""}
+    <label class="block text-xs text-slate-400 mb-1">Playlist aus deinem Account wählen</label>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <select id="spotify-playlist-select" class="${inputClass}">
+        <option value="">– auswählen –</option>${options}
+      </select>
+      <button type="button" id="spotify-create-playlist" class="rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium px-3 py-2 whitespace-nowrap">+ Neue Playlist</button>
+    </div>
+    <p class="text-xs text-slate-500 mt-2">Neue Songs werden in die unten eingetragene Playlist geschrieben.</p>`;
+
+  const urlInput = document.getElementById("f-playlistUrl");
+  const select = document.getElementById("spotify-playlist-select");
+  if (urlInput.value) select.value = urlInput.value;
+  select.addEventListener("change", () => {
+    if (select.value) urlInput.value = select.value;
+  });
+
+  document.getElementById("spotify-create-playlist").addEventListener("click", async () => {
+    const name = prompt("Name der neuen Playlist:", `Adventskalender für ${calendar.recipientName}`);
+    if (!name) return;
+    try {
+      const playlist = await api.spotifyCreatePlaylist(calendarId, name);
+      urlInput.value = playlist.url;
+      await loadSpotifyStatus();
+      document.getElementById("spotify-playlist-select").value = playlist.url;
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  document.getElementById("spotify-disconnect").addEventListener("click", async () => {
+    if (!confirm("Spotify-Verbindung für diesen Kalender trennen?")) return;
+    await api.spotifyDisconnect(calendarId);
+    await loadSpotifyStatus();
+  });
 }
 
 function renderIotBoxFields(c) {

@@ -64,6 +64,10 @@ const api = {
     return request("POST", "/admin/upload", form, true);
   },
   generateWichtelLink: (id, day) => request("POST", `/admin/calendars/${id}/days/${day}/wichtel-link`),
+
+  spotifyStatus: (id) => request("GET", `/spotify/status?calendarId=${encodeURIComponent(id)}`),
+  spotifyDisconnect: (id) => request("POST", "/spotify/disconnect", { calendarId: id }),
+  spotifyCreatePlaylist: (id, name) => request("POST", "/spotify/playlists", { calendarId: id, name }),
 };
 
 async function requireAdminOrRedirect() {

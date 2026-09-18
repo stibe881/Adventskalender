@@ -1837,9 +1837,9 @@ function renderContent(type, c, dayNum) {
         
       if (!hasAdded || isPreview) {
         html += `<div style="margin-bottom: 24px;">
-          <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 8px;">Suche einen Weihnachtssong und füge ihn zur gemeinsamen Playlist hinzu!</p>
+          <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 8px;">Suche einen Song auf Spotify und füge ihn zur gemeinsamen Playlist hinzu!${calendarMeta.spotifyConnected ? " Er landet direkt in der echten Spotify-Playlist." : ""}</p>
           <div style="display: flex; gap: 8px;">
-            <input type="text" id="spotify-search" placeholder="z.B. Last Christmas..." style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 8px 16px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='rgba(255,255,255,0.2)'">
+            <input type="text" id="spotify-search" data-day="${dayNum}" placeholder="z.B. Last Christmas..." style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 8px 16px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='rgba(255,255,255,0.2)'">
             <button onclick="searchSpotify(${dayNum})" style="background: #10b981; color: #000; font-weight: bold; padding: 8px 16px; border-radius: 9999px; border: none; cursor: pointer;">Suchen</button>
           </div>
           <div id="spotify-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
@@ -1863,8 +1863,9 @@ function renderContent(type, c, dayNum) {
         playlist.forEach((song, i) => {
           html += `<div class="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg">
             <div class="text-slate-500 w-4 text-right text-xs font-mono">${i+1}</div>
+            ${song.image ? `<img src="${escapeHtml(song.image)}" alt="" style="width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;">` : ""}
             <div class="flex-1 min-w-0">
-              <div class="font-bold text-sm truncate">${escapeHtml(song.title)}</div>
+              <div class="font-bold text-sm truncate">${song.url ? `<a href="${escapeHtml(song.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(song.title)}</a>` : escapeHtml(song.title)}</div>
               <div class="text-xs text-slate-400 truncate">${escapeHtml(song.artist)}</div>
             </div>
             <div class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Tag ${song.day}</div>
@@ -2535,61 +2536,72 @@ window.connectIotBox = async function() {
   }
 };
 
-window.searchSpotify = function(day) {
-  const query = document.getElementById("spotify-search").value.toLowerCase();
+let spotifySearchResults = [];
+
+window.searchSpotify = async function(day) {
+  const query = document.getElementById("spotify-search").value.trim();
   const resEl = document.getElementById("spotify-results");
-  if (!query) return;
-  
-  // Mock search results
+  if (query.length < 2) return;
+
   resEl.innerHTML = `<div class="animate-pulse text-sm text-green-300">Suche auf Spotify...</div>`;
-  
-  setTimeout(() => {
-    const mockSongs = [
-      { title: "Last Christmas", artist: "Wham!" },
-      { title: "All I Want for Christmas Is You", artist: "Mariah Carey" },
-      { title: "Driving Home for Christmas", artist: "Chris Rea" },
-      { title: "It's Beginning to Look a Lot like Christmas", artist: "Michael Bublé" },
-      { title: "Wonderful Dream (Holidays are Coming)", artist: "Melanie Thornton" }
-    ].filter(s => s.title.toLowerCase().includes(query) || s.artist.toLowerCase().includes(query));
-    
-    if (mockSongs.length === 0) {
-      resEl.innerHTML = `<p class="text-sm text-rose-300">Keine Weihnachtssongs gefunden.</p>`;
-      return;
-    }
-    
-    resEl.innerHTML = mockSongs.map(s => `
-      <div class="flex items-center justify-between bg-slate-800 p-2 rounded-lg border border-white/5 hover:border-green-500/50 transition-colors">
-        <div class="flex-1 min-w-0 mr-2">
-          <div class="font-bold text-sm truncate text-white">${escapeHtml(s.title)}</div>
-          <div class="text-xs text-slate-400 truncate">${escapeHtml(s.artist)}</div>
-        </div>
-        <button onclick="addSpotifySong(${day}, '${escapeHtml(s.title.replace(/'/g, "\\'"))}', '${escapeHtml(s.artist.replace(/'/g, "\\'"))}')" style="flex-shrink:0;background:#1DB954;color:#000;font-size:0.75rem;font-weight:700;padding:6px 16px;border-radius:9999px;border:none;cursor:pointer;letter-spacing:0.04em;box-shadow:0 2px 8px rgba(29,185,84,0.35);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'">+ Hinzufügen</button>
+
+  const auth = isPreview ? `calendarId=${encodeURIComponent(routeId)}` : `cal=${encodeURIComponent(routeId)}`;
+  try {
+    const data = await fetchJson(`/api/spotify/search?q=${encodeURIComponent(query)}&${auth}`);
+    spotifySearchResults = data.tracks || [];
+  } catch (err) {
+    resEl.innerHTML = `<p class="text-sm text-rose-300">${escapeHtml(err.message)}</p>`;
+    return;
+  }
+
+  if (spotifySearchResults.length === 0) {
+    resEl.innerHTML = `<p class="text-sm text-rose-300">Nichts gefunden – probier einen anderen Suchbegriff.</p>`;
+    return;
+  }
+
+  resEl.innerHTML = spotifySearchResults.map((s, i) => `
+    <div class="flex items-center gap-3 bg-slate-800 p-2 rounded-lg border border-white/5 hover:border-green-500/50 transition-colors">
+      ${s.image ? `<img src="${escapeHtml(s.image)}" alt="" style="width:40px;height:40px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : `<div style="width:40px;height:40px;border-radius:6px;background:#334155;flex-shrink:0;"></div>`}
+      <div class="flex-1 min-w-0 mr-2">
+        <div class="font-bold text-sm truncate text-white">${escapeHtml(s.title)}</div>
+        <div class="text-xs text-slate-400 truncate">${escapeHtml(s.artist)}${s.album ? ` · ${escapeHtml(s.album)}` : ""}</div>
       </div>
-    `).join("");
-  }, 600);
+      <button onclick="addSpotifySong(${day}, ${i})" style="flex-shrink:0;background:#1DB954;color:#000;font-size:0.75rem;font-weight:700;padding:6px 16px;border-radius:9999px;border:none;cursor:pointer;letter-spacing:0.04em;box-shadow:0 2px 8px rgba(29,185,84,0.35);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'">+ Hinzufügen</button>
+    </div>
+  `).join("");
 };
 
-window.addSpotifySong = async function(day, title, artist) {
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target?.id === "spotify-search") {
+    e.preventDefault();
+    const day = parseInt(document.getElementById("spotify-search").dataset.day, 10);
+    if (day) searchSpotify(day);
+  }
+});
+
+window.addSpotifySong = async function(day, index) {
+  const track = spotifySearchResults[index];
+  if (!track) return;
   try {
     const playlistUrl = isPreview
       ? `/api/admin/calendars/${routeId}/playlist`
       : `/api/calendar/${routeId}/playlist`;
-    const res = await fetch(playlistUrl, {
+    const data = await fetchJson(playlistUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ day, title, artist })
+      body: JSON.stringify({ day, title: track.title, artist: track.artist, trackUri: track.uri, url: track.url, image: track.image }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    
+
     localStorage.setItem(`spotify_${routeId}_${day}`, "true");
-    
-    // Update local meta and re-render
     if (!calendarMeta.playlist) calendarMeta.playlist = [];
-    calendarMeta.playlist.push({ day, title, artist });
-    
+    calendarMeta.playlist.push({ day, title: track.title, artist: track.artist, url: track.url, image: track.image });
+
     const door = days.find((d) => d.day === day);
     openContentModal(door);
+
+    if (data.spotify && !data.spotify.added && calendarMeta.spotifyConnected) {
+      showLockToast(`Gespeichert – aber nicht in Spotify eingetragen: ${data.spotify.reason}`);
+    }
   } catch (err) {
     alert("Fehler: " + err.message);
   }

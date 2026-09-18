@@ -47,5 +47,13 @@ module.exports = {
     secretKey: process.env.STRIPE_SECRET_KEY || "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
     priceId: process.env.STRIPE_PRICE_ID || "",
-  }
+  },
+  spotify: {
+    clientId: process.env.SPOTIFY_CLIENT_ID || "",
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
+    // Must match a Redirect URI registered in the Spotify Developer Dashboard.
+    redirectUri:
+      process.env.SPOTIFY_REDIRECT_URI ||
+      `${process.env.BASE_URL || `http://127.0.0.1:${process.env.PORT || 3000}`}/api/spotify/callback`,
+  },
 };

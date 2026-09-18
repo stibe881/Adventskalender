@@ -108,6 +108,17 @@ npm run dev
 4. Über „🔗 Link kopieren“ den persönlichen Link an die beschenkte Person senden.
 5. Diese kann ab dem jeweiligen Datum im Dezember ihre Türchen öffnen – alles andere bleibt bis dahin verschlossen, garantiert serverseitig.
 
+## Spotify-Anbindung (Inhaltstyp „Gemeinsame Playlist“)
+
+Songwünsche der Beschenkten werden in der App gespeichert **und** – sobald der Kalender mit einem Spotify-Account verbunden ist – automatisch in die echte Spotify-Playlist eingetragen.
+
+1. Unter https://developer.spotify.com/dashboard eine App anlegen und `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` in die `.env` eintragen.
+2. In der Spotify-App als **Redirect URI** exakt `<BASE_URL>/api/spotify/callback` hinterlegen (lokal `http://127.0.0.1:3000/api/spotify/callback` – Spotify akzeptiert kein `localhost`; produktiv die HTTPS-Domain).
+3. Solange die Spotify-App im „Development Mode“ ist, dürfen nur Spotify-Nutzer, die im Dashboard unter *User Management* eingetragen sind, die Verbindung herstellen (das betrifft nur den Schenker, nicht die Beschenkten – die Song-Suche läuft über das App-Token).
+4. Im Editor beim Türchen „Gemeinsame Playlist“ auf **Mit Spotify verbinden** klicken, danach eine Playlist aus dem Account wählen oder per Klick eine neue anlegen.
+
+Die Suche der Beschenkten nutzt die Spotify Web API (Client Credentials, `/api/spotify/search`); das Hinzufügen läuft über den OAuth-Token des Schenkers (`server/src/services/spotify.js`), der pro Kalender gespeichert und automatisch erneuert wird. Tokens werden nie an den Browser ausgeliefert.
+
 ## Hinweise für den Produktivbetrieb
 
 - Setze `NODE_ENV=production` und eine öffentlich erreichbare `BASE_URL` in der `.env`, damit generierte Links korrekt sind und Cookies als `secure` gesetzt werden (HTTPS erforderlich).

@@ -457,12 +457,8 @@ router.post("/dev-toggle-pro", async (req, res) => {
   }
 });
 
-function hasAccess(calendar, user) {
-  if (!calendar) return false;
-  if (calendar.ownerId === user.id) return true;
-  if (calendar.collaborators && calendar.collaborators.includes(user.email)) return true;
-  return false;
-}
+const { hasAccess } = require("../utils/access");
+const spotify = require("../services/spotify");
 
 // ---------- Calendars ----------
 
@@ -513,7 +509,9 @@ router.post("/calendars", async (req, res) => {
 router.get("/calendars/:id", async (req, res) => {
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden oder kein Zugriff." });
-  res.json(calendar);
+  // Never hand OAuth tokens to the browser; the editor only needs to know the link exists.
+  const { spotify: spotifyLink, ...safe } = calendar;
+  res.json({ ...safe, spotifyConnected: Boolean(spotifyLink?.refreshToken), spotifyAccount: spotifyLink?.displayName || null });
 });
 
 router.put("/calendars/:id", async (req, res) => {
@@ -682,6 +680,7 @@ router.get("/calendars/:id/preview", async (req, res) => {
     syncOpen: calendar.syncOpen,
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
+    spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     year: calendar.year,
     today: getTodayParts(),
     preview: true,
@@ -826,16 +825,18 @@ router.post("/calendars/:id/playlist", async (req, res) => {
     return res.status(404).json({ error: "Kalender nicht gefunden." });
   }
 
-  const { day, title, artist } = req.body;
+  const { day, title, artist, trackUri, url, image } = req.body;
   if (!day || !title || !artist) return res.status(400).json({ error: "Missing fields" });
 
-  await db.updateCalendar(calendar.id, (cal) => {
+  const updated = await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.playlist) cal.playlist = [];
-    cal.playlist.push({ day, title, artist, addedAt: new Date().toISOString() });
+    cal.playlist.push({ day, title, artist, trackUri: trackUri || null, url: url || null, image: image || null, addedAt: new Date().toISOString() });
     return cal;
   });
 
-  res.json({ success: true });
+  const door = updated.days.find((d) => d.day === Number(day));
+  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri);
+  res.json({ success: true, spotify: result });
 });
 
 module.exports = router;

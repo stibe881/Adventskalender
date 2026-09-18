@@ -150,6 +150,7 @@ app.get("/api/calendar/by-domain", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/spotify", require("./routes/spotify"));
 
 // Pretty recipient URL: /c/:token -> calendar SPA page
 app.get("/c/:token", (req, res) => {

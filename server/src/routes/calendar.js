@@ -122,6 +122,7 @@ router.get("/:token", async (req, res) => {
     companyMode: calendar.companyMode || false,
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
+    spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     year: calendar.year,
     today: getTodayParts(),
     streak: streak,
@@ -332,16 +333,20 @@ router.post("/:token/playlist", async (req, res) => {
   const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
-  const { day, title, artist } = req.body;
+  const { day, title, artist, trackUri, url, image } = req.body;
   if (!day || !title || !artist) return res.status(400).json({ error: "Missing fields" });
 
-  await db.updateCalendar(calendar.id, (cal) => {
+  const updated = await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.playlist) cal.playlist = [];
-    cal.playlist.push({ day, title, artist, addedAt: new Date().toISOString() });
+    cal.playlist.push({ day, title, artist, trackUri: trackUri || null, url: url || null, image: image || null, addedAt: new Date().toISOString() });
     return cal;
   });
-  
-  res.json({ success: true });
+
+  // Mirror the wish into the real Spotify playlist when the owner linked an account.
+  const spotify = require("../services/spotify");
+  const door = updated.days.find((d) => d.day === Number(day));
+  const result = await spotify.addTrackForCalendar(updated, door?.content?.playlistUrl, trackUri);
+  res.json({ success: true, spotify: result });
 });
 
 router.get("/:token/vapidPublicKey", (req, res) => {
