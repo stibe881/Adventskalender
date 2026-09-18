@@ -123,6 +123,7 @@ router.get("/:token", async (req, res) => {
     syncOpen: calendar.syncOpen,
     companyMode: calendar.companyMode || false,
     companyName: calendar.companyMode ? await require("../utils/access").resolveCompanyName(calendar) : null,
+    communityCanvas: require("../utils/access").communityCanvasEnabled(calendar),
     metaPuzzle: calendar.metaPuzzle,
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),

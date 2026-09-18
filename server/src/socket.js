@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const db = require("./db");
+const { communityCanvasEnabled } = require("./utils/access");
 
 let io;
 
@@ -60,7 +61,7 @@ function initSocket(server) {
     socket.on("get_pixels", async (idOrToken) => {
       try {
         const cal = await resolveCalendar(idOrToken);
-        if (cal) socket.emit("pixels_state", cal.pixelGrid || {});
+        if (cal && communityCanvasEnabled(cal)) socket.emit("pixels_state", cal.pixelGrid || {});
       } catch (err) {
         console.error("[socket] get_pixels fehlgeschlagen:", err.message);
       }
@@ -70,7 +71,7 @@ function initSocket(server) {
       if (!validPixel(data)) return;
       try {
         const cal = await resolveCalendar(data.calendarId);
-        if (!cal) return;
+        if (!cal || !communityCanvasEnabled(cal)) return;
         await db.updateCalendar(cal.id, (c) => {
           if (!c.pixelGrid) c.pixelGrid = {};
           c.pixelGrid[`${data.x},${data.y}`] = data.color;

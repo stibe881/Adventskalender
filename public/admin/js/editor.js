@@ -140,6 +140,7 @@ async function loadCalendar() {
   document.getElementById("randomLayout").checked = calendar.randomLayout;
   document.getElementById("syncOpen").checked = calendar.syncOpen || false;
   document.getElementById("companyMode").checked = calendar.companyMode || false;
+  document.getElementById("communityCanvas").checked = calendar.communityCanvas !== false;
   
   const metaCheckbox = document.getElementById("metaPuzzle");
   const metaConfig = document.getElementById("metaPuzzleConfig");
@@ -204,6 +205,7 @@ async function loadCalendar() {
   const firmaSettings = document.getElementById("firma-settings");
   firmaSettings.classList.toggle("hidden", calendar.theme !== "firma");
   document.getElementById("company-mode-block").classList.toggle("hidden", calendar.theme !== "firma");
+  document.getElementById("community-canvas-block").classList.toggle("hidden", calendar.theme !== "firma");
 
   // Keep reference to customConfig
   if (!calendar.customConfig) calendar.customConfig = {};
@@ -672,6 +674,7 @@ themeSelect.addEventListener("change", (e) => {
   const isFirma = e.target.value === "firma";
   document.getElementById("firma-settings").classList.toggle("hidden", !isFirma);
   document.getElementById("company-mode-block").classList.toggle("hidden", !isFirma);
+  document.getElementById("community-canvas-block").classList.toggle("hidden", !isFirma);
   if (!isFirma) document.getElementById("companyMode").checked = false;
 });
 
@@ -1557,6 +1560,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     metaPuzzle: document.getElementById("metaPuzzle").checked,
     metaPassword: document.getElementById("metaPassword").value,
     companyMode: document.getElementById("companyMode").checked,
+    communityCanvas: document.getElementById("communityCanvas").checked,
     customConfig: calendar.customConfig,
   });
   await loadCalendar();

@@ -267,7 +267,9 @@ async function init() {
   }
   
   initPet(calendarMeta.streak || 0);
-  initPixelArt();
+  // Community canvas is a firma-template feature the owner can switch off.
+  document.getElementById("pixel-art-btn").classList.toggle("hidden", !calendarMeta.communityCanvas);
+  if (calendarMeta.communityCanvas) initPixelArt();
   initGlobalAudioPlayer();
 
   if (!isPreview) {

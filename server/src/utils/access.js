@@ -19,4 +19,10 @@ async function resolveCompanyName(calendar) {
   return calendar.recipientName || null;
 }
 
-module.exports = { hasAccess, resolveCompanyName };
+// The shared pixel canvas is a company feature; firma calendars have it on
+// unless the owner switched it off.
+function communityCanvasEnabled(calendar) {
+  return Boolean(calendar) && calendar.theme === "firma" && calendar.communityCanvas !== false;
+}
+
+module.exports = { hasAccess, resolveCompanyName, communityCanvasEnabled };

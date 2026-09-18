@@ -457,7 +457,7 @@ router.post("/dev-toggle-pro", async (req, res) => {
   }
 });
 
-const { hasAccess, resolveCompanyName } = require("../utils/access");
+const { hasAccess, resolveCompanyName, communityCanvasEnabled } = require("../utils/access");
 const spotify = require("../services/spotify");
 
 // ---------- Calendars ----------
@@ -515,13 +515,14 @@ router.get("/calendars/:id", async (req, res) => {
 });
 
 router.put("/calendars/:id", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const updated = await db.updateCalendar(req.params.id, (cal) => {
     if (syncOpen !== undefined) cal.syncOpen = Boolean(syncOpen);
     if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
+    if (communityCanvas !== undefined) cal.communityCanvas = Boolean(communityCanvas);
     // Company mode is a feature of the "firma" template only.
     if ((theme && THEMES.includes(theme) ? theme : cal.theme) !== "firma") cal.companyMode = false;
     if (metaPuzzle !== undefined) cal.metaPuzzle = Boolean(metaPuzzle);
@@ -687,6 +688,7 @@ router.get("/calendars/:id/preview", async (req, res) => {
     metaPuzzle: calendar.metaPuzzle,
     companyMode: calendar.companyMode || false,
     companyName: await resolveCompanyName(calendar),
+    communityCanvas: communityCanvasEnabled(calendar),
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     hasCoins: calendar.days.some((d) => d.contentType === "coins"),
