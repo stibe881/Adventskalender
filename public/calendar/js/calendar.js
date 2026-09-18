@@ -1637,15 +1637,15 @@ function renderContent(type, c, dayNum) {
       return cardWrap(
         "product",
         "Für Dich",
-        `<div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col items-center p-4">
-           ${c.image ? `<img src="${escapeHtml(c.image)}" class="w-full h-48 object-cover rounded-xl mb-4" />` : ''}
-           <h3 class="text-xl font-bold mb-2 text-center">${escapeHtml(c.title)}</h3>
-           <div class="flex items-center gap-3 mb-4">
-             ${c.oldPrice ? `<span class="text-rose-400 line-through text-sm">${escapeHtml(c.oldPrice)}</span>` : ''}
-             ${c.newPrice ? `<span class="text-2xl font-black text-emerald-400">${escapeHtml(c.newPrice)}</span>` : ''}
+        `<div style="background: rgba(128,128,128,0.05); border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; padding: 24px; margin: 0 auto; max-width: 320px;">
+           ${c.image ? `<img src="${escapeHtml(c.image)}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 20px;" onerror="this.style.display='none'" />` : ''}
+           <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; text-align: center;">${escapeHtml(c.title)}</h3>
+           <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px;">
+             ${c.oldPrice ? `<span style="color: #ef4444; text-decoration: line-through; font-size: 1rem;">${escapeHtml(c.oldPrice)} CHF</span>` : ''}
+             ${c.newPrice ? `<span style="font-size: 1.75rem; font-weight: 900; color: #10b981;">${escapeHtml(c.newPrice)} CHF</span>` : ''}
            </div>
-           ${c.discount ? `<div class="bg-indigo-900/50 text-indigo-200 border border-indigo-500/30 font-mono px-4 py-2 rounded-lg mb-6 border-dashed font-bold flex items-center gap-2"><span>🏷️</span> ${escapeHtml(c.discount)}</div>` : ''}
-           ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" class="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">Zum Shop <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></a>` : ''}
+           ${c.discount ? `<div style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 2px dashed rgba(99, 102, 241, 0.5); font-family: monospace; padding: 8px 16px; border-radius: 8px; margin-bottom: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;"><span>🏷️</span> ${escapeHtml(c.discount)}</div>` : ''}
+           ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" style="width: 100%; text-align: center; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; padding: 14px 24px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Zum Shop <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></a>` : ''}
          </div>`
       );
 
