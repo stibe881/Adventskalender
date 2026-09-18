@@ -674,15 +674,32 @@ function renderDoorGrid() {
     let logoHtml = "";
     
     if (themeKey === "firma") {
-      const doorStyle = cfg.doorStyle || "white"; // "white", "color", "logo", "color-logo"
+      const styleConfig = cfg.doorStyle || "white";
+      const hasLogo = styleConfig.includes("logo");
+      const baseStyle = styleConfig.replace("-logo", "");
+      const c = cfg.firmaColor || "#3b82f6";
       
-      if (doorStyle === "color" || doorStyle === "color-logo") {
-        const c = cfg.firmaColor || "#3b82f6";
-        // Override the CSS variables explicitly so that children (like .door-number) pick them up
-        leafFrontStyle = `background: ${c}; border-color: ${c}; --number-color: #ffffff; --lock-color: rgba(255,255,255,0.7);`;
+      switch(baseStyle) {
+        case "color":
+          leafFrontStyle = `background: ${c}; border-color: ${c}; --number-color: #ffffff; --lock-color: rgba(255,255,255,0.7);`;
+          break;
+        case "outline":
+          leafFrontStyle = `background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 2px solid ${c}; --number-color: ${c}; --lock-color: ${c};`;
+          break;
+        case "glass":
+          leafFrontStyle = `background: rgba(255,255,255,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 4px 15px rgba(0,0,0,0.1); --number-color: ${c}; --lock-color: ${c};`;
+          break;
+        case "dark":
+          leafFrontStyle = `background: #0f172a; border: 1px solid ${c}; --number-color: ${c}; --lock-color: rgba(255,255,255,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.3);`;
+          break;
+        case "logo":
+        case "white":
+        default:
+          // Default white style handles these cases (logo case gets hasLogo=true but baseStyle=logo->default)
+          break;
       }
       
-      if ((doorStyle === "logo" || doorStyle === "color-logo") && cfg.logo) {
+      if (hasLogo && cfg.logo) {
         logoHtml = `<img src="${cfg.logo}" class="door-logo" style="position:absolute; width:60%; height:60%; object-fit:contain; top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.15; pointer-events:none;" />`;
       }
     }

@@ -143,10 +143,20 @@
                   <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
                 </label>
                 <select id="firma-door-style" class="pro-feature-input w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-                  <option value="white">Klassisch Weiß (Standard)</option>
-                  <option value="color">Firmenfarbe</option>
-                  <option value="logo">Weiß + Logo-Wasserzeichen</option>
-                  <option value="color-logo">Firmenfarbe + Logo-Wasserzeichen</option>
+                  <optgroup label="Ohne Logo">
+                    <option value="white">Klassisch Weiß (Standard)</option>
+                    <option value="color">Vollflächig (Firmenfarbe)</option>
+                    <option value="outline">Umriss (Transparent)</option>
+                    <option value="glass">Milchglas (Modern)</option>
+                    <option value="dark">Dunkel (Elegant)</option>
+                  </optgroup>
+                  <optgroup label="Mit Logo-Wasserzeichen">
+                    <option value="white-logo">Klassisch Weiß + Logo</option>
+                    <option value="color-logo">Vollflächig + Logo</option>
+                    <option value="outline-logo">Umriss + Logo</option>
+                    <option value="glass-logo">Milchglas + Logo</option>
+                    <option value="dark-logo">Dunkel + Logo</option>
+                  </optgroup>
                 </select>
               </div>
             </div>
