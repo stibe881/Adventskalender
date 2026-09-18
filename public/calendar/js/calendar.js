@@ -59,14 +59,15 @@ let userCoins = 0;
 let userInventory = [];
 
 function updateCoinDisplay() {
+  const shown = isPreview ? "∞" : userCoins;
   const cd = document.getElementById("coin-display");
-  if (cd) cd.textContent = userCoins;
+  if (cd) cd.textContent = shown;
   const sb = document.getElementById("shop-balance");
-  if (sb) sb.textContent = userCoins;
-  
-  // Sync to leaderboard if name is set
+  if (sb) sb.textContent = shown;
+
+  // Sync to leaderboard if name is set (never from the admin preview)
   const lbName = localStorage.getItem("lb_name");
-  if (lbName && typeof routeId !== "undefined") {
+  if (!isPreview && lbName && typeof routeId !== "undefined") {
     fetchJson(`/api/calendar/${routeId}/score`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -435,7 +436,7 @@ function renderShop() {
   if (!list) return;
   list.innerHTML = SHOP_ITEMS.map((item) => {
     const owned = userInventory.includes(item.id);
-    const affordable = userCoins >= item.price;
+    const affordable = isPreview || userCoins >= item.price;
     return `
       <button type="button" onclick="buyItem('${item.id}')" ${owned ? "disabled" : ""}
         class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform ${owned ? "border-emerald-400 opacity-80 cursor-default" : "border-amber-300 hover:scale-[1.02] active:scale-95 hover:bg-amber-50"}">
@@ -468,11 +469,14 @@ window.buyItem = function(itemId) {
     alert("Du besitzt dieses Item bereits!");
     return;
   }
-  if (userCoins < item.price) {
-    alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} 🪙.`);
-    return;
+  // The admin preview has unlimited coins so every item can be tried out.
+  if (!isPreview) {
+    if (userCoins < item.price) {
+      alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} 🪙.`);
+      return;
+    }
+    userCoins -= item.price;
   }
-  userCoins -= item.price;
   userInventory.push(item.id);
   saveUserCoins();
   localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
