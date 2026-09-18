@@ -423,10 +423,10 @@ function applyEffects(enabled) {
 const SHOP_ITEMS = [
   { id: "bow", name: "Schleife", emoji: "🎀", slot: "neck", price: 20, desc: "Hübsch verpackt." },
   { id: "scarf", name: "Kuschelschal", emoji: "🧣", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
-  { id: "santahat", name: "Weihnachtsmütze", emoji: "🎅", slot: "head", price: 40, desc: "Der Klassiker." },
+  { id: "santahat", name: "Weihnachtsmann", emoji: "🎅", slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
   { id: "hat", name: "Zylinder", emoji: "🎩", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
   { id: "bell", name: "Glöckchen", emoji: "🔔", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
-  { id: "skis", name: "Skier", emoji: "🎿", slot: "ride", price: 90, desc: "Ab auf die Piste." },
+  { id: "skis", name: "Schlittschuhe", emoji: "⛸️", slot: "feet", price: 90, desc: "Elegant übers Eis gleiten." },
   { id: "glasses", name: "Sonnenbrille", emoji: "🕶️", slot: "face", price: 100, desc: "Cool bleiben, auch bei Schnee." },
   { id: "lights", name: "Lichterkette", emoji: "✨", slot: "aura", price: 120, desc: "Funkelt bei jedem Schritt." },
   { id: "sleigh", name: "Schlitten", emoji: "🛷", slot: "ride", price: 150, desc: "Rentiere ziehen, Rentiere fahren." },
@@ -453,23 +453,30 @@ function initPet(streak = calendarMeta?.streak || 0) {
     petEl.querySelector(".rudi-stable").addEventListener("click", () => {
       emoji.style.transform = "translateY(-14px)";
       setTimeout(() => (emoji.style.transform = "translateY(0)"), 220);
-      // Rudi shows off one of his purchases; without any he just hops.
-      const owned = SHOP_ITEMS.filter((i) => userInventory.includes(i.id));
-      if (owned.length) useItem(owned[Math.floor(Math.random() * owned.length)].id);
+      // Tapping Rudi while he wears something takes the last piece off;
+      // otherwise he shows off a random trick.
+      if (wornItems.length) {
+        toggleWear(SHOP_ITEMS.find((i) => i.id === wornItems[wornItems.length - 1]));
+        return;
+      }
+      const tricks = SHOP_ITEMS.filter((i) => userInventory.includes(i.id) && !WEARABLES.includes(i.id));
+      if (tricks.length) useItem(tricks[Math.floor(Math.random() * tricks.length)].id);
       else showLockToast("Rudi hüpft – kauf ihm im Nordpol-Shop etwas, dann zeigt er Kunststücke!");
     });
   }
 
+  loadWorn();
+  const worn = wornEmoji();
   emoji.style.filter = "";
   if (petState === "sleepy") {
-    emoji.textContent = "🦌💤";
+    emoji.textContent = `${worn}🦌💤`;
     emoji.style.filter = "grayscale(0.45)";
     petEl.title = "Rudi schläft – öffne ein Türchen!";
   } else if (petState === "happy") {
-    emoji.textContent = "🦌";
+    emoji.textContent = `${worn}🦌`;
     petEl.title = `Rudi ist glücklich · ${activityText}`;
   } else {
-    emoji.textContent = "🦌✨";
+    emoji.textContent = `${worn}🦌✨`;
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
     petEl.title = `Rudi: On Fire! 🔥 ${activityText}`;
   }
@@ -485,7 +492,8 @@ function renderPetItems() {
   bar.innerHTML = owned
     .map((item) => {
       const action = RUDI_ACTIONS[item.id];
-      return `<button type="button" class="stable-item" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}" aria-label="${escapeHtml(item.name)}">${item.emoji}</button>`;
+      const worn = wornItems.includes(item.id);
+      return `<button type="button" class="stable-item${worn ? " is-worn" : ""}" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}${worn ? " (getragen)" : ""}" aria-label="${escapeHtml(item.name)}">${item.emoji}</button>`;
     })
     .join("");
   bar.style.display = owned.length ? "flex" : "none";
@@ -527,19 +535,49 @@ function renderShop() {
 
 // ---------- Rudi actions (what purchased items do) ----------
 
+// Wearables stay on Rudi until they are taken off again.
+const WEARABLES = ["bow", "scarf", "hat", "glasses", "crown"];
+let wornItems = [];
+
+function loadWorn() {
+  try { wornItems = JSON.parse(localStorage.getItem(`worn_${routeId}`) || "[]"); } catch (e) { wornItems = []; }
+  wornItems = wornItems.filter((id) => WEARABLES.includes(id) && userInventory.includes(id));
+}
+
+function wornEmoji() {
+  return WEARABLES.filter((id) => wornItems.includes(id)).map((id) => SHOP_ITEMS.find((i) => i.id === id)?.emoji || "").join("");
+}
+
+function toggleWear(item) {
+  if (wornItems.includes(item.id)) {
+    wornItems = wornItems.filter((id) => id !== item.id);
+    showLockToast(`Rudi legt ${item.name} ab.`);
+  } else {
+    // one piece per slot – a crown replaces the top hat and so on
+    wornItems = wornItems.filter((id) => SHOP_ITEMS.find((i) => i.id === id)?.slot !== item.slot);
+    wornItems.push(item.id);
+    showLockToast(`Rudi trägt jetzt ${item.name}.`);
+    if (window.atmosphere) window.atmosphere.playClickSound();
+  }
+  localStorage.setItem(`worn_${routeId}`, JSON.stringify(wornItems));
+  initPet();
+  const emoji = document.getElementById("pet-emoji");
+  emoji.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 400, easing: "ease-out" });
+}
+
 const RUDI_ACTIONS = {
-  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel("🛷", "sleigh") },
-  skis: { label: "Slalom-Abfahrt über den Bildschirm", run: () => rudiTravel("🎿", "slalom") },
-  wings: { label: "Rundflug quer über den Kalender", run: () => rudiTravel("🪽", "fly") },
-  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel("🌟", "fly") },
+  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel({ mode: "sleigh", vehicle: "🛷" }) },
+  skis: { label: "Auf Schlittschuhen über den Bildschirm gleiten", run: () => rudiTravel({ mode: "glide", feet: "⛸️" }) },
+  wings: { label: "Mit Flügeln über den Kalender fliegen", run: () => rudiTravel({ mode: "fly", back: "🪽" }) },
+  santahat: { label: "Mit dem Weihnachtsmann auf dem Rücken fliegen", run: () => rudiTravel({ mode: "fly", rider: "🎅" }) },
+  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel({ mode: "fly", vehicle: "🌟" }) },
   lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
   bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },
-  hat: { label: "Zylinder aufsetzen", run: (item) => rudiPose(item, "Rudi zieht den Zylinder!") },
-  santahat: { label: "Weihnachtsmütze aufsetzen", run: (item) => rudiPose(item, "Ho ho ho! Rudi in Weihnachtsstimmung.") },
-  crown: { label: "Krone aufsetzen", run: (item) => rudiPose(item, "Seine Majestät Rudi I. grüsst huldvoll.") },
-  glasses: { label: "Sonnenbrille aufsetzen", run: (item) => rudiPose(item, "Rudi: zu cool für Schnee.") },
-  scarf: { label: "Schal umlegen", run: (item) => rudiPose(item, "Rudi kuschelt sich in seinen Schal.") },
-  bow: { label: "Schleife anlegen", run: (item) => rudiPose(item, "Rudi zupft seine Schleife zurecht.") },
+  hat: { label: "Zylinder anziehen / ablegen", run: (item) => toggleWear(item) },
+  crown: { label: "Krone aufsetzen / abnehmen", run: (item) => toggleWear(item) },
+  glasses: { label: "Sonnenbrille aufsetzen / abnehmen", run: (item) => toggleWear(item) },
+  scarf: { label: "Schal umlegen / ablegen", run: (item) => toggleWear(item) },
+  bow: { label: "Schleife anlegen / ablegen", run: (item) => toggleWear(item) },
 };
 
 window.useItem = function(itemId) {
@@ -553,14 +591,16 @@ window.useItem = function(itemId) {
 
 let rudiBusy = false;
 
-// Rudi leaves his card and crosses the screen with the given vehicle.
-function rudiTravel(vehicle, mode) {
+// Rudi leaves his stall and crosses the screen. Whatever he wears comes
+// along; a rider sits on his back, wings on his shoulders, skates on his feet.
+function rudiTravel({ mode, vehicle = "", rider = "", back = "", feet = "" }) {
   if (rudiBusy) return;
   rudiBusy = true;
   const petEmoji = document.getElementById("pet-emoji");
   const traveller = document.createElement("div");
   traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
-  traveller.textContent = `🦌${vehicle}`;
+  const overlay = (glyph, style) => (glyph ? `<span style="position:absolute;font-size:0.55em;line-height:1;${style}">${glyph}</span>` : "");
+  traveller.innerHTML = `<span style="display:inline-block;white-space:nowrap;">${wornEmoji()}<span style="position:relative;display:inline-block;">🦌${overlay(rider, "left:38%;top:-42%;")}${overlay(back, "left:52%;top:-30%;")}${overlay(feet, "left:22%;bottom:-32%;")}</span>${vehicle}</span>`;
   document.body.appendChild(traveller);
   const originalEmoji = petEmoji.textContent;
   petEmoji.textContent = "💨";
@@ -574,12 +614,12 @@ function rudiTravel(vehicle, mode) {
       { transform: `translate(${0.6 * W}px, ${0.55 * H}px) rotate(-10deg)`, offset: 0.7 },
       { transform: `translate(${1.05 * W}px, ${0.82 * H}px) rotate(-14deg)` },
     ],
-    slalom: [
-      { transform: `translate(${1.05 * W}px, ${0.02 * H}px) rotate(15deg) scaleX(-1)` },
-      { transform: `translate(${0.65 * W}px, ${0.22 * H}px) rotate(-15deg) scaleX(-1)`, offset: 0.25 },
-      { transform: `translate(${0.55 * W}px, ${0.42 * H}px) rotate(15deg) scaleX(-1)`, offset: 0.5 },
-      { transform: `translate(${0.2 * W}px, ${0.62 * H}px) rotate(-15deg) scaleX(-1)`, offset: 0.75 },
-      { transform: `translate(${-0.3 * W}px, ${0.85 * H}px) rotate(10deg) scaleX(-1)` },
+    glide: [
+      { transform: `translate(${-0.25 * W}px, ${0.62 * H}px) rotate(4deg)` },
+      { transform: `translate(${0.2 * W}px, ${0.5 * H}px) rotate(-6deg)`, offset: 0.3 },
+      { transform: `translate(${0.5 * W}px, ${0.66 * H}px) rotate(6deg)`, offset: 0.55 },
+      { transform: `translate(${0.8 * W}px, ${0.52 * H}px) rotate(-5deg)`, offset: 0.8 },
+      { transform: `translate(${1.1 * W}px, ${0.6 * H}px) rotate(3deg)` },
     ],
     fly: [
       { transform: `translate(${-0.25 * W}px, ${0.8 * H}px) rotate(-20deg)` },
@@ -589,8 +629,8 @@ function rudiTravel(vehicle, mode) {
       { transform: `translate(${1.1 * W}px, ${0.1 * H}px) rotate(-10deg)` },
     ],
   }[mode];
-  // Flying is a leisurely glide; the sleigh and skis stay brisk.
-  const duration = mode === "fly" ? 11000 : 3400;
+  // Flying and skating are leisurely; the sleigh stays brisk.
+  const duration = { fly: 11000, glide: 7000, sleigh: 3400 }[mode];
 
   if (window.atmosphere) {
     if (mode === "sleigh") [0, 350, 700, 1050, 1400].forEach((d) => window.atmosphere.playTone(880 + (d % 700), "sine", 0.15, 0.03, d / 1000));
@@ -599,8 +639,9 @@ function rudiTravel(vehicle, mode) {
   const spray = setInterval(() => {
     if (!effectsEnabled || !field) return;
     const r = traveller.getBoundingClientRect();
-    field.burst(r.left + r.width * 0.2, r.top + r.height * 0.9, ["#ffffff", "#e0f2fe", "#bae6fd"], 6);
-  }, 140);
+    const colors = mode === "fly" ? ["#fde68a", "#ffffff", "#fbbf24"] : ["#ffffff", "#e0f2fe", "#bae6fd"];
+    field.burst(r.left + r.width * 0.2, r.top + r.height * 0.9, colors, mode === "fly" ? 3 : 6);
+  }, mode === "fly" ? 260 : 140);
 
   const anim = traveller.animate(frames, { duration, easing: mode === "sleigh" ? "cubic-bezier(0.45,0,0.85,0.6)" : "ease-in-out", fill: "forwards" });
   anim.onfinish = () => {
