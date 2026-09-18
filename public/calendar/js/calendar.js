@@ -221,7 +221,8 @@ async function init() {
   document.getElementById("toggle-effects-btn").addEventListener("click", () => applyEffects(!effectsEnabled));
 
   // The shop only makes sense when the calendar hands out coins somewhere.
-  document.getElementById("shop-btn").classList.toggle("hidden", !calendarMeta.hasCoins);
+  // The Nordpol-Shop only sells gear for Rudi, so it disappears together with him.
+  document.getElementById("shop-btn").classList.toggle("hidden", !calendarMeta.hasCoins || calendarMeta.rudiEnabled === false);
   
   if (typeof io !== "undefined") {
     socket = io();
@@ -439,6 +440,12 @@ function initPet(streak = calendarMeta?.streak || 0) {
   const petEl = document.getElementById("digital-pet");
   const emoji = document.getElementById("pet-emoji");
   if (!petEl) return;
+  // The owner can switch Rudi off in the calendar settings.
+  if (calendarMeta?.rudiEnabled === false) {
+    petEl.classList.add("hidden");
+    document.body.classList.add("rudi-off");
+    return;
+  }
   petEl.classList.remove("hidden");
 
   const openedCount = days.filter((d) => d.opened).length;

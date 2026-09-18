@@ -57,121 +57,141 @@
             <label class="block text-sm text-slate-300 mb-1">Passwortschutz (Optional)</label>
             <input type="text" id="calendarPassword" name="calendarPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Geheimwort..." />
           </div>
-          
-          <div class="sm:col-span-4 mt-2 border-t border-white/10 pt-4">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Lässt im Hintergrund des Kalenders dekorative Schneeflocken rieseln.</p>
-          </div>
 
-          <div class="sm:col-span-4 mt-2">
-            <label class="block text-sm text-slate-300 mb-1">
-              Eigenes Logo (White-Labeling)
-              <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-            </label>
-            <div class="flex items-center gap-4">
-              <input type="file" id="logoUpload" accept="image/*" class="pro-feature-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
-              <input type="hidden" id="calendarLogo" name="calendarLogo" />
-              <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
-                <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
-                <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-              </div>
-            </div>
-          </div>
-          
-          <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="strictMode" class="text-sm text-slate-300">Strict Mode</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen. Verhindert vorzeitiges Spicken.</p>
-          </div>
-          
-          <div class="sm:col-span-2 mt-2">
+          <div class="sm:col-span-2">
             <label class="block text-sm text-slate-300 mb-1">E-Mail (Erinnerungen)</label>
             <input name="recipientEmail" type="email" placeholder="z. B. bine@beispiel.de" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             <p class="text-xs text-slate-500 mt-1">Die Adresse erhält Benachrichtigungen, wenn Türchen geöffnet werden.</p>
           </div>
-          
-          <div class="sm:col-span-2 mt-2 flex flex-col justify-end pb-1">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="randomLayout" class="text-sm text-slate-300">Zahlen mischen</label>
+
+          <!-- Funktionen: alle Ein/Aus-Schalter an einem Ort -->
+          <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4 space-y-4" id="feature-toggles">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Funktionen</h3>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="strictMode" class="text-sm text-slate-300">🔒 Strict Mode</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen. Verhindert vorzeitiges Spicken.</p>
             </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="randomLayout" class="text-sm text-slate-300">🔀 Zahlen mischen</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Lässt im Hintergrund des Kalenders dekorative Schneeflocken rieseln.</p>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="rudiEnabled" name="rudiEnabled" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="rudiEnabled" class="text-sm text-slate-300">🦌 Rudi, das Rentier</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Zeigt Rudi in seinem Rentierstall unter dem Kalender. Er wacht mit jedem geöffneten Türchen weiter auf und lässt sich mit Artikeln aus dem Nordpol-Shop ausstatten. Deaktiviert verschwinden Stall und Shop.</p>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="syncOpen" class="text-sm text-slate-300">👥 Multiplayer: Synchronisiertes Öffnen</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Zwei Personen (oder mehr) müssen gleichzeitig auf das Türchen klicken, damit es sich öffnet.</p>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="metaPuzzle" class="text-sm text-slate-300">🧩 Meta-Rätsel aktivieren</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Verteilt ein 23-stelliges Lösungswort automatisch über die ersten 23 Türchen. Das letzte Türchen fragt dieses Passwort ab.</p>
+              <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
+                <input type="text" id="metaPassword" name="metaPassword" placeholder="Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
+              </div>
+            </div>
+
+            <div class="hidden" id="company-mode-block">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="companyMode" name="companyMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="companyMode" class="text-sm text-slate-300">🏢 Firmenmodus (Jeder Mitarbeitende hat seinen eigenen Fortschritt)</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Mitarbeitende melden sich beim ersten Besuch mit ihrer E-Mail-Adresse an. Der Fortschritt wird geräteübergreifend in der Datenbank gespeichert – nicht lokal. Angezeigt werden das Logo und der Firmenname aus deinen Kontoeinstellungen.</p>
+            </div>
+
+            <div class="hidden" id="community-canvas-block">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="communityCanvas" name="communityCanvas" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
+                <label for="communityCanvas" class="text-sm text-slate-300">🎨 Community-Leinwand</label>
+              </div>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Gemeinsames Pixelbild für das ganze Team: Pro geöffnetem Türchen erhält jede Person 10 Pixel, die live für alle sichtbar gesetzt werden.</p>
+            </div>
           </div>
-          
-          <div class="sm:col-span-4 mt-2">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="syncOpen" class="text-sm text-slate-300">Multiplayer: Synchronisiertes Öffnen</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Zwei Personen (oder mehr) müssen gleichzeitig auf das Türchen klicken, damit es sich öffnet.</p>
-          </div>
-          
-          <div class="sm:col-span-4 mt-2">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="metaPuzzle" class="text-sm text-slate-300">Meta-Rätsel aktivieren</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Verteilt ein 23-stelliges Lösungswort automatisch über die ersten 23 Türchen. Das letzte Türchen fragt dieses Passwort ab.</p>
-            <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
-              <input type="text" id="metaPassword" name="metaPassword" placeholder="Lösungswort (z.B. FRÖHLICHE WEIHNACHTEN!)" class="w-full sm:w-2/3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" maxlength="23">
-            </div>
-          </div>
-          <div class="sm:col-span-4 mt-2 hidden" id="company-mode-block">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="companyMode" name="companyMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="companyMode" class="text-sm text-slate-300">🏢 Firmenmodus (Jeder Mitarbeitende hat seinen eigenen Fortschritt)</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Mitarbeitende melden sich beim ersten Besuch mit ihrer E-Mail-Adresse an. Der Fortschritt wird geräteübergreifend in der Datenbank gespeichert – nicht lokal. Angezeigt werden das Logo und der Firmenname aus deinen Kontoeinstellungen.</p>
-          </div>
-          <div class="sm:col-span-4 mt-2 hidden" id="community-canvas-block">
-            <div class="flex items-center gap-2">
-              <input type="checkbox" id="communityCanvas" name="communityCanvas" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-              <label for="communityCanvas" class="text-sm text-slate-300">🎨 Community-Leinwand</label>
-            </div>
-            <p class="text-xs text-slate-500 mt-1 ml-6">Gemeinsames Pixelbild für das ganze Team: Pro geöffnetem Türchen erhält jede Person 10 Pixel, die live für alle sichtbar gesetzt werden.</p>
-          </div>
-          <div class="sm:col-span-4 hidden" id="firma-settings">
-            <div class="grid sm:grid-cols-2 gap-4 mt-2 p-4 bg-white/5 border border-white/10 rounded-xl relative">
+
+          <!-- Branding: Logo und Firmen-Design gehören zusammen -->
+          <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4" id="branding-section">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Branding</h3>
+            <div class="p-4 bg-white/5 border border-white/10 rounded-xl space-y-4">
               <div>
                 <label class="block text-sm text-slate-300 mb-1">
-                  Corporate Farbe
+                  Eigenes Logo (White-Labeling)
                   <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
                 </label>
-                <input type="color" id="firma-color" value="#3b82f6" class="pro-feature-input w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
+                <div class="flex items-center gap-4">
+                  <input type="file" id="logoUpload" accept="image/*" class="pro-feature-input text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500 cursor-pointer bg-slate-900 border border-white/10 rounded-lg p-1" />
+                  <input type="hidden" id="calendarLogo" name="calendarLogo" />
+                  <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
+                    <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
+                    <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-1">
-                  Hintergrundbild
-                  <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-                </label>
-                <input type="file" id="firma-bg" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block text-sm text-slate-300 mb-1">
-                  Türchen-Stil
-                  <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
-                </label>
-                <select id="firma-door-style" class="pro-feature-input w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
-                  <optgroup label="Ohne Logo">
-                    <option value="white">Klassisch Weiß (Standard)</option>
-                    <option value="color">Vollflächig (Firmenfarbe)</option>
-                    <option value="outline">Umriss (Transparent)</option>
-                    <option value="glass">Milchglas (Modern)</option>
-                    <option value="dark">Dunkel (Elegant)</option>
-                  </optgroup>
-                  <optgroup label="Mit Logo-Wasserzeichen">
-                    <option value="white-logo">Klassisch Weiß + Logo</option>
-                    <option value="color-logo">Vollflächig + Logo</option>
-                    <option value="outline-logo">Umriss + Logo</option>
-                    <option value="glass-logo">Milchglas + Logo</option>
-                    <option value="dark-logo">Dunkel + Logo</option>
-                  </optgroup>
-                </select>
+
+              <div class="hidden grid sm:grid-cols-2 gap-4 pt-4 border-t border-white/10" id="firma-settings">
+                <div>
+                  <label class="block text-sm text-slate-300 mb-1">
+                    Corporate Farbe
+                    <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+                  </label>
+                  <input type="color" id="firma-color" value="#3b82f6" class="pro-feature-input w-full h-9 rounded bg-slate-800 border-0 cursor-pointer" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-300 mb-1">
+                    Hintergrundbild
+                    <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+                  </label>
+                  <input type="file" id="firma-bg" accept="image/*" class="pro-feature-input text-sm text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-sm text-slate-300 mb-1">
+                    Türchen-Stil
+                    <span class="ml-2 text-[10px] font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 align-middle">PRO</span>
+                  </label>
+                  <select id="firma-door-style" class="pro-feature-input w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                    <optgroup label="Ohne Logo">
+                      <option value="white">Klassisch Weiß (Standard)</option>
+                      <option value="color">Vollflächig (Firmenfarbe)</option>
+                      <option value="outline">Umriss (Transparent)</option>
+                      <option value="glass">Milchglas (Modern)</option>
+                      <option value="dark">Dunkel (Elegant)</option>
+                    </optgroup>
+                    <optgroup label="Mit Logo-Wasserzeichen">
+                      <option value="white-logo">Klassisch Weiß + Logo</option>
+                      <option value="color-logo">Vollflächig + Logo</option>
+                      <option value="outline-logo">Umriss + Logo</option>
+                      <option value="glass-logo">Milchglas + Logo</option>
+                      <option value="dark-logo">Dunkel + Logo</option>
+                    </optgroup>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

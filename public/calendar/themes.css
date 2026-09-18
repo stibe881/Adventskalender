@@ -893,6 +893,8 @@ body {
 @media (max-width: 900px) {
   .calendar-footer { padding-bottom: 230px; }
 }
+/* No stable on the page -> no extra clearance needed. */
+body.rudi-off .calendar-footer { padding-bottom: 24px; }
 
 /* Secret door 25 (unlocked by inviting friends) gets a golden glow. */
 .door-scene[data-day="25"] .leaf-front {

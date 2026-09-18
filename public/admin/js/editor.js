@@ -146,6 +146,7 @@ async function loadCalendar() {
   document.getElementById("syncOpen").checked = calendar.syncOpen || false;
   document.getElementById("companyMode").checked = calendar.companyMode || false;
   document.getElementById("communityCanvas").checked = calendar.communityCanvas !== false;
+  document.getElementById("rudiEnabled").checked = calendar.rudiEnabled !== false;
   
   const metaCheckbox = document.getElementById("metaPuzzle");
   const metaConfig = document.getElementById("metaPuzzleConfig");
@@ -1570,6 +1571,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     metaPassword: document.getElementById("metaPassword").value,
     companyMode: document.getElementById("companyMode").checked,
     communityCanvas: document.getElementById("communityCanvas").checked,
+    rudiEnabled: document.getElementById("rudiEnabled").checked,
     customConfig: calendar.customConfig,
   });
   await loadCalendar();
