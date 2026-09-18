@@ -1835,7 +1835,11 @@ function renderContent(type, c, dayNum) {
       let html = `<div style="background: rgba(0,0,0,0.5); padding: 24px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); color: #fff;">
         <h3 style="font-size: 1.25rem; font-weight: bold; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span>🎵</span> Familien-Playlist</h3>`;
         
-      if (!hasAdded && !isPreview) {
+      if (isPreview) {
+        html += `<div style="margin-bottom: 24px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+          <p class="text-sm text-slate-300">Vorschau-Modus: Hier können Nutzer nach einem Song suchen.</p>
+        </div>`;
+      } else if (!hasAdded) {
         html += `<div style="margin-bottom: 24px;">
           <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 8px;">Suche einen Weihnachtssong und füge ihn zur gemeinsamen Playlist hinzu!</p>
           <div style="display: flex; gap: 8px;">
