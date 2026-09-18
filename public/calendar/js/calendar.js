@@ -1,4 +1,4 @@
-const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", "TOKEN"] or ["c","preview","ID"]
+﻿const pathParts = window.location.pathname.split("/").filter(Boolean); // ["c", "TOKEN"] or ["c","preview","ID"]
 const isPreview = pathParts[1] === "preview";
 // routeId is resolved either from the URL (/c/:token) or,
 // for custom-domain deployments, fetched from the server by Host header.
@@ -2566,7 +2566,7 @@ window.searchSpotify = function(day) {
           <div class="font-bold text-sm truncate text-white">${escapeHtml(s.title)}</div>
           <div class="text-xs text-slate-400 truncate">${escapeHtml(s.artist)}</div>
         </div>
-        <button onclick="addSpotifySong(${day}, '${escapeHtml(s.title.replace(/'/g, "\\'"))}', '${escapeHtml(s.artist.replace(/'/g, "\\'"))}')" class="bg-white text-black text-xs font-bold px-3 py-1 rounded-full hover:scale-105 transition-transform">Hinzufügen</button>
+        <button onclick="addSpotifySong(${day}, '${escapeHtml(s.title.replace(/'/g, "\\'"))}', '${escapeHtml(s.artist.replace(/'/g, "\\'"))}')" style="flex-shrink:0;background:#1DB954;color:#000;font-size:0.75rem;font-weight:700;padding:6px 16px;border-radius:9999px;border:none;cursor:pointer;letter-spacing:0.04em;box-shadow:0 2px 8px rgba(29,185,84,0.35);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='scale(1.07)'" onmouseout="this.style.transform='scale(1)'">+ Hinzufügen</button>
       </div>
     `).join("");
   }, 600);
