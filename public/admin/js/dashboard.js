@@ -27,7 +27,7 @@ async function init() {
     
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await api.logout();
-      window.location.href = "/admin/";
+      window.location.href = "/";
     });
     
     // Payment Status prüfen
@@ -397,7 +397,7 @@ createForm.addEventListener("submit", async (e) => {
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
   await api.logout();
-  window.location.href = "/admin/";
+  window.location.href = "/";
 });
 
 init();

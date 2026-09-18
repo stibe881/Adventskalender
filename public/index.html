@@ -479,5 +479,25 @@
     </div>
   </footer>
 
+  <script src="/admin/js/api.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const user = await api.me();
+        if (user && user.email) {
+          const navLinks = document.querySelector('.nav-links');
+          if (navLinks) {
+            navLinks.innerHTML = '<a href="/admin/dashboard.html" class="btn-primary" style="padding: 8px 16px;">Zum Admin-Bereich</a>';
+          }
+          const heroButtons = document.querySelector('.hero-buttons');
+          if (heroButtons) {
+            heroButtons.innerHTML = '<a href="/admin/dashboard.html" class="btn-primary" style="padding: 14px 28px; font-size: 1rem;">Zum Admin-Bereich</a>';
+          }
+        }
+      } catch (err) {
+        // Not logged in, leave buttons as they are
+      }
+    });
+  </script>
 </body>
 </html>

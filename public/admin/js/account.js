@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await api.logout();
-      window.location.href = "/admin/";
+      window.location.href = "/";
     });
   }
 
