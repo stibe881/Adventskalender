@@ -637,21 +637,24 @@ function leafFrontHtml(door, cols, rows, house) {
 }
 
 function showCorporateLoginModal() {
+  // Styled inline on purpose: this gate must be usable even if the Tailwind
+  // bundle is missing or stale on the server.
   const modal = document.createElement("div");
-  modal.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md";
+  modal.style.cssText = "position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);padding:16px;backdrop-filter:blur(8px);font-family:Inter,system-ui,sans-serif;";
   modal.innerHTML = `
-    <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden">
-      <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
-      <div class="text-5xl mb-4">🏢</div>
-      <h2 class="text-2xl font-black text-white mb-2">Willkommen!</h2>
-      <p class="text-slate-300 mb-6 text-sm">Dies ist ein Firmen-Kalender. Bitte gib deine E-Mail-Adresse oder dein Kürzel ein, um deinen ganz persönlichen Fortschritt zu speichern.</p>
-      <form id="corp-login-form" class="space-y-4">
-        <input type="text" id="corp-email" required placeholder="E-Mail oder Kürzel..." class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors">
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]">Speichern & Loslegen</button>
+    <div style="background:#0f172a;border:1px solid rgba(16,185,129,0.3);border-radius:18px;padding:32px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6);position:relative;overflow:hidden;color:#fff;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,#10b981,#2dd4bf);"></div>
+      <div style="font-size:3rem;margin-bottom:12px;">🏢</div>
+      <h2 style="font-size:1.5rem;font-weight:900;margin:0 0 8px;">Willkommen!</h2>
+      <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist ein Firmen-Kalender. Bitte gib deine E-Mail-Adresse oder dein Kürzel ein, um deinen ganz persönlichen Fortschritt zu speichern.</p>
+      <form id="corp-login-form" style="display:flex;flex-direction:column;gap:12px;">
+        <input type="text" id="corp-email" required autocomplete="email" placeholder="E-Mail oder Kürzel…" style="width:100%;box-sizing:border-box;background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px 16px;color:#fff;font-size:1rem;outline:none;">
+        <button type="submit" style="width:100%;background:#059669;color:#fff;font-weight:700;padding:12px;border-radius:12px;border:0;font-size:1rem;cursor:pointer;">Speichern &amp; Loslegen</button>
       </form>
     </div>
   `;
   document.body.appendChild(modal);
+  setTimeout(() => document.getElementById("corp-email")?.focus(), 50);
 
   document.getElementById("corp-login-form").addEventListener("submit", (e) => {
     e.preventDefault();
