@@ -667,6 +667,69 @@ document.getElementById("firma-bg").addEventListener("change", async (e) => {
 
 
 
+function getDropzoneHtml(id, label, multiple) {
+  return `
+    <div class="mt-4">
+      <label class="block text-sm text-slate-300 mb-2">${label}</label>
+      <div id="${id}-dropzone" class="w-full border-2 border-dashed border-emerald-500/30 rounded-xl bg-slate-800/50 hover:bg-slate-800 hover:border-emerald-500/70 transition-all duration-200 p-8 flex flex-col items-center justify-center cursor-pointer text-center group">
+        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <p class="text-sm font-semibold text-white mb-1">Klicke hier oder ziehe Bilder in dieses Feld</p>
+        <p class="text-xs text-slate-400">Unterstützt JPG, PNG, GIF, WEBP</p>
+        <input id="${id}-input" type="file" accept="image/*" ${multiple ? "multiple" : ""} class="hidden" />
+      </div>
+    </div>
+  `;
+}
+
+function attachDropzone(id, onFiles) {
+  const dropzone = document.getElementById(`${id}-dropzone`);
+  const input = document.getElementById(`${id}-input`);
+
+  if(!dropzone || !input) return;
+
+  dropzone.addEventListener("click", () => input.click());
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("border-emerald-500", "bg-slate-700");
+  });
+
+  dropzone.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
+  });
+
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handle(e.dataTransfer.files);
+    }
+  });
+
+  input.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handle(e.target.files);
+    }
+  });
+
+  async function handle(files) {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (fileArray.length === 0) return;
+    
+    const statusText = dropzone.querySelector("p.text-sm");
+    const prevText = statusText.textContent;
+    statusText.textContent = "Lade hoch... ⏳";
+    
+    await onFiles(fileArray);
+    
+    statusText.textContent = prevText;
+    input.value = "";
+  }
+}
+
 function fieldWrap(labelText, inputHtml) {
   return `<div><label class="block text-sm text-slate-300 mb-1">${labelText}</label>${inputHtml}</div>`;
 }
@@ -803,14 +866,12 @@ function renderQrFields(c) {
 function renderPuzzleFields(c) {
   typeFields.innerHTML =
     fieldWrap("Erfolgsnachricht", `<textarea id="f-successMessage" rows="2" class="${inputClass}">${escapeHtml(c.successMessage)}</textarea>`) +
-    fieldWrap("Bild hochladen", `<input id="f-image" type="file" accept="image/*" class="${inputClass}" />`) +
-    `<div id="f-puzzle-preview" class="mt-2 text-sm text-slate-400">${c.imageUrl ? 'Aktuell: Bild vorhanden' : ''}</div>`;
+    getDropzoneHtml("f-puzzle", "Bild hochladen (Drag & Drop)", false) +
+    `<div id="f-puzzle-preview" class="mt-2 text-sm text-emerald-400 font-bold">${c.imageUrl ? 'Aktuell: Bild vorhanden' : ''}</div>`;
     
-  document.getElementById("f-image").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  attachDropzone("f-puzzle", async (files) => {
     try {
-      const { url } = await api.upload(file);
+      const { url } = await api.upload(files[0]);
       currentContent.imageUrl = url;
       document.getElementById("f-puzzle-preview").textContent = "Neues Bild hochgeladen.";
     } catch (err) {
@@ -999,57 +1060,13 @@ function renderGalleryFields(c) {
   currentContent.images = c.images || [];
   typeFields.innerHTML =
     fieldWrap("Beschriftung", `<input id="f-caption" value="${escapeHtml(c.caption || "")}" class="${inputClass}" />`) +
-    `<div class="mt-4">
-      <label class="block text-sm text-slate-300 mb-2">Bilder hochladen (Drag & Drop)</label>
-      <div id="gallery-dropzone" class="w-full border-2 border-dashed border-emerald-500/30 rounded-xl bg-slate-800/50 hover:bg-slate-800 hover:border-emerald-500/70 transition-all duration-200 p-8 flex flex-col items-center justify-center cursor-pointer text-center group">
-        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center text-3xl mb-3 group-hover:scale-110 transition-transform">📸</div>
-        <p class="text-sm font-semibold text-white mb-1">Klicke hier oder ziehe Bilder in dieses Feld</p>
-        <p class="text-xs text-slate-400">Unterstützt JPG, PNG, GIF, WEBP</p>
-        <input id="f-images" type="file" accept="image/*" multiple class="hidden" />
-      </div>
-    </div>` +
+    getDropzoneHtml("f-gallery", "Bilder hochladen (Drag & Drop, Mehrfachauswahl möglich)", true) +
     `<div id="f-gallery-preview" class="flex flex-wrap gap-2 mt-4"></div>`;
 
   renderGalleryPreview();
 
-  const dropzone = document.getElementById("gallery-dropzone");
-  const input = document.getElementById("f-images");
-
-  dropzone.addEventListener("click", () => input.click());
-
-  dropzone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropzone.classList.add("border-emerald-500", "bg-slate-700");
-  });
-
-  dropzone.addEventListener("dragleave", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
-  });
-
-  dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("border-emerald-500", "bg-slate-700");
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-    }
-  });
-
-  input.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(e.target.files);
-    }
-  });
-
-  async function handleFiles(files) {
-    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (fileArray.length === 0) return;
-    
-    const statusText = dropzone.querySelector("p.text-sm");
-    const prevText = statusText.textContent;
-    statusText.textContent = "Lade hoch... ⏳";
-    
-    for (const file of fileArray) {
+  attachDropzone("f-gallery", async (files) => {
+    for (const file of files) {
       try {
         const { url } = await api.upload(file);
         currentContent.images.push(url);
@@ -1058,10 +1075,7 @@ function renderGalleryFields(c) {
         alert(`Upload fehlgeschlagen (${file.name}): ${err.message}`);
       }
     }
-    
-    statusText.textContent = prevText;
-    input.value = "";
-  }
+  });
 }
 
 function renderGalleryPreview() {
@@ -1126,13 +1140,12 @@ function renderMemoryFields(c) {
   currentContent.images = c.images || [];
   typeFields.innerHTML =
     fieldWrap("Gratulationstext (wenn gelöst)", `<textarea id="f-successMessage" rows="2" class="${inputClass}">${escapeHtml(c.successMessage)}</textarea>`) +
-    fieldWrap("Bilder hochladen (Lade 4 bis 8 Bilder hoch. Sie werden automatisch als Paare verwendet.)", `<input id="f-images" type="file" accept="image/*" multiple class="${inputClass}" />`) +
+    getDropzoneHtml("f-memory", "Bilder hochladen (Drag & Drop, lade 4 bis 8 Bilder hoch)", true) +
     `<div id="f-gallery-preview" class="flex flex-wrap gap-2 mt-2"></div>`;
 
   renderGalleryPreview(); // Reusing the same preview logic as gallery
 
-  document.getElementById("f-images").addEventListener("change", async (e) => {
-    const files = Array.from(e.target.files || []);
+  attachDropzone("f-memory", async (files) => {
     for (const file of files) {
       try {
         const { url } = await api.upload(file);
@@ -1142,7 +1155,6 @@ function renderMemoryFields(c) {
         alert(`Upload fehlgeschlagen (${file.name}): ${err.message}`);
       }
     }
-    e.target.value = "";
   });
 }
 
