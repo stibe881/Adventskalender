@@ -59,9 +59,6 @@ function renderHeader(themeKey, theme, meta) {
       🔥 ${meta.streak} Tage Streak!
     </div>`;
   }
-  headerTopHtml += `<button id="btn-leaderboard" class="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-sm font-bold text-white border border-white/30 backdrop-blur hover:bg-white/20 transition-colors">
-    🏆 Rangliste
-  </button>`;
   headerTopHtml += `</div>`;
 
   const titleHtml = logoUrl ? logoHtml : `<h1 class="text-4xl md:text-6xl font-black mb-4 drop-shadow-lg leading-tight tracking-tight">${escapeText(meta.recipientName)}</h1>`;
