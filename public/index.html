@@ -172,6 +172,57 @@
       font-size: 1.25rem;
     }
 
+    /* Showcase Section */
+    .showcase {
+      padding: 80px 0;
+    }
+    .showcase-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .showcase-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      margin: 0 0 16px 0;
+    }
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+    @media (max-width: 768px) {
+      .showcase-grid { grid-template-columns: 1fr; }
+    }
+    .showcase-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 32px;
+      border-radius: 8px;
+      display: flex;
+      gap: 20px;
+    }
+    .showcase-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      background: rgba(14, 165, 233, 0.1);
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .showcase-content h3 {
+      margin: 0 0 8px 0;
+      font-size: 1.25rem;
+    }
+    .showcase-content p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
     /* Features Section */
     .features {
       background: #0b1120;
@@ -325,6 +376,58 @@
       </div>
     </div>
   </main>
+
+  <!-- Showcase Section -->
+  <section class="showcase">
+    <div class="container">
+      <div class="showcase-header">
+        <h2 class="showcase-title">Grenzenlose Möglichkeiten</h2>
+        <p class="features-subtitle" style="margin: 0 auto;">Entdecke die vielen Funktionen, um deinen Adventskalender genau nach deinen Vorstellungen zu gestalten.</p>
+      </div>
+      
+      <div class="showcase-grid">
+        <div class="showcase-card">
+          <div class="showcase-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <div class="showcase-content">
+            <h3>Vielfältige Vorlagen & Themes</h3>
+            <p>Wähle aus verschiedenen, liebevoll gestalteten Vorlagen und Themes. Egal ob klassisch weihnachtlich, modern oder verspielt – finde genau den passenden Stil für deinen Kalender.</p>
+          </div>
+        </div>
+
+        <div class="showcase-card">
+          <div class="showcase-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          </div>
+          <div class="showcase-content">
+            <h3>Für jede Zielgruppe</h3>
+            <p>Egal ob als romantische Überraschung für den Partner, Spaß für die ganze Familie oder als professionelles Geschenk für Kunden und Mitarbeiter. Der Kalender passt sich deiner Zielgruppe an.</p>
+          </div>
+        </div>
+
+        <div class="showcase-card">
+          <div class="showcase-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+          </div>
+          <div class="showcase-content">
+            <h3>Vollständige Personalisierung</h3>
+            <p>Mache den Kalender zu deinem eigenen. Lade eigene Hintergrundbilder hoch, passe die Farben an und setze dein eigenes Firmen- oder Familienlogo ein (White-Labeling).</p>
+          </div>
+        </div>
+
+        <div class="showcase-card">
+          <div class="showcase-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div class="showcase-content">
+            <h3>Spannende Inhaltstypen</h3>
+            <p>Von einfachen Textnachrichten über eingebettete YouTube-Videos und Bildergalerien bis hin zu interaktiven Escape-Room-Rätseln. Überrasche jeden Tag aufs Neue!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Features Section -->
   <section id="anleitung" class="features">
