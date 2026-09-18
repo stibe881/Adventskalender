@@ -515,11 +515,15 @@ router.get("/calendars/:id", async (req, res) => {
 });
 
 router.put("/calendars/:id", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
   const updated = await db.updateCalendar(req.params.id, (cal) => {
+    if (syncOpen !== undefined) cal.syncOpen = Boolean(syncOpen);
+    if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
+    if (metaPuzzle !== undefined) cal.metaPuzzle = Boolean(metaPuzzle);
+    if (metaPassword !== undefined) cal.metaPassword = metaPassword ? String(metaPassword).trim() : "";
     if (recipientName && String(recipientName).trim()) cal.recipientName = String(recipientName).trim();
     if (recipientEmail !== undefined) cal.recipientEmail = recipientEmail ? String(recipientEmail).trim() : null;
     if (theme && THEMES.includes(theme)) cal.theme = theme;
