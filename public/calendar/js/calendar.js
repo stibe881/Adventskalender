@@ -360,7 +360,6 @@ function initNextDoorCountdown() {
   serverClockOffset = calendarMeta.serverNow ? Date.now() - calendarMeta.serverNow : 0;
   const el = document.createElement("div");
   el.id = "next-door-countdown";
-  el.className = "hidden";
   el.style.cssText = "display:none;margin:14px auto 0;width:max-content;max-width:92vw;padding:8px 16px;border-radius:999px;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(6px);color:#fff;font-size:0.9rem;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.25);";
   header.appendChild(el);
   updateNextDoorCountdown();
