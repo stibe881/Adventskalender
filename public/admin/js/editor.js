@@ -667,7 +667,9 @@ document.getElementById("firma-bg").addEventListener("change", async (e) => {
 
 
 
-function getDropzoneHtml(id, label, multiple) {
+function getDropzoneHtml(id, label, multiple, acceptsPdf = false) {
+  const acceptStr = acceptsPdf ? "image/*,application/pdf" : "image/*";
+  const descStr = acceptsPdf ? "Unterstützt JPG, PNG, GIF, WEBP, PDF" : "Unterstützt JPG, PNG, GIF, WEBP";
   return `
     <div class="mt-4">
       <label class="block text-sm text-slate-300 mb-2">${label}</label>
@@ -675,15 +677,15 @@ function getDropzoneHtml(id, label, multiple) {
         <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
-        <p class="text-sm font-semibold text-white mb-1">Klicke hier oder ziehe Bilder in dieses Feld</p>
-        <p class="text-xs text-slate-400">Unterstützt JPG, PNG, GIF, WEBP</p>
-        <input id="${id}-input" type="file" accept="image/*" ${multiple ? "multiple" : ""} class="hidden" />
+        <p class="text-sm font-semibold text-white mb-1">Klicke hier oder ziehe Dateien in dieses Feld</p>
+        <p class="text-xs text-slate-400">${descStr}</p>
+        <input id="${id}-input" type="file" accept="${acceptStr}" ${multiple ? "multiple" : ""} class="hidden" />
       </div>
     </div>
   `;
 }
 
-function attachDropzone(id, onFiles) {
+function attachDropzone(id, onFiles, acceptsPdf = false) {
   const dropzone = document.getElementById(`${id}-dropzone`);
   const input = document.getElementById(`${id}-input`);
 
@@ -716,7 +718,7 @@ function attachDropzone(id, onFiles) {
   });
 
   async function handle(files) {
-    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/') || (acceptsPdf && f.type === 'application/pdf'));
     if (fileArray.length === 0) return;
     
     const statusText = dropzone.querySelector("p.text-sm");
@@ -798,7 +800,18 @@ function renderTimeCapsuleFields(c) {
 function renderPrintPlayFields(c) {
   typeFields.innerHTML =
     fieldWrap("Titel des Spielteils", `<input id="f-ppTitle" value="${escapeHtml(c.ppTitle || '')}" class="${inputClass}" />`) +
-    fieldWrap("Bild-URL (Das PDF/Spielfeld)", `<input id="f-ppImage" value="${escapeHtml(c.ppImage || '')}" class="${inputClass}" />`);
+    getDropzoneHtml("f-printplay", "Bild / PDF hochladen (Drag & Drop)", false, true) +
+    `<div id="f-printplay-preview" class="mt-2 text-sm text-emerald-400 font-bold">${c.ppImage ? 'Aktuell: Datei vorhanden' : ''}</div>`;
+
+  attachDropzone("f-printplay", async (files) => {
+    try {
+      const { url } = await api.upload(files[0]);
+      currentContent.ppImage = url;
+      document.getElementById("f-printplay-preview").textContent = "Neue Datei hochgeladen.";
+    } catch (err) {
+      alert("Upload fehlgeschlagen: " + err.message);
+    }
+  }, true);
 }
 
 function renderChoiceFields(c) {
@@ -811,11 +824,22 @@ function renderChoiceFields(c) {
 function renderProductFields(c) {
   typeFields.innerHTML =
     fieldWrap("Produkt-Name", `<input id="f-title" value="${escapeHtml(c.title || '')}" class="${inputClass}" />`) +
-    fieldWrap("Bild-URL", `<input id="f-image" value="${escapeHtml(c.image || '')}" class="${inputClass}" placeholder="https://..." />`) +
+    getDropzoneHtml("f-product", "Produkt-Bild hochladen (Drag & Drop)", false) +
+    `<div id="f-product-preview" class="mt-2 text-sm text-emerald-400 font-bold mb-4">${c.image ? 'Aktuell: Bild vorhanden' : ''}</div>` +
     fieldWrap("Streichpreis (z.B. 49,99 CHF)", `<input id="f-oldPrice" value="${escapeHtml(c.oldPrice || '')}" class="${inputClass}" />`) +
     fieldWrap("Aktionspreis (z.B. 29,99 CHF)", `<input id="f-newPrice" value="${escapeHtml(c.newPrice || '')}" class="${inputClass}" />`) +
     fieldWrap("Rabattcode (optional)", `<input id="f-discount" value="${escapeHtml(c.discount || '')}" placeholder="XMAS20" class="${inputClass}" />`) +
     fieldWrap("Kaufen-Button Link", `<input id="f-url" value="${escapeHtml(c.url || '')}" placeholder="https://..." class="${inputClass}" />`);
+
+  attachDropzone("f-product", async (files) => {
+    try {
+      const { url } = await api.upload(files[0]);
+      currentContent.image = url;
+      document.getElementById("f-product-preview").textContent = "Neues Bild hochgeladen.";
+    } catch (err) {
+      alert("Upload fehlgeschlagen: " + err.message);
+    }
+  });
 }
 
 function renderArFields(c) {
@@ -1244,7 +1268,7 @@ function collectFieldsData(type) {
     case "product":
       return { 
         title: val("f-title"), 
-        image: val("f-image"), 
+        image: currentContent.image || null, 
         oldPrice: val("f-oldPrice"), 
         newPrice: val("f-newPrice"), 
         discount: val("f-discount"), 
@@ -1258,7 +1282,7 @@ function collectFieldsData(type) {
       };
     case "coins": return { coinAmount: parseInt(val("f-coinAmount"), 10) || 50 };
     case "diary": return { diaryQuestion: val("f-diaryQuestion") };
-    case "printplay": return { ppTitle: val("f-ppTitle"), ppImage: val("f-ppImage") };
+    case "printplay": return { ppTitle: val("f-ppTitle"), ppImage: currentContent.ppImage || null };
     case "duel":
     case "timecapsule":
       return {};
