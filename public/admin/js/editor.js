@@ -236,15 +236,29 @@ function renderDoorGrid() {
       if (meta) {
         tooltipTitle.innerHTML = `${meta.icon} ${meta.label}`;
         tooltipBody.textContent = getPreviewText(door.content, door.contentType);
+        
+        // Ensure tooltip is in body so document-relative positioning works perfectly
+        if (tooltip.parentElement !== document.body) {
+          document.body.appendChild(tooltip);
+        }
+        
         tooltip.classList.remove("hidden");
         // small delay for opacity transition
         requestAnimationFrame(() => tooltip.classList.remove("opacity-0"));
         
-        // Position it below the button
+        // Position it below the button, relative to document
         const rect = btn.getBoundingClientRect();
-        const gridRect = doorGrid.getBoundingClientRect();
-        tooltip.style.left = `${rect.left - gridRect.left + (rect.width/2) - (tooltip.offsetWidth/2)}px`;
-        tooltip.style.top = `${rect.bottom - gridRect.top + 8}px`;
+        let leftPos = rect.left + window.scrollX + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        
+        // Prevent going off left edge
+        if (leftPos < 8) leftPos = 8;
+        // Prevent going off right edge
+        if (leftPos + tooltip.offsetWidth > window.innerWidth - 8) {
+          leftPos = window.innerWidth - tooltip.offsetWidth - 8;
+        }
+        
+        tooltip.style.left = `${leftPos}px`;
+        tooltip.style.top = `${rect.bottom + window.scrollY + 8}px`;
       }
     });
     
