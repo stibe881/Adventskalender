@@ -25,4 +25,42 @@ function communityCanvasEnabled(calendar) {
   return Boolean(calendar) && calendar.theme === "firma" && calendar.communityCanvas !== false;
 }
 
-module.exports = { hasAccess, resolveCompanyName, communityCanvasEnabled };
+// Secret door 25: unlocked once the recipient has invited three friends.
+// Its content is configured by the owner (cal.bonusDoor); without a
+// configuration a friendly default thank-you is shown.
+const BONUS_DOOR_DAY = 25;
+const BONUS_REFERRALS_NEEDED = 3;
+const DEFAULT_BONUS_CONTENT = {
+  contentType: "text",
+  content: {
+    message: "Wahnsinn! Du hast 3 Freunde eingeladen! Als Dankeschön: Hier ist dein geheimes 25. Türchen 🎄✨",
+    sender: "Team Adventskalender",
+  },
+};
+
+function getBonusDoor(calendar) {
+  const stored = calendar?.bonusDoor || {};
+  const configured = Boolean(stored.contentType);
+  return {
+    day: BONUS_DOOR_DAY,
+    contentType: configured ? stored.contentType : DEFAULT_BONUS_CONTENT.contentType,
+    content: configured ? stored.content : DEFAULT_BONUS_CONTENT.content,
+    configured,
+    opened: Boolean(stored.opened),
+    openedAt: stored.openedAt || null,
+  };
+}
+
+function bonusDoorUnlocked(calendar) {
+  return (calendar?.referrals || 0) >= BONUS_REFERRALS_NEEDED;
+}
+
+module.exports = {
+  hasAccess,
+  resolveCompanyName,
+  communityCanvasEnabled,
+  BONUS_DOOR_DAY,
+  BONUS_REFERRALS_NEEDED,
+  getBonusDoor,
+  bonusDoorUnlocked,
+};

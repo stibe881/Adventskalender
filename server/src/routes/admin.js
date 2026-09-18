@@ -457,7 +457,7 @@ router.post("/dev-toggle-pro", async (req, res) => {
   }
 });
 
-const { hasAccess, resolveCompanyName, communityCanvasEnabled } = require("../utils/access");
+const { hasAccess, resolveCompanyName, communityCanvasEnabled, getBonusDoor, BONUS_DOOR_DAY } = require("../utils/access");
 const spotify = require("../services/spotify");
 
 // ---------- Calendars ----------
@@ -695,14 +695,20 @@ router.get("/calendars/:id/preview", async (req, res) => {
     year: calendar.year,
     today: getTodayParts(),
     preview: true,
-    days: calendar.days.map((d) => ({
-      day: d.day,
-      unlockDate: unlockDateISO(calendar.year, d.day),
-      unlocked: true,
-      filled: Boolean(d.contentType),
-      contentType: d.contentType,
-      content: d.content,
-    })),
+    days: [
+      ...calendar.days.map((d) => ({
+        day: d.day,
+        unlockDate: unlockDateISO(calendar.year, d.day),
+        unlocked: true,
+        filled: Boolean(d.contentType),
+        contentType: d.contentType,
+        content: d.content,
+      })),
+      (() => {
+        const bonus = getBonusDoor(calendar);
+        return { day: bonus.day, bonus: true, unlockDate: null, unlocked: true, filled: true, contentType: bonus.contentType, content: bonus.content };
+      })(),
+    ],
   });
 });
 
@@ -723,8 +729,8 @@ router.get("/calendars/:id/analytics", async (req, res) => {
 
 router.put("/calendars/:id/days/:day", async (req, res) => {
   const dayNum = parseInt(req.params.day, 10);
-  if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > 24) {
-    return res.status(400).json({ error: "Ungültiger Tag (1-24)." });
+  if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > BONUS_DOOR_DAY) {
+    return res.status(400).json({ error: "Ungültiger Tag (1-25)." });
   }
   const { contentType, content } = req.body || {};
   if (contentType !== null && !CONTENT_TYPES.includes(contentType)) {
@@ -738,6 +744,20 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
 
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+
+  // Door 25 is the secret referral door and lives outside the 24-day array.
+  if (dayNum === BONUS_DOOR_DAY) {
+    const updated = await db.updateCalendar(req.params.id, (cal) => {
+      cal.bonusDoor = {
+        ...(cal.bonusDoor || {}),
+        contentType: contentType || null,
+        content: contentType ? finalContent : null,
+      };
+      return cal;
+    });
+    const bonus = getBonusDoor(updated);
+    return res.json({ day: BONUS_DOOR_DAY, bonus: true, contentType: updated.bonusDoor.contentType, content: updated.bonusDoor.content, opened: bonus.opened, openedAt: bonus.openedAt });
+  }
 
   const updated = await db.updateCalendar(req.params.id, (cal) => {
     const doorIdx = cal.days.findIndex((d) => d.day === dayNum);

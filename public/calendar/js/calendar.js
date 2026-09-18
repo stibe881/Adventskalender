@@ -91,10 +91,11 @@ function updateProgress() {
   // Show it once we have data
   progressContainer.classList.remove("hidden");
   
-  const filledDays = days.filter(d => d.contentType && d.contentType !== "none").length;
+  const regular = days.filter((d) => !d.bonus);
+  const filledDays = regular.filter(d => d.contentType && d.contentType !== "none").length;
   if (filledDays === 0) return; // Don't show progress if calendar is empty
-  
-  const openedDays = days.filter(d => d.opened).length;
+
+  const openedDays = regular.filter(d => d.opened).length;
   const percent = Math.round((openedDays / filledDays) * 100);
   
   progressText.textContent = `${openedDays}/${filledDays} Türchen geöffnet`;
@@ -172,16 +173,8 @@ async function init() {
     return;
   }
   
-  if (calendarMeta.referrals >= 3 && !days.find(d => d.day === 25)) {
-    days.push({
-      day: 25,
-      unlocked: true,
-      opened: false,
-      filled: true,
-      contentType: "text",
-      content: { message: "Wahnsinn! Du hast 3 Freunde eingeladen! Als Dankeschön: Hier ist dein geheimes 25. Türchen 🎄✨", sender: "Team Adventskalender" }
-    });
-  }
+  // The secret door 25 arrives from the server once enough friends were invited
+  // (or always in the admin preview); its content is configured in the editor.
 
   themeKey = calendarMeta.theme;
   theme = getThemeConfig(themeKey);
@@ -960,6 +953,9 @@ function renderDoorGrid() {
     }
     order = arr;
   }
+
+  // Doors outside the theme's 24-day layout (the secret door 25) go last.
+  order = [...order, ...days.map((d) => d.day).filter((d) => !order.includes(d))];
 
   order.forEach((dayNum, index) => {
     const door = days.find((d) => d.day === dayNum);

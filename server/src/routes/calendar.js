@@ -2,6 +2,19 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const db = require("../db");
 const { isDayUnlocked, unlockDateISO, unlockAtMs, getTodayParts } = require("../utils/time");
+const { getBonusDoor, bonusDoorUnlocked, BONUS_DOOR_DAY, BONUS_REFERRALS_NEEDED } = require("../utils/access");
+
+// Public view of the secret door 25, mirroring publicDayView's rules.
+function bonusDayView(calendar, user) {
+  const bonus = getBonusDoor(calendar);
+  let isOpened = bonus.opened;
+  if (calendar.companyMode) {
+    const userState = user && calendar.userStates && calendar.userStates[user];
+    isOpened = Boolean(userState && userState.openedDays && userState.openedDays.includes(BONUS_DOOR_DAY));
+  }
+  const base = { day: BONUS_DOOR_DAY, bonus: true, unlockDate: null, unlocked: true, opened: isOpened, filled: true, isLocked: false, lockHint: null };
+  return isOpened ? { ...base, contentType: bonus.contentType, content: bonus.content } : base;
+}
 
 const router = express.Router();
 
@@ -134,7 +147,11 @@ router.get("/:token", async (req, res) => {
     serverNow: Date.now(),
     streak: streak,
     leaderboard: calendar.leaderboard || [],
-    days: calendar.days.map((d) => publicDayView(calendar, d, user)),
+    bonusReferralsNeeded: BONUS_REFERRALS_NEEDED,
+    days: [
+      ...calendar.days.map((d) => publicDayView(calendar, d, user)),
+      ...(bonusDoorUnlocked(calendar) ? [bonusDayView(calendar, user)] : []),
+    ],
   });
 });
 
@@ -143,11 +160,16 @@ router.post("/:token/days/:day/open", async (req, res) => {
   if (!calendar) return res.status(404).json({ error: "Dieser Kalender existiert nicht." });
 
   const dayNum = parseInt(req.params.day, 10);
-  const door = calendar.days.find((d) => d.day === dayNum);
+  const isBonus = dayNum === BONUS_DOOR_DAY;
+  const door = isBonus ? getBonusDoor(calendar) : calendar.days.find((d) => d.day === dayNum);
   if (!door) return res.status(400).json({ error: "Ungültiges Türchen." });
 
+  if (isBonus && !bonusDoorUnlocked(calendar)) {
+    return res.status(403).json({ error: `Das geheime Türchen öffnet sich erst, wenn ${BONUS_REFERRALS_NEEDED} Freunde eingeladen wurden.` });
+  }
+
   // Server-side-only truth: never trust any date the client might send.
-  const unlocked = calendar.strictMode ? isDayUnlocked(calendar.year, dayNum) : true;
+  const unlocked = isBonus ? true : calendar.strictMode ? isDayUnlocked(calendar.year, dayNum) : true;
   if (!unlocked) {
     return res.status(403).json({
       error: "Noch nicht so weit! Dieses Türchen öffnet sich erst am " + unlockDateISO(calendar.year, dayNum) + ".",
@@ -189,6 +211,8 @@ router.post("/:token/days/:day/open", async (req, res) => {
       if (!cal.userStates[user].openedDays.includes(dayNum)) {
         cal.userStates[user].openedDays.push(dayNum);
       }
+    } else if (isBonus) {
+      cal.bonusDoor = { ...(cal.bonusDoor || {}), opened: true, openedAt: (cal.bonusDoor && cal.bonusDoor.openedAt) || new Date().toISOString() };
     } else {
       const d = cal.days.find((x) => x.day === dayNum);
       if (d) {
@@ -200,6 +224,11 @@ router.post("/:token/days/:day/open", async (req, res) => {
     }
     return cal;
   });
+
+  if (isBonus) {
+    const bonus = getBonusDoor(updated);
+    return res.json({ day: BONUS_DOOR_DAY, contentType: bonus.contentType, content: bonus.content });
+  }
 
   // Check if day 24 was just opened and trigger postcard!
   if (dayNum === 24) {

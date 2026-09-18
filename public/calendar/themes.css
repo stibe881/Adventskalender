@@ -893,3 +893,10 @@ body {
 @media (max-width: 900px) {
   .calendar-footer { padding-bottom: 230px; }
 }
+
+/* Secret door 25 (unlocked by inviting friends) gets a golden glow. */
+.door-scene[data-day="25"] .leaf-front {
+  border-color: #fde047 !important;
+  box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.55), 0 0 22px rgba(253, 224, 71, 0.55) !important;
+}
+.door-scene[data-day="25"] .door-number { color: #fde047 !important; }

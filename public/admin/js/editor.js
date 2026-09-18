@@ -96,6 +96,11 @@ function handleSpotifyReturn() {
 
 async function loadCalendar() {
   calendar = await api.getCalendar(calendarId);
+  // Secret door 25 is stored separately (bonusDoor); show it as a 25th tile.
+  if (!calendar.days.find((d) => d.day === 25)) {
+    const b = calendar.bonusDoor || {};
+    calendar.days.push({ day: 25, bonus: true, contentType: b.contentType || null, content: b.content || null, opened: Boolean(b.opened), openedAt: b.openedAt || null });
+  }
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
   document.getElementById("cal-subtitle").textContent = `Dezember ${calendar.year} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
 
@@ -242,16 +247,20 @@ function renderDoorGrid() {
     const meta = door.contentType ? CONTENT_TYPE_META[door.contentType] : null;
     const btn = document.createElement("button");
     btn.type = "button";
+    const isBonus = door.day === 25;
     btn.className = `relative aspect-square rounded-xl border flex flex-col items-center justify-center gap-1 transition-colors ${
-      door.contentType
+      isBonus
+        ? (door.contentType ? "bg-amber-900/30 border-amber-400/70 hover:bg-amber-900/50" : "bg-slate-900/60 border-amber-400/40 border-dashed hover:bg-slate-800")
+        : door.contentType
         ? "bg-emerald-900/30 border-emerald-700/60 hover:bg-emerald-900/50"
         : "bg-slate-900/60 border-white/10 hover:bg-slate-800"
     }`;
-    btn.draggable = true;
+    btn.draggable = !isBonus;
     btn.dataset.day = door.day;
+    if (isBonus) btn.title = "Geheimes Türchen 25 – erscheint, sobald der Beschenkte 3 Freunde eingeladen hat. Ohne eigenen Inhalt wird ein Standard-Dankeschön gezeigt.";
     btn.innerHTML = `
-      <span class="text-lg">${meta ? meta.icon : "🚪"}</span>
-      <span class="text-xs font-semibold">${door.day}</span>
+      <span class="text-lg">${meta ? meta.icon : isBonus ? "⭐" : "🚪"}</span>
+      <span class="text-xs font-semibold">${isBonus ? "25 · Geheim" : door.day}</span>
       ${door.opened ? '<span class="absolute top-1 right-1 text-[10px]" title="Bereits geöffnet">👁️</span>' : ""}
       ${door.openedAt ? `<span class="absolute bottom-1 right-1 text-[8px] text-slate-400" title="Geöffnet am">🕒 ${new Date(door.openedAt).toLocaleDateString()}</span>` : ""}
     `;
@@ -615,7 +624,7 @@ function openModal(day) {
   currentDay = day;
   const door = calendar.days.find((d) => d.day === day);
   currentContent = JSON.parse(JSON.stringify(door.content || {}));
-  document.getElementById("modal-day").textContent = day;
+  document.getElementById("modal-day").textContent = day === 25 ? "25 – Geheimes Bonus-Türchen (nach 3 Einladungen)" : day;
   
   applySelectedType(door.contentType || "");
   renderTypeFields(door.contentType, currentContent);
