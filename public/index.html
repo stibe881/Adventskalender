@@ -313,7 +313,7 @@
   <nav class="nav-bar container">
     <div class="nav-logo">
       <span><i data-icon="tree-pine"></i></span>
-      <span>Adventskalender</span>
+      <span>Advently</span>
     </div>
     <div class="nav-links">
       <a href="/admin/" class="nav-link">Login</a>
@@ -345,8 +345,8 @@
       </p>
       
       <div class="hero-buttons">
-        <a href="/admin/?mode=register" class="btn-primary" style="padding: 16px 32px; font-size: 1.125rem; box-shadow: 0 10px 25px -10px rgba(5,150,105,0.7);">Jetzt kostenlos starten</a>
-        <a href="#anleitung" class="btn-secondary" style="padding: 16px 32px; font-size: 1.125rem; background: rgba(30,41,59,0.7); backdrop-filter: blur(8px);">So funktioniert's</a>
+        <a href="/admin/" class="btn-secondary" style="padding: 16px 32px; font-size: 1.125rem; background: rgba(30,41,59,0.7); backdrop-filter: blur(8px);">Login</a>
+        <a href="/admin/?mode=register" class="btn-primary" style="padding: 16px 32px; font-size: 1.125rem; box-shadow: 0 10px 25px -10px rgba(5,150,105,0.7);">Registrieren</a>
       </div>
     </div>
   </div>
@@ -463,23 +463,8 @@
 
   <script src="/admin/js/api.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      try {
-        const user = await api.me();
-        if (user && user.email) {
-          const navLinks = document.querySelector('.nav-links');
-          if (navLinks) {
-            navLinks.innerHTML = '<a href="/admin/dashboard.html" class="btn-primary" style="padding: 8px 16px;">Zum Admin-Bereich</a>';
-          }
-          const heroButtons = document.querySelector('.hero-buttons');
-          if (heroButtons) {
-            heroButtons.innerHTML = '<a href="/admin/dashboard.html" class="btn-primary" style="padding: 14px 28px; font-size: 1rem;">Zum Admin-Bereich</a>';
-          }
-        }
-      } catch (err) {
-        // Not logged in, leave buttons as they are
-      }
-    });
+    // The start page always offers Login and Registrieren. Whoever is already
+    // signed in lands on their dashboard as soon as the login page opens.
   </script>
   <script src="/shared/native.js"></script>
 </body>
