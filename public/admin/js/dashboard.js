@@ -277,25 +277,26 @@ function renderTableRow(cal) {
   const progressPct = Math.round((cal.filledDoors / 24) * 100);
   
   row.innerHTML = `
-    <td class="px-4 py-3">
-      <div class="font-display font-semibold text-white">${escapeHtml(cal.recipientName)}</div>
-      <div class="text-xs text-slate-500">Erstellt: ${new Date(cal.createdAt).toLocaleDateString("de-DE")}</div>
+    <td class="px-2 sm:px-4 py-3" style="max-width:0;width:100%">
+      <div class="font-display font-semibold text-white" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(cal.recipientName)}</div>
+      <div class="text-xs text-slate-500 md:hidden" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${THEME_LABELS[cal.theme] || cal.theme} · ${cal.year}</div>
+      <div class="text-xs text-slate-500 hidden md:block">Erstellt: ${new Date(cal.createdAt).toLocaleDateString("de-DE")}</div>
     </td>
-    <td class="px-4 py-3">${THEME_LABELS[cal.theme] || cal.theme} (${cal.year})</td>
-    <td class="px-4 py-3">
+    <td class="px-4 py-3 hidden md:table-cell">${THEME_LABELS[cal.theme] || cal.theme} (${cal.year})</td>
+    <td class="px-2 sm:px-4 py-3 whitespace-nowrap">
       <div class="flex items-center gap-2">
         <span class="text-emerald-400 font-bold">${cal.filledDoors}/24</span>
-        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class="hidden sm:block w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
           <div class="h-full bg-emerald-500" style="width: ${progressPct}%"></div>
         </div>
       </div>
     </td>
-    <td class="px-4 py-3">
+    <td class="px-2 sm:px-4 py-3 whitespace-nowrap">
       <span class="text-amber-400 font-bold">${cal.openedDoors}/24</span>
     </td>
-    <td class="px-4 py-3 text-right">
+    <td class="px-1 sm:px-4 py-3 text-right">
       <div class="relative inline-block text-left">
-        <button class="calendar-menu-btn text-slate-400 hover:text-white p-2" onclick="toggleMenu('table-${cal.id}')">
+        <button class="calendar-menu-btn text-slate-400 hover:text-white p-2" aria-label="Aktionen" onclick="toggleMenu('table-${cal.id}')">
           •••
         </button>
         <div id="menu-table-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden text-left">

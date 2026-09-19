@@ -53,15 +53,15 @@
       </div>
       
       <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
-      <div id="calendar-table-container" class="hidden overflow-x-auto bg-white/5 border border-white/10 rounded-xl">
-        <table class="w-full text-left text-sm text-slate-300">
+      <div id="calendar-table-container" class="hidden bg-white/5 border border-white/10 rounded-xl">
+        <table class="w-full text-left text-sm text-slate-300" style="table-layout:auto">
           <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
             <tr>
-              <th class="px-4 py-3">Empfänger</th>
-              <th class="px-4 py-3">Theme</th>
-              <th class="px-4 py-3">Befüllt</th>
-              <th class="px-4 py-3">Geöffnet</th>
-              <th class="px-4 py-3 text-right">Aktionen</th>
+              <th class="px-2 sm:px-4 py-3" style="width:100%">Empfänger</th>
+              <th class="px-4 py-3 hidden md:table-cell">Theme</th>
+              <th class="px-2 sm:px-4 py-3">Befüllt</th>
+              <th class="px-2 sm:px-4 py-3">Geöffnet</th>
+              <th class="px-1 sm:px-4 py-3 text-right"><span class="hidden sm:inline">Aktionen</span></th>
             </tr>
           </thead>
           <tbody id="calendar-table-body" class="divide-y divide-white/10"></tbody>
