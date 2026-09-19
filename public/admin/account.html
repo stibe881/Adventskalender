@@ -37,6 +37,14 @@
           <input name="company" type="text"
             class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Nach dem Login öffnen</label>
+          <select name="defaultApp" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="calendar">🎄 Adventskalender</option>
+            <option value="wichteln">🎁 Wichteln</option>
+          </select>
+          <p class="text-xs text-slate-500 mt-1">Zwischen beiden Bereichen kannst du jederzeit oben im Kopfbereich wechseln.</p>
+        </div>
         <div id="profile-error" class="hidden text-red-400 text-sm"></div>
         <div id="profile-success" class="hidden text-emerald-400 text-sm"></div>
         <button type="submit"

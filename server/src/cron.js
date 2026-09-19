@@ -19,6 +19,15 @@ const transporter = nodemailer.createTransport({
 const pushedToday = new Set();
 
 function startCron() {
+  // ── Wichteln: Erinnerung am Vortag + automatische Löschung (08:00) ─────────
+  cron.schedule("0 8 * * *", async () => {
+    try {
+      await runWichtelJobs();
+    } catch (err) {
+      console.error("[CRON] Wichtel-Job fehlgeschlagen:", err);
+    }
+  }, { timezone: config.timezone });
+
   // ── Tägliche E-Mail-Erinnerung: 07:00 Uhr ─────────────────────────────────
   cron.schedule("0 7 * * *", async () => {
     console.log("[CRON] Starte täglichen E-Mail-Erinnerungs-Job...");
@@ -122,4 +131,35 @@ function startCron() {
   console.log("[CRON] Jobs registriert: E-Mail täglich 07:00 | Push minütlich geprüft.");
 }
 
-module.exports = { startCron };
+async function runWichtelJobs(now = new Date()) {
+  const { notifyParticipant, eventLine, removePhotoFiles } = require("./routes/wichteln");
+  const groups = await db.getAllWichtelGroups();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowIso = new Intl.DateTimeFormat("en-CA", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(tomorrow);
+  let reminders = 0;
+  let deleted = 0;
+  for (const g of groups) {
+    // Retention over: wipe the whole group including photos.
+    if (g.deleteAt && new Date(g.deleteAt).getTime() <= now.getTime()) {
+      removePhotoFiles(g);
+      await db.deleteWichtelGroup(g.id);
+      deleted++;
+      continue;
+    }
+    if (g.eventDate === tomorrowIso && !g.reminderSentFor?.includes(tomorrowIso)) {
+      const line = eventLine(g);
+      for (const p of (g.participants || []).filter((x) => !x.pending && x.email && x.notify?.email !== false)) {
+        const target = g.status !== "draft" ? (g.participants || []).find((x) => x.id === p.assignedTo) : null;
+        await notifyParticipant(g, p, "Morgen ist Bescherung! 🎄",
+          `Hallo ${p.name}!\n\nMorgen ist es so weit: ${line}${target ? `\nDu beschenkst: ${target.name}` : ""}`,
+          `<p>Hallo ${p.name}!</p><p>Morgen ist es so weit: <strong>${line}</strong></p>${target ? `<p>Du beschenkst: <strong>${target.name}</strong></p>` : ""}`);
+        reminders++;
+      }
+      await db.updateWichtelGroup(g.id, (x) => { x.reminderSentFor = [...(x.reminderSentFor || []), tomorrowIso]; return x; });
+    }
+  }
+  if (reminders || deleted) console.log(`[CRON] Wichteln: ${reminders} Erinnerungen, ${deleted} Runden gelöscht.`);
+  return { reminders, deleted };
+}
+
+module.exports = { startCron, runWichtelJobs };

@@ -138,11 +138,11 @@ router.post("/logout", (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   const user = await db.getUserByEmail(req.user.email);
   if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden" });
-  res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company });
+  res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company, defaultApp: user.defaultApp === "wichteln" ? "wichteln" : "calendar" });
 });
 
 router.put("/profile", requireAuth, async (req, res) => {
-  const { username, company } = req.body || {};
+  const { username, company, defaultApp } = req.body || {};
   
   const user = await db.getUserByEmail(req.user.email);
   if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden" });
@@ -165,6 +165,8 @@ router.put("/profile", requireAuth, async (req, res) => {
     ...u,
     username: username ? String(username).trim() : null,
     company: company ? String(company).trim() : null,
+    // Which app opens after login: the advent calendar or the Wichtel tool.
+    defaultApp: defaultApp !== undefined ? (defaultApp === "wichteln" ? "wichteln" : "calendar") : u.defaultApp,
   }));
 
   // Update JWT cookie with new username if we use it

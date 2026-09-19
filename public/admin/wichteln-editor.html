@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wichtel-Runde bearbeiten – Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+  <style>
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; }
+    .field { width: 100%; border-radius: 0.5rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); padding: 0.5rem 0.75rem; color: #fff; font-size: 0.875rem; }
+    .field:focus { outline: none; box-shadow: 0 0 0 2px #10b981; }
+    select.field option { background: #0f172a; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <a href="/admin/wichteln.html" class="text-slate-400 hover:text-white text-sm whitespace-nowrap">← Zurück</a>
+        <div class="min-w-0">
+          <h1 id="group-title" class="font-display font-bold text-lg leading-none truncate">Wichtel-Runde</h1>
+          <p class="text-xs text-slate-400 mt-1"><span id="status-badge" class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-700">…</span> <span id="participant-summary"></span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a id="my-area-link" href="#" target="_blank" class="hidden text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg whitespace-nowrap">🎁 Mein Wichtel-Bereich</a>
+        <button id="invite-card-btn" class="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg font-semibold whitespace-nowrap">Einladungskarte</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- Draw / status -->
+    <section id="draw-card" class="bg-gradient-to-br from-emerald-900/40 to-slate-900 border border-emerald-500/30 rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="font-display text-xl font-semibold">🎲 Auslosung</h2>
+          <p id="draw-hint" class="text-sm text-slate-300 mt-1"></p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="draw-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">Jetzt auslosen</button>
+          <button id="reveal-btn" class="hidden bg-amber-500 hover:bg-amber-400 text-slate-900 px-4 py-2 rounded-lg font-semibold text-sm">Wichtel enthüllen</button>
+        </div>
+      </div>
+      <div id="reveal-table" class="hidden mt-5"></div>
+    </section>
+
+    <!-- Participants -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 class="font-display text-xl font-semibold">👥 Teilnehmende <span id="participant-count" class="text-sm font-normal text-slate-400"></span></h2>
+        <button id="invite-all-btn" class="text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg">📧 Alle per E-Mail einladen</button>
+      </div>
+      <form id="add-participant-form" class="grid sm:grid-cols-5 gap-3 mb-4">
+        <input name="name" required maxlength="60" placeholder="Name" class="sm:col-span-2 field" />
+        <input name="email" type="email" placeholder="E-Mail (optional)" class="sm:col-span-2 field" />
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-sm px-4 py-2">+ Hinzufügen</button>
+      </form>
+      <p id="participant-error" class="hidden text-sm text-rose-400 mb-3"></p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs uppercase text-slate-400 border-b border-white/10">
+            <tr><th class="py-2 pr-3">Name</th><th class="py-2 pr-3">E-Mail</th><th class="py-2 pr-3">Status</th><th class="py-2 pr-3">Wunschzettel</th><th class="py-2 pr-3">Geschenk</th><th class="py-2 text-right">Aktionen</th></tr>
+          </thead>
+          <tbody id="participant-rows" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p class="text-xs text-slate-500 mt-3">Der Wichtel-Generator ist auf <span id="max-participants">100</span> Teilnehmende ausgelegt.</p>
+    </section>
+
+    <!-- Exclusions -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-1">🚫 Ausschlüsse</h2>
+      <p class="text-sm text-slate-400 mb-4">Paare oder Geschwister sollen sich nicht ziehen? Der Generator berücksichtigt es garantiert – in beide Richtungen.</p>
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <select id="excl-a" class="field sm:w-56"></select>
+        <span class="text-slate-500">zieht nicht</span>
+        <select id="excl-b" class="field sm:w-56"></select>
+        <button id="excl-add" class="bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Ausschluss hinzufügen</button>
+      </div>
+      <div id="exclusion-list" class="flex flex-wrap gap-2"></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-4">⚙️ Einstellungen</h2>
+      <form id="settings-form" class="grid sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2"><label class="block text-sm text-slate-300 mb-1">Titel</label><input name="title" required maxlength="80" class="field" /></div>
+        <div><label class="block text-sm text-slate-300 mb-1">Organisator (Name)</label><input name="organizerName" maxlength="60" class="field" /></div>
+        <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="organizerParticipates" class="w-4 h-4 rounded bg-slate-900 border-white/10"> Organisator wichtelt mit</label></div>
+
+        <div class="sm:col-span-2 border-t border-white/10 pt-4">
+          <label class="block text-sm text-slate-300 mb-2">Einladungsmodus</label>
+          <div class="grid sm:grid-cols-3 gap-2 text-sm">
+            <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="email" class="mt-1"><span><b class="text-white">Per E-Mail</b><br><span class="text-slate-400 text-xs">Jede Person bekommt ihren Link zugeschickt.</span></span></label>
+            <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="link" class="mt-1"><span><b class="text-white">Teilbarer Link</b><br><span class="text-slate-400 text-xs">Alle tragen sich selbst ein.</span></span></label>
+            <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="names" class="mt-1"><span><b class="text-white">Ohne E-Mail</b><br><span class="text-slate-400 text-xs">Links selbst verteilen.</span></span></label>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-slate-300 mt-3"><input type="checkbox" name="waitingRoom" class="w-4 h-4 rounded bg-slate-900 border-white/10"> Warteraum: Wer sich über den Link einträgt, muss von dir freigegeben werden</label>
+        </div>
+
+        <div class="sm:col-span-2 border-t border-white/10 pt-4 grid sm:grid-cols-2 gap-4">
+          <div><label class="block text-sm text-slate-300 mb-1">Budget</label><input name="budget" maxlength="40" placeholder="z. B. 20–25 CHF" class="field" /></div>
+          <div><label class="block text-sm text-slate-300 mb-1">Motto</label><input name="motto" maxlength="120" placeholder="z. B. Selbstgemachtes, Schrottwichteln …" class="field" /></div>
+          <div><label class="block text-sm text-slate-300 mb-1">Tag der Bescherung</label><input name="eventDate" type="date" class="field" /></div>
+          <div><label class="block text-sm text-slate-300 mb-1">Uhrzeit</label><input name="eventTime" type="time" class="field" /></div>
+          <div class="sm:col-span-2"><label class="block text-sm text-slate-300 mb-1">Ort</label><input name="eventPlace" maxlength="120" placeholder="z. B. Büro Küche, 2. Stock" class="field" /></div>
+          <div class="sm:col-span-2"><label class="block text-sm text-slate-300 mb-1">Beschreibung für alle</label><textarea name="description" rows="3" maxlength="2000" class="field" placeholder="Was sollen alle wissen? Regeln, Anreise, Ablauf …"></textarea></div>
+          <p class="sm:col-span-2 text-xs text-slate-500 -mt-2">Jede Person kann den Termin mit einem Klick in ihren Kalender übernehmen – samt Motto, Budget, Wichtelkind und Erinnerung am Vortag.</p>
+        </div>
+
+        <div class="sm:col-span-2 border-t border-white/10 pt-4 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="chatEnabled" class="w-4 h-4 rounded bg-slate-900 border-white/10"> 💬 Anonymer Chat</label>
+            <p class="text-xs text-slate-500 mt-1 ml-6">Zwei getrennte Kanäle: mit dem Wichtelkind und mit dem eigenen geheimen Wichtel. Für Schulklassen o. ä. abschaltbar.</p>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-300 mb-1">🗑️ Aufbewahrungsfrist nach der Bescherung</label>
+            <select name="retentionDays" class="field">
+              <option value="30">30 Tage</option><option value="60">60 Tage</option><option value="90">90 Tage</option><option value="180">180 Tage</option>
+            </select>
+            <p id="delete-at-hint" class="text-xs text-slate-500 mt-1">Danach wird die komplette Runde samt Fotos, Nachrichten und Wünschen spurlos gelöscht.</p>
+          </div>
+        </div>
+
+        <div class="sm:col-span-2 flex items-center gap-3 pt-2">
+          <button type="submit" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2">Speichern</button>
+          <span id="settings-saved" class="hidden text-sm text-emerald-400">Gespeichert ✓</span>
+          <span id="settings-error" class="hidden text-sm text-rose-400"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Invitation -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-1">🔗 Einladung</h2>
+      <p class="text-sm text-slate-400 mb-4">Link teilen oder Einladungskarte mit QR-Code ausdrucken, verteilen, abscannen – fertig ist der Beitritt ohne Tippen.</p>
+      <div class="flex flex-col sm:flex-row gap-3 items-start">
+        <div class="flex-1 w-full">
+          <div class="flex gap-2">
+            <input id="invite-link" readonly class="field text-xs" />
+            <button id="copy-invite" class="bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm whitespace-nowrap">Kopieren</button>
+          </div>
+          <button id="rotate-invite" class="text-xs text-slate-500 hover:text-rose-300 mt-2">Link erneuern (alter Link wird ungültig)</button>
+        </div>
+        <img id="invite-qr" alt="QR-Code" class="w-32 h-32 rounded-lg bg-white p-1 hidden" />
+      </div>
+    </section>
+
+    <!-- Prints -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-1">🖨️ Druckansichten &amp; PDF</h2>
+      <p class="text-sm text-slate-400 mb-4">Öffnet eine Druckansicht – über „Als PDF speichern“ im Druckdialog wird daraus ein PDF.</p>
+      <div class="flex flex-wrap gap-2">
+        <button data-print="participants" class="print-btn bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Teilnehmerliste</button>
+        <button data-print="wishlists" class="print-btn bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Wunschzettel</button>
+        <button data-print="matrix" class="print-btn bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Ziehungsmatrix</button>
+        <button data-print="card" class="print-btn bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Einladungskarte</button>
+      </div>
+    </section>
+
+    <!-- Photos -->
+    <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-1">📸 Foto-Wand</h2>
+      <p class="text-sm text-slate-400 mb-4">Fotos, die Teilnehmende in der gemeinsamen Galerie geteilt haben.</p>
+      <div id="photo-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+    </section>
+
+    <!-- Danger zone -->
+    <section class="bg-rose-950/20 border border-rose-500/30 rounded-2xl p-6">
+      <h2 class="font-display text-xl font-semibold mb-1 text-rose-200">Runde löschen</h2>
+      <p class="text-sm text-slate-400 mb-4">Löscht die komplette Runde samt Teilnehmenden, Wünschen, Nachrichten und Fotos. Das kann nicht rückgängig gemacht werden.</p>
+      <button id="delete-group" class="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">Runde endgültig löschen</button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden bg-slate-800 border border-white/10 text-sm text-white px-4 py-2 rounded-full shadow-xl"></div>
+
+  <!-- Invite card modal -->
+  <div id="card-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 relative text-center">
+      <button id="card-close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <h2 class="font-display text-xl font-semibold mb-3">Einladungskarte</h2>
+      <img id="card-qr" alt="QR-Code" class="w-48 h-48 mx-auto rounded-lg bg-white p-2" />
+      <p id="card-link" class="text-xs text-slate-400 break-all mt-3"></p>
+      <button id="card-print" class="mt-4 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">Karte drucken</button>
+    </div>
+  </div>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/wichteln-editor.js"></script>
+</body>
+</html>

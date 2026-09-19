@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wichteln – Adventskalender</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="/admin/images/logo.png" alt="Logo" class="w-12 h-12 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
+        <div>
+          <h1 class="font-display font-bold text-lg leading-none">Wichteln</h1>
+          <p class="text-xs text-slate-400">Angemeldet als <span id="admin-name" class="font-medium text-emerald-400"></span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <nav class="app-switch flex bg-slate-800 rounded-lg p-1 border border-white/10 text-xs font-semibold" aria-label="Bereich wechseln">
+          <a href="/admin/dashboard.html" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white">🎄 Adventskalender</a>
+          <a href="/admin/wichteln.html" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow">🎁 Wichteln</a>
+        </nav>
+        <a href="/admin/account.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Konto</a>
+        <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Abmelden</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="font-display text-2xl font-semibold">Deine Wichtel-Runden</h2>
+          <p class="text-sm text-slate-400 mt-1">Namen eintragen, auslosen lassen, fertig. Lose werden anonym verteilt, Wunschzettel, anonymer Chat und Foto-Wand inklusive.</p>
+        </div>
+        <button id="new-group-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap">
+          + Neue Runde
+        </button>
+      </div>
+
+      <div id="group-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <div id="empty-state" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl mt-4">
+        <div class="text-4xl mb-3">🎁</div>
+        <h3 class="text-lg font-semibold text-white mb-1">Noch keine Wichtel-Runde</h3>
+        <p class="text-slate-400 text-sm mb-4">Erstelle deine erste Runde und lade deine Leute in weniger als einer Minute ein.</p>
+        <button onclick="document.getElementById('new-group-btn').click()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Jetzt starten</button>
+      </div>
+    </section>
+
+    <section class="grid sm:grid-cols-3 gap-4 text-sm">
+      <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+        <div class="text-2xl mb-2">1️⃣</div>
+        <h3 class="font-semibold text-white mb-1">Runde anlegen &amp; einladen</h3>
+        <p class="text-slate-400">Titel vergeben und Einladungsmodus wählen: per E-Mail, per teilbarem Link mit Warteraum oder ganz ohne E-Mail-Adressen.</p>
+      </div>
+      <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+        <div class="text-2xl mb-2">2️⃣</div>
+        <h3 class="font-semibold text-white mb-1">Regeln festlegen &amp; auslosen</h3>
+        <p class="text-slate-400">Ausschlüsse für Paare, Budget und Löschfrist festlegen. Der Generator zieht garantiert kreuzungsfrei und verschickt jedem sein Los.</p>
+      </div>
+      <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+        <div class="text-2xl mb-2">3️⃣</div>
+        <h3 class="font-semibold text-white mb-1">Wichteln &amp; feiern</h3>
+        <p class="text-slate-400">Wunschzettel pflegen, anonym nachfragen, Geschenk-Status verfolgen und hinterher Fotos hochladen. Danach löscht sich alles von selbst.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Create Modal -->
+  <div id="create-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
+      <button id="create-close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <h2 class="font-display text-xl font-semibold mb-1">Neue Wichtel-Runde</h2>
+      <p class="text-xs text-slate-500 mb-5">Alles lässt sich später noch ändern.</p>
+      <form id="create-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Titel der Wichtel-Runde</label>
+          <input name="title" required maxlength="80" placeholder="z. B. Weihnachtsfeier Team Nord" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Dein Name (als Organisator)</label>
+          <input name="organizerName" maxlength="60" placeholder="z. B. Stefan" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-2">Einladungsmodus</label>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer"><input type="radio" name="inviteMode" value="email" checked class="mt-1"><span><b class="text-white">Per E-Mail</b><br><span class="text-slate-400">Du trägst Namen und E-Mail-Adressen ein, jede Person bekommt ihren persönlichen Link zugeschickt.</span></span></label>
+            <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer"><input type="radio" name="inviteMode" value="link" class="mt-1"><span><b class="text-white">Per teilbarem Link mit Warteraum</b><br><span class="text-slate-400">Link teilen, alle tragen sich selbst ein. Du gibst sie frei. Null Adressverwaltung für dich.</span></span></label>
+            <label class="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer"><input type="radio" name="inviteMode" value="names" class="mt-1"><span><b class="text-white">Ohne E-Mail-Adressen</b><br><span class="text-slate-400">Nur Namen eintragen, die persönlichen Links verteilst du später selbst.</span></span></label>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="organizerParticipates" checked class="w-4 h-4 rounded bg-slate-900 border-white/10"> Ich wichtle selbst mit <span class="text-xs text-slate-500">(du siehst dein Los genauso wenig wie alle anderen)</span></label>
+        <p id="create-error" class="hidden text-sm text-rose-400"></p>
+        <button type="submit" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5">Runde anlegen</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/wichteln.js"></script>
+</body>
+</html>

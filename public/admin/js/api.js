@@ -41,7 +41,7 @@ const api = {
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),
-  updateProfile: (username, company) => request("PUT", "/auth/profile", { username, company }),
+  updateProfile: (username, company, defaultApp) => request("PUT", "/auth/profile", { username, company, defaultApp }),
   changePassword: (currentPassword, newPassword) => request("POST", "/auth/change-password", { currentPassword, newPassword }),
   deleteAccount: (password) => request("DELETE", "/auth/delete-account", { password }),
   checkout: (calendarId) => request("POST", "/payment/checkout", { calendarId }),
@@ -64,6 +64,24 @@ const api = {
     return request("POST", "/admin/upload", form, true);
   },
   generateWichtelLink: (id, day) => request("POST", `/admin/calendars/${id}/days/${day}/wichtel-link`),
+
+  // Wichteln (Secret Santa)
+  listWichtelGroups: () => request("GET", "/wichteln/groups"),
+  createWichtelGroup: (data) => request("POST", "/wichteln/groups", data),
+  getWichtelGroup: (id) => request("GET", `/wichteln/groups/${id}`),
+  updateWichtelGroup: (id, data) => request("PUT", `/wichteln/groups/${id}`, data),
+  deleteWichtelGroup: (id) => request("DELETE", `/wichteln/groups/${id}`),
+  addWichtelParticipant: (id, data) => request("POST", `/wichteln/groups/${id}/participants`, data),
+  updateWichtelParticipant: (id, pid, data) => request("PUT", `/wichteln/groups/${id}/participants/${pid}`, data),
+  removeWichtelParticipant: (id, pid) => request("DELETE", `/wichteln/groups/${id}/participants/${pid}`),
+  approveWichtelParticipant: (id, pid) => request("POST", `/wichteln/groups/${id}/participants/${pid}/approve`),
+  inviteWichtelParticipant: (id, pid) => request("POST", `/wichteln/groups/${id}/participants/${pid}/invite`),
+  inviteAllWichtel: (id) => request("POST", `/wichteln/groups/${id}/invite-all`),
+  setWichtelExclusions: (id, exclusions) => request("PUT", `/wichteln/groups/${id}/exclusions`, { exclusions }),
+  drawWichtel: (id) => request("POST", `/wichteln/groups/${id}/draw`),
+  revealWichtel: (id) => request("POST", `/wichteln/groups/${id}/reveal`),
+  wichtelInviteCard: (id) => request("GET", `/wichteln/groups/${id}/invite-card`),
+  rotateWichtelInvite: (id) => request("POST", `/wichteln/groups/${id}/rotate-invite`),
 
   spotifyStatus: (id) => request("GET", `/spotify/status?calendarId=${encodeURIComponent(id)}`),
   spotifyDisconnect: (id) => request("POST", "/spotify/disconnect", { calendarId: id }),

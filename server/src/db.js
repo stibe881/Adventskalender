@@ -55,9 +55,78 @@ async function initDB() {
       data JSON
     )
   `);
+
+  // Wichtel-Runden (Secret Santa groups). Participant tokens live inside the
+  // JSON document; lookups use JSON_SEARCH so no extra table is needed.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wichtel_groups (
+      id VARCHAR(255) PRIMARY KEY,
+      ownerId VARCHAR(255),
+      inviteToken VARCHAR(255) UNIQUE,
+      data JSON,
+      INDEX idx_wichtel_owner (ownerId)
+    )
+  `);
 }
 
 initDB().catch(console.error);
+
+// ── Wichteln ────────────────────────────────────────────────────────────────
+async function getAllWichtelGroups() {
+  const [rows] = await pool.query("SELECT * FROM wichtel_groups");
+  return rows.map((r) => r.data);
+}
+
+async function getWichtelGroupsByOwner(ownerId) {
+  const [rows] = await pool.query("SELECT * FROM wichtel_groups WHERE ownerId = ?", [ownerId]);
+  return rows.map((r) => r.data);
+}
+
+async function getWichtelGroupById(id) {
+  const [rows] = await pool.query("SELECT * FROM wichtel_groups WHERE id = ?", [id]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function getWichtelGroupByInviteToken(token) {
+  const [rows] = await pool.query("SELECT * FROM wichtel_groups WHERE inviteToken = ?", [token]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function getWichtelGroupByParticipantToken(token) {
+  const [rows] = await pool.query(
+    "SELECT * FROM wichtel_groups WHERE JSON_SEARCH(data, 'one', ?, NULL, '$.participants[*].token') IS NOT NULL LIMIT 1",
+    [token]
+  );
+  return rows.length ? rows[0].data : null;
+}
+
+async function createWichtelGroup(group) {
+  await pool.query("INSERT INTO wichtel_groups (id, ownerId, inviteToken, data) VALUES (?, ?, ?, ?)", [
+    group.id,
+    group.ownerId,
+    group.inviteToken,
+    JSON.stringify(group),
+  ]);
+  return group;
+}
+
+async function updateWichtelGroup(id, updaterFn) {
+  const group = await getWichtelGroupById(id);
+  if (!group) return null;
+  const updated = await updaterFn(group);
+  await pool.query("UPDATE wichtel_groups SET ownerId = ?, inviteToken = ?, data = ? WHERE id = ?", [
+    updated.ownerId,
+    updated.inviteToken,
+    JSON.stringify(updated),
+    id,
+  ]);
+  return updated;
+}
+
+async function deleteWichtelGroup(id) {
+  const [result] = await pool.query("DELETE FROM wichtel_groups WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+}
 
 async function getAllCalendars() {
   const [rows] = await pool.query("SELECT * FROM calendars");
@@ -245,4 +314,12 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  getAllWichtelGroups,
+  getWichtelGroupsByOwner,
+  getWichtelGroupById,
+  getWichtelGroupByInviteToken,
+  getWichtelGroupByParticipantToken,
+  createWichtelGroup,
+  updateWichtelGroup,
+  deleteWichtelGroup,
 };

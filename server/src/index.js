@@ -151,6 +151,12 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/spotify", require("./routes/spotify"));
+app.use("/api/wichteln", require("./routes/wichteln"));
+
+// Wichteln: participant area and invite page share one SPA.
+app.get(["/w/join/:inviteToken", "/w/:token"], (req, res) => {
+  res.sendFile(path.join(config.paths.publicDir, "wichteln", "index.html"));
+});
 
 // Pretty recipient URL: /c/:token -> calendar SPA page
 app.get("/c/:token", (req, res) => {

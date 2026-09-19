@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     api.me().then(user => {
       if (user.username) profileForm.elements["username"].value = user.username;
       if (user.company) profileForm.elements["company"].value = user.company;
+      profileForm.elements["defaultApp"].value = user.defaultApp === "wichteln" ? "wichteln" : "calendar";
     }).catch(console.error);
 
     profileForm.addEventListener("submit", async (e) => {
@@ -30,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const company = formData.get("company");
 
       try {
-        const res = await api.updateProfile(username, company);
+        const res = await api.updateProfile(username, company, formData.get("defaultApp"));
         profileSuccess.textContent = res.message || "Profil aktualisiert.";
         profileSuccess.classList.remove("hidden");
       } catch (err) {

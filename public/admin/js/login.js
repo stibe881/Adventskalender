@@ -18,8 +18,8 @@
 
   // Already logged in? Skip straight to dashboard.
   try {
-    await api.me();
-    window.location.href = "/admin/dashboard.html";
+    const me = await api.me();
+    window.location.href = me.defaultApp === "wichteln" ? "/admin/wichteln.html" : "/admin/dashboard.html";
   } catch (_) {
     /* not logged in, stay on this page */
   }
@@ -122,7 +122,8 @@ form.addEventListener("submit", async (e) => {
       document.getElementById("company").value = "";
     } else {
       await api.login(email, password, document.getElementById("remember-me").checked);
-      window.location.href = "/admin/dashboard.html";
+      const me = await api.me().catch(() => ({}));
+      window.location.href = me.defaultApp === "wichteln" ? "/admin/wichteln.html" : "/admin/dashboard.html";
     }
   } catch (err) {
     errorMsg.textContent = err.message || "Aktion fehlgeschlagen.";

@@ -119,6 +119,19 @@ Songwünsche der Beschenkten werden in der App gespeichert **und** – sobald de
 
 Die Suche der Beschenkten nutzt die Spotify Web API (Client Credentials, `/api/spotify/search`); das Hinzufügen läuft über den OAuth-Token des Schenkers (`server/src/services/spotify.js`), der pro Kalender gespeichert und automatisch erneuert wird. Tokens werden nie an den Browser ausgeliefert.
 
+## Wichteln (Secret Santa)
+
+Eingeloggte Nutzer können oben im Kopfbereich zwischen **Adventskalender** und **Wichteln** wechseln. Unter *Konto* lässt sich einstellen, welcher Bereich nach dem Login geöffnet wird.
+
+- **Runde anlegen & einladen:** Titel, Organisator-Name, Einladungsmodus (per E-Mail, per teilbarem Link mit Warteraum, ohne E-Mail-Adressen). Der Organisator kann selbst mitwichteln, ohne sein Los zu kennen.
+- **Regeln:** Ausschlüsse für Paare, Budget, Motto, Termin/Ort der Bescherung, anonymer Chat an/aus, Aufbewahrungsfrist (30–180 Tage).
+- **Auslosen:** kreuzungsfrei unter Beachtung der Ausschlüsse; jede Person erhält ihr Los per E-Mail bzw. über den persönlichen Link (`/w/<token>`). Neu auslosen und spätere Enthüllung durch den Organisator.
+- **Teilnehmerbereich:** Wichtelkind mit Wunschzettel (Shop-Links mit Vorschau) und Hinweisen (Allergien, Lieblingsgeschmack, Hobbys), zwei anonyme Chat-Kanäle, Geschenk-Status mit Vorfreude-Anzeige, Foto-Wand, Kalender-Export (ICS) mit Erinnerung am Vortag, Benachrichtigungen per E-Mail.
+- **Organisator:** Einladungskarte mit QR-Code, Druckansichten (Teilnehmerliste, Wunschzettel, Ziehungs-/Ausschlussmatrix), Warteraum-Freigabe.
+- **Cron (08:00):** Erinnerung am Vortag der Bescherung und automatische, spurlose Löschung der Runde nach Ablauf der Frist.
+
+Die Daten liegen in der Tabelle `wichtel_groups` (wird beim Start automatisch angelegt).
+
 ## Hinweise für den Produktivbetrieb
 
 - Setze `NODE_ENV=production` und eine öffentlich erreichbare `BASE_URL` in der `.env`, damit generierte Links korrekt sind und Cookies als `secure` gesetzt werden (HTTPS erforderlich).
