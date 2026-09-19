@@ -12,7 +12,7 @@
     "extra": {
       "serverUrl": "https://mein-adventskalender.ch",
       "eas": {
-        "projectId": ""
+        "projectId": "1c1ecde6-c6a0-467b-8fc2-401e9db52e17"
       }
     },
     "splash": {
@@ -95,6 +95,7 @@
           "defaultChannel": "default"
         }
       ]
-    ]
+    ],
+    "owner": "stibe88"
   }
 }
