@@ -21,10 +21,12 @@ also **keinen Mac**.
 cd mobile
 npm install
 npm run configure -- --url https://adventskalender.deine-domain.ch   # Server-URL + Deep-Link-Hosts setzen
-npm install -g eas-cli
-eas login
-eas init            # legt das Expo-Projekt an und trägt extra.eas.projectId in app.json ein
+npm run login       # Expo-Konto (eas-cli ist lokal im Projekt, keine globale Installation nötig)
+npm run init        # legt das Expo-Projekt an und trägt extra.eas.projectId in app.json ein
 ```
+
+Alle `eas`-Befehle laufen über die lokale Kopie im Projekt (`npx eas …`), das funktioniert auch
+auf Shared-Hosting ohne Root-Rechte.
 
 Die App-ID ist `ch.stibe.adventskalender` (in `app.json` unter `ios.bundleIdentifier`
 und `android.package` änderbar).

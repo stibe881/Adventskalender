@@ -30,7 +30,14 @@
     "build:preview": "eas build -p android --profile preview",
     "submit:android": "eas submit -p android",
     "submit:ios": "eas submit -p ios",
-    "doctor": "npx expo-doctor"
+    "doctor": "npx expo-doctor",
+    "login": "eas login",
+    "init": "eas init",
+    "whoami": "eas whoami",
+    "credentials": "eas credentials"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "eas-cli": "^24.7.0"
+  }
 }
