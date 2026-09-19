@@ -19,7 +19,7 @@
   // Already logged in? Skip straight to dashboard.
   try {
     const me = await api.me();
-    window.location.href = me.defaultApp === "wichteln" ? "/admin/wichteln.html" : "/admin/dashboard.html";
+    window.location.href = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
   } catch (_) {
     /* not logged in, stay on this page */
   }
@@ -123,7 +123,7 @@ form.addEventListener("submit", async (e) => {
     } else {
       await api.login(email, password, document.getElementById("remember-me").checked);
       const me = await api.me().catch(() => ({}));
-      window.location.href = me.defaultApp === "wichteln" ? "/admin/wichteln.html" : "/admin/dashboard.html";
+      window.location.href = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
     }
   } catch (err) {
     errorMsg.textContent = err.message || "Aktion fehlgeschlagen.";

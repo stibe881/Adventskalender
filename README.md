@@ -119,6 +119,25 @@ Songwünsche der Beschenkten werden in der App gespeichert **und** – sobald de
 
 Die Suche der Beschenkten nutzt die Spotify Web API (Client Credentials, `/api/spotify/search`); das Hinzufügen läuft über den OAuth-Token des Schenkers (`server/src/services/spotify.js`), der pro Kalender gespeichert und automatisch erneuert wird. Tokens werden nie an den Browser ausgeliefert.
 
+## Wichteltür (Weihnachtswichtel-Planer)
+
+Drittes Modul neben Adventskalender und Wichteln: Eltern planen die 24 Nächte des
+Weihnachtswichtels, der den Kindern Streiche spielt.
+
+- **Eltern-Seite** `/e/<shareToken>`: Plan für den 1.–24. Dezember, Ideen-Bibliothek
+  (60 Ideen mit Aufwand, Material, Alter), automatische Planung, Einkaufsliste nach
+  Wochen, Wichtelpost, Briefvorlagen in Wichtel-Stimme, Druckansichten (Plan,
+  Einkauf, Mini-Briefe, Rückblick). Der Link gibt volle Bearbeitungsrechte ohne
+  Konto, damit das andere Elternteil mitplanen kann; in der App bleibt die Tür
+  gespeichert und erscheint auf der Startseite unter „Meine Wichteltüren“.
+- **Kinder-Seite** `/k/<kidToken>`: Tür, Countdown, Briefe vom Wichtel, Briefe an den
+  Wichtel. Zeigt nie den Plan.
+- **Erinnerung**: Jeden Abend zur eingestellten Zeit per Push (App/Browser) und
+  E-Mail: was heute Nacht zu tun ist, was morgen vorbereitet werden muss.
+- **Verwaltung** `/admin/wichteltuer.html`: Türen anlegen, Links erneuern, löschen.
+- Code: `server/src/routes/wichteltuer/`, `server/src/wichteltuer/` (Ideen, Briefe,
+  Limits), `public/wichteltuer/`, Tests in `test/wichteltuer.test.js`.
+
 ## Wichteln (Secret Santa)
 
 Eingeloggte Nutzer können oben im Kopfbereich zwischen **Adventskalender** und **Wichteln** wechseln. Unter *Konto* lässt sich einstellen, welcher Bereich nach dem Login geöffnet wird.

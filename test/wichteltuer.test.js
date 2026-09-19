@@ -121,12 +121,14 @@ test("Wichteltür: owner creates a plan, co-parent edits via share link, kids wr
   const at = (iso, hhmm) => new Date(`${iso}T${hhmm}:00+01:00`);
   mails.length = 0;
   pushed.length = 0;
-  let jobs = await runElfReminders(at("2026-12-01", "20:00"));
+  // Evening of the 2nd: the night for the 3rd is planned and open.
+  let jobs = await runElfReminders(at("2026-12-02", "20:00"));
   assert.equal(jobs.sent, 1);
   assert.equal(mails.length, 1);
-  assert.ok(mails[0].text.includes("Wichtel im Kühlschrank") === false, "the finished day is not repeated");
-  assert.ok(pushed[0].payload.body.includes("2. Dezember") || pushed[0].payload.body.includes("nichts geplant") || pushed[0].payload.body.includes("Morgen vorbereiten"));
-  jobs = await runElfReminders(at("2026-12-01", "20:00"));
+  assert.ok(!mails[0].text.includes("Wichtel im Kühlschrank"), "the finished day is not repeated");
+  assert.ok(pushed[0].payload.body.includes("3. Dezember"));
+  assert.ok(pushed[0].payload.url.endsWith("#tag-2026-12-03"));
+  jobs = await runElfReminders(at("2026-12-02", "20:00"));
   assert.equal(jobs.sent, 0, "only once per evening");
   jobs = await runElfReminders(at("2026-12-03", "20:00"));
   assert.equal(jobs.sent, 1);

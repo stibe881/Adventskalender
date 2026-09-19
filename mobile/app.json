@@ -65,6 +65,16 @@
             {
               "scheme": "https",
               "host": "mein-adventskalender.ch",
+              "pathPrefix": "/e/"
+            },
+            {
+              "scheme": "https",
+              "host": "mein-adventskalender.ch",
+              "pathPrefix": "/k/"
+            },
+            {
+              "scheme": "https",
+              "host": "mein-adventskalender.ch",
               "pathPrefix": "/admin/"
             }
           ],

@@ -83,6 +83,10 @@ const api = {
   unrevealWichtel: (id) => request("POST", `/wichteln/groups/${id}/unreveal`),
   wichtelInviteCard: (id) => request("GET", `/wichteln/groups/${id}/invite-card`),
   rotateWichtelInvite: (id) => request("POST", `/wichteln/groups/${id}/rotate-invite`),
+  // Wichteltür (elf planner)
+  listElfPlans: () => request("GET", "/wichteltuer/plans"),
+  createElfPlan: (data) => request("POST", "/wichteltuer/plans", data),
+  deleteElfPlan: (id) => request("DELETE", `/wichteltuer/plans/${id}`),
   wichtelChecklist: (id) => request("GET", `/wichteln/groups/${id}/checklist`),
   duplicateWichtelGroup: (id, data) => request("POST", `/wichteln/groups/${id}/duplicate`, data || {}),
 

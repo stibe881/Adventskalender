@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     api.me().then(user => {
       if (user.username) profileForm.elements["username"].value = user.username;
       if (user.company) profileForm.elements["company"].value = user.company;
-      profileForm.elements["defaultApp"].value = user.defaultApp === "wichteln" ? "wichteln" : "calendar";
+      profileForm.elements["defaultApp"].value = ["wichteln", "wichteltuer"].includes(user.defaultApp) ? user.defaultApp : "calendar";
     }).catch(console.error);
 
     profileForm.addEventListener("submit", async (e) => {

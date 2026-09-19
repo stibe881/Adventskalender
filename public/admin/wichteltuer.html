@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Wichteltür – Advently</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/shared/styles.css" />
+  <link rel="stylesheet" href="/shared/ui.css" />
+  <script src="/shared/icons.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="/admin/images/logo.png" alt="Logo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shadow-lg shadow-emerald-500/20 shrink-0" />
+        <div>
+          <h1 class="font-display font-bold text-lg leading-none">Advently</h1>
+          <p class="text-xs text-slate-400 truncate max-w-[55vw] sm:max-w-none">Angemeldet als <span id="admin-name" class="font-medium text-emerald-400"></span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+        <nav class="app-switch flex bg-slate-800 rounded-lg p-1 border border-white/10 text-xs font-semibold whitespace-nowrap" aria-label="Bereich wechseln">
+          <a href="/admin/dashboard.html" class="px-2.5 sm:px-3 py-1.5 rounded-md text-slate-400 hover:text-white"><i data-icon="tree-pine"></i> Adventskalender</a>
+          <a href="/admin/wichteln.html" class="px-2.5 sm:px-3 py-1.5 rounded-md text-slate-400 hover:text-white"><i data-icon="gift"></i> Wichteln</a>
+          <a href="/admin/wichteltuer.html" class="px-2.5 sm:px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow"><i data-icon="door-open"></i> Wichteltür</a>
+        </nav>
+        <a href="/admin/account.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors whitespace-nowrap">Konto</a>
+        <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white transition-colors whitespace-nowrap">Abmelden</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
+    <section>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div class="min-w-0">
+          <h2 class="font-display text-2xl font-semibold">Deine Wichteltüren</h2>
+          <p class="text-sm text-slate-400 mt-1">Der Weihnachtswichtel, der nachts Streiche spielt: 24 Nächte planen, Material einkaufen, abends erinnert werden – und die Kinder schreiben ihm Briefe.</p>
+        </div>
+        <button id="new-plan-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap">+ Neue Wichteltür</button>
+      </div>
+
+      <div id="plan-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <div id="empty-state" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl mt-4">
+        <div class="text-4xl mb-3 text-amber-400"><i data-icon="door-open"></i></div>
+        <h3 class="text-lg font-semibold text-white mb-1">Noch keine Wichteltür</h3>
+        <p class="text-slate-400 text-sm mb-4">Lege den Wichtel an, trag die Kinder ein und lass die 24 Nächte automatisch planen.</p>
+        <button onclick="document.getElementById('new-plan-btn').click()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">Jetzt starten</button>
+      </div>
+
+      <div id="shared-section" class="hidden mt-8">
+        <h3 class="font-display text-lg font-semibold mb-1">Geteilt mit dir</h3>
+        <p class="text-sm text-slate-400 mb-3">Wichteltüren, die jemand mit diesem Gerät geteilt hat.</p>
+        <div id="shared-list" class="grid sm:grid-cols-2 gap-4"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Create Modal -->
+  <div id="create-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
+      <button id="create-close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl"><i data-icon="x"></i></button>
+      <h2 class="font-display text-xl font-semibold mb-1">Neue Wichteltür</h2>
+      <p class="text-xs text-slate-500 mb-5">Alles lässt sich später noch ändern.</p>
+      <form id="create-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Name des Wichtels</label>
+          <input name="elfName" required maxlength="40" placeholder="z. B. Pixi, Nisse, Fridolin" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Kinder <span class="text-slate-500">(Name und Alter)</span></label>
+          <div id="create-children" class="space-y-2">
+            <div class="flex gap-2"><input name="childName" maxlength="40" placeholder="Name" class="flex-1 rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /><input name="childAge" type="number" min="0" max="18" placeholder="Alter" class="w-24 rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /></div>
+          </div>
+          <button type="button" id="create-add-child" class="text-xs text-emerald-400 mt-2">+ weiteres Kind</button>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Jahr</label>
+          <input name="year" type="number" min="2024" max="2100" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="autoplan" checked class="w-4 h-4 rounded bg-slate-900 border-white/10"> Alle 24 Nächte gleich automatisch planen <span class="text-xs text-slate-500">(passend zum Alter, änderbar)</span></label>
+        <p id="create-error" class="hidden text-sm text-rose-400"></p>
+        <button type="submit" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5">Wichteltür anlegen</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/shared/native.js"></script>
+  <script src="/shared/ui.js"></script>
+  <script src="/admin/js/api.js"></script>
+  <script src="/admin/js/wichteltuer.js"></script>
+</body>
+</html>
