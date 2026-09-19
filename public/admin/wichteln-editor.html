@@ -28,7 +28,7 @@
     .check-item.is-ok { color: #cbd5e1; } .check-item.is-ok .ui-icon { color: #34d399; }
     .check-item.is-warn { color: #fde68a; } .check-item.is-warn .ui-icon { color: #fbbf24; }
     .check-item.is-block { color: #fecdd3; } .check-item.is-block .ui-icon { color: #fb7185; }
-    .secnav { position: sticky; top: 64px; z-index: 5; display: flex; gap: 4px; overflow-x: auto; padding: 4px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); scrollbar-width: none; }
+    .secnav { position: sticky; top: 8px; z-index: 5; display: flex; gap: 4px; overflow-x: auto; padding: 4px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); scrollbar-width: none; }
     .secnav::-webkit-scrollbar { display: none; }
     .secnav a { flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; color: #cbd5e1; white-space: nowrap; }
     .secnav a:hover { background: rgba(255,255,255,0.08); color: #fff; }
@@ -37,7 +37,7 @@
   <script src="/shared/icons.js"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
-  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
+  <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sm:sticky top-0 z-10">
     <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto sm:flex-1">
         <a href="/admin/wichteln.html" class="text-slate-400 hover:text-white text-sm whitespace-nowrap">← Zurück</a>
@@ -167,8 +167,8 @@
       <p class="lead">Link teilen oder Einladungskarte mit QR-Code ausdrucken, verteilen, abscannen – fertig ist der Beitritt ohne Tippen.</p>
       <div class="flex flex-col sm:flex-row gap-3 items-start">
         <div class="flex-1 w-full">
-          <div class="flex gap-2">
-            <input id="invite-link" readonly class="field text-xs" />
+          <div class="flex flex-wrap gap-2">
+            <input id="invite-link" readonly class="field text-xs flex-1 min-w-[180px]" />
             <button id="copy-invite" class="btn btn-ghost"><i data-icon="copy"></i> Kopieren</button>
             <button id="share-invite" class="btn btn-primary"><i data-icon="share-2"></i> Teilen</button>
           </div>
