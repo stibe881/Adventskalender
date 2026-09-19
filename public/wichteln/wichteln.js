@@ -124,17 +124,19 @@ async function load() {
 function render() {
   const { group: g, me } = data;
   if (me.pending) {
-    app.innerHTML = `${headerCard()}
+    app.innerHTML = `${navBar()}${headerCard()}
       <div class="w-card text-center">
         <div class="text-5xl mb-3 text-amber-300"><i data-icon="hourglass"></i></div>
         <h2 class="w-title text-xl">Du bist im Warteraum</h2>
         <p class="text-slate-300 mt-2">Der Organisator gibt dich gleich frei. Diese Seite prüft das automatisch.</p>
         <p class="text-xs text-slate-500 mt-4">Speichere dir diesen Link: <span class="text-slate-300 break-all">${esc(window.location.href)}</span></p>
       </div>`;
+    bindNav();
     return;
   }
   const drawn = g.status !== "draft";
   app.innerHTML = [
+    navBar(),
     headerCard(),
     stepper(),
     data.reveal ? revealCard() : "",
@@ -147,6 +149,44 @@ function render() {
     footerCard(),
   ].join("");
   bindEvents();
+}
+
+// Top bar: back (organizer came from the admin editor, or a previous page exists),
+// link to the round's administration for the organizer, and a switcher when this
+// browser knows several rounds.
+function navBar() {
+  const g = data.group;
+  const me = data.me;
+  const links = [];
+  const cameFromAdmin = /\/admin\//.test(document.referrer || "");
+  if (me.isOrganizer) links.push(`<a href="/admin/wichteln-editor.html?id=${encodeURIComponent(g.id)}" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="settings"></i> Runde verwalten</a>`);
+  else if (cameFromAdmin || window.history.length > 1) links.push(`<a href="#" data-act="back" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>`);
+  let known = [];
+  try { known = JSON.parse(localStorage.getItem("wichtel_tokens") || "[]"); } catch (_) {}
+  const others = known.filter((t) => t !== token);
+  if (others.length) links.push(`<button type="button" data-act="switch" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="refresh-cw"></i> Andere Runde</button>`);
+  if (!links.length) return "";
+  return `<div class="flex flex-wrap gap-2" id="w-nav">${links.join("")}</div><div id="w-switch" class="hidden w-card space-y-2"></div>`;
+}
+
+async function showSwitcher() {
+  const box = document.getElementById("w-switch");
+  box.classList.toggle("hidden");
+  if (box.classList.contains("hidden") || box.dataset.loaded) return;
+  box.innerHTML = `<p class="text-sm text-slate-400">Lade Runden …</p>`;
+  let known = [];
+  try { known = JSON.parse(localStorage.getItem("wichtel_tokens") || "[]"); } catch (_) {}
+  const rows = [];
+  for (const t of known) {
+    try {
+      const r = await fetch(`/api/wichteln/p/${encodeURIComponent(t)}`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      rows.push(`<a href="/w/${encodeURIComponent(t)}" class="block w-btn w-btn--ghost w-full ${t === token ? "opacity-60" : ""}">${esc(d.group.title)} <span class="text-xs text-slate-400">· als ${esc(d.me.name)}${t === token ? " (aktuell)" : ""}</span></a>`);
+    } catch (_) { /* skip dead links */ }
+  }
+  box.innerHTML = `<h3 class="font-semibold text-white">Deine Wichtel-Runden auf diesem Gerät</h3>${rows.join("") || `<p class="text-sm text-slate-400">Keine weiteren Runden gefunden.</p>`}`;
+  box.dataset.loaded = "1";
 }
 
 function headerCard() {
@@ -346,7 +386,15 @@ function footerCard() {
 }
 
 // ── Events ──────────────────────────────────────────────────────────────────
+function bindNav() {
+  const back = document.querySelector("#w-nav [data-act='back']");
+  if (back) back.addEventListener("click", (e) => { e.preventDefault(); window.history.back(); });
+  const sw = document.querySelector("#w-nav [data-act='switch']");
+  if (sw) sw.addEventListener("click", showSwitcher);
+}
+
 function bindEvents() {
+  bindNav();
   document.querySelectorAll(".w-chat").forEach((c) => (c.scrollTop = c.scrollHeight));
 
   document.querySelectorAll("form[data-chat]").forEach((form) => form.addEventListener("submit", async (e) => {

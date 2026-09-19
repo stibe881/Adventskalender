@@ -44,6 +44,11 @@
     send({ type: "openExternal", url: u.href });
   }, true);
 
+  // No browser tabs inside the app: links that would open a new tab navigate in place.
+  document.querySelectorAll('a[target="_blank"]').forEach((a) => {
+    if (a.getAttribute("href") && new URL(a.href, location.href).origin === location.origin) a.removeAttribute("target");
+  });
+
   // The app keeps you signed in permanently – no need to ask.
   const rememberRow = document.getElementById("remember-row");
   if (rememberRow) {
