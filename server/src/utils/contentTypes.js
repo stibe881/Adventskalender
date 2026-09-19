@@ -27,7 +27,8 @@ const CONTENT_TYPES = [
   "timecapsule",
   "printplay",
   "spotify-collab",
-  "iot-box"
+  "iot-box",
+  "wichteln"
 ];
 
 const THEMES = ["partner", "kid", "parents", "modern", "firma"];

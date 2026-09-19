@@ -1,0 +1,82 @@
+/* Test harness: mounts the real routers on an in-memory database stub so the
+ * suite runs without MySQL, SMTP or a push gateway. */
+const path = require("path");
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+
+const SRC = path.join(__dirname, "..", "..", "server", "src");
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+function createStubDb() {
+  const user = { id: "u1", email: "orga@example.ch", isPro: true, isVerified: true, username: "Stefan", company: "X", passwordHash: "x", defaultApp: "wichteln" };
+  const groups = {};
+  const calendars = {};
+  const db = {
+    user, groups, calendars,
+    getUserByEmail: async () => clone(user),
+    getUserById: async () => clone(user),
+    updateUser: async (id, fn) => { Object.assign(user, await fn(clone(user))); return user; },
+    getUserByCompany: async () => null,
+    getUserByUsername: async () => null,
+    getAllCalendars: async () => Object.values(calendars).map(clone),
+    updateCalendar: async (id, fn) => { calendars[id] = clone(await fn(clone(calendars[id]))); return calendars[id]; },
+    getAllWichtelGroups: async () => Object.values(groups).map(clone),
+    getWichtelGroupsByOwner: async (o) => Object.values(groups).filter((g) => g.ownerId === o).map(clone),
+    getWichtelGroupById: async (id) => (groups[id] ? clone(groups[id]) : null),
+    getWichtelGroupByInviteToken: async (t) => clone(Object.values(groups).find((g) => g.inviteToken === t) || null),
+    getWichtelGroupByParticipantToken: async (t) => clone(Object.values(groups).find((g) => g.participants.some((p) => p.token === t)) || null),
+    createWichtelGroup: async (g) => { groups[g.id] = clone(g); return g; },
+    updateWichtelGroup: async (id, fn) => { if (!groups[id]) return null; const u = await fn(clone(groups[id])); groups[id] = clone(u); return u; },
+    deleteWichtelGroup: async (id) => { const had = Boolean(groups[id]); delete groups[id]; return had; },
+  };
+  return db;
+}
+
+function install(db) {
+  const pushed = [];
+  const stub = (file, exports) => { require.cache[require.resolve(path.join(SRC, file))] = { id: file, filename: file, loaded: true, exports }; };
+  stub("db.js", db);
+  stub("push.js", {
+    sendPushNotification: async (sub, payload) => {
+      pushed.push({ sub, payload });
+      if (sub.endpoint === "expo:ExponentPushToken[dead]") { const e = new Error("gone"); e.statusCode = 410; throw e; }
+    },
+    isExpoPushToken: (v) => /^ExponentPushToken\[[\w-]+\]$/.test(v),
+    getVapidPublicKey: () => "BPUBKEY",
+    initWebPush() {},
+  });
+  const mails = [];
+  stub("services/mail.js", {
+    sendMail: async (m) => { mails.push(m); return true; },
+    layout: (title, body) => `<html><body><h1>${title}</h1>${body}</body></html>`,
+    escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])),
+  });
+  return { pushed, mails };
+}
+
+async function startApp() {
+  const db = createStubDb();
+  const { pushed, mails } = install(db);
+  const config = require(path.join(SRC, "config"));
+  const app = express();
+  app.use(cookieParser());
+  app.use(express.json());
+  app.use("/api/auth", require(path.join(SRC, "routes/auth")));
+  app.use("/api/wichteln", require(path.join(SRC, "routes/wichteln")));
+  const server = app.listen(0);
+  await new Promise((r) => server.once("listening", r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const session = jwt.sign({ role: "user", id: db.user.id, email: db.user.email }, config.jwtSecret);
+  const auth = { cookie: `advent_session=${session}` };
+  const call = async (method, p, body, headers = auth) => {
+    const r = await fetch(`${base}${p}`, { method, headers: { "Content-Type": "application/json", ...headers }, body: body === undefined ? undefined : JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    return { status: r.status, d };
+  };
+  const anon = (method, p, body) => call(method, p, body, {});
+  const stop = () => new Promise((r) => server.close(r));
+  return { app, base, db, pushed, mails, call, anon, stop, config, session };
+}
+
+module.exports = { startApp, createStubDb, install };

@@ -608,6 +608,13 @@ function getSpecificPreviewMockup(type) {
         <div class="w-3/4 h-3 bg-slate-200 rounded mb-4"></div>
         <div class="w-full h-8 bg-slate-800 rounded mt-auto text-white flex items-center justify-center text-xs font-bold">PDF HERUNTERLADEN</div>
       </div>`;
+    case "wichteln":
+      return `<div class="w-full bg-emerald-950 rounded-xl p-4 text-white flex flex-col items-center gap-3 border border-emerald-800">
+        <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-3xl"><i data-icon="gift"></i></div>
+        <div class="w-2/3 h-4 bg-emerald-800 rounded-full"></div>
+        <div class="w-1/2 h-3 bg-emerald-900 rounded-full"></div>
+        <div class="w-full h-9 bg-emerald-500 rounded-lg text-emerald-950 font-bold text-xs flex items-center justify-center">Zur Wichtel-Runde</div>
+      </div>`;
     case "iot-box":
       return `<div class="w-full bg-slate-800 rounded-xl p-6 shadow-inner border border-slate-700 text-center relative">
         <div class="absolute top-4 right-4 w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
@@ -805,6 +812,7 @@ function renderTypeFields(type, content) {
     printplay: renderPrintPlayFields,
     "spotify-collab": renderSpotifyCollabFields,
     "iot-box": renderIotBoxFields,
+    wichteln: renderWichtelnFields,
   };
   (renderers[type] || (() => {}))(content);
 }
@@ -945,6 +953,15 @@ async function loadSpotifyStatus() {
     await api.spotifyDisconnect(calendarId);
     await loadSpotifyStatus();
   });
+}
+
+function renderWichtelnFields(c) {
+  typeFields.innerHTML =
+    `<p class="text-sm text-slate-300 mb-4">Hinter diesem Türchen steckt die Einladung zu einer Wichtel-Runde. Kopiere den Einladungslink aus dem Wichtel-Editor (Bereich „Einladung“) hierher.</p>` +
+    fieldWrap("Einladungslink der Wichtel-Runde", `<input id="f-wichtelUrl" value="${escapeHtml(c.wichtelUrl || '')}" placeholder="https://…/w/join/…" class="${inputClass}" />`) +
+    fieldWrap("Überschrift", `<input id="f-wichtelTitle" value="${escapeHtml(c.wichtelTitle || '')}" placeholder="Du bist zum Wichteln eingeladen!" class="${inputClass}" />`) +
+    fieldWrap("Text (optional)", `<textarea id="f-wichtelText" rows="3" placeholder="Budget, Motto, Termin …" class="${inputClass}">${escapeHtml(c.wichtelText || '')}</textarea>`) +
+    `<p class="text-xs text-slate-400 mt-2">Tipp: <a href="/admin/wichteln.html" class="text-emerald-400 underline">Zum Wichtel-Bereich</a> – dort findest du Link und QR-Code jeder Runde.</p>`;
 }
 
 function renderIotBoxFields(c) {
@@ -1454,6 +1471,7 @@ function collectFieldsData(type) {
     case "diary": return { diaryQuestion: val("f-diaryQuestion") };
     case "printplay": return { ppTitle: val("f-ppTitle"), ppImage: currentContent.ppImage || null };
     case "spotify-collab": return { playlistUrl: val("f-playlistUrl") };
+    case "wichteln": return { wichtelUrl: val("f-wichtelUrl"), wichtelTitle: val("f-wichtelTitle"), wichtelText: val("f-wichtelText") };
     case "duel":
     case "timecapsule":
       return {};

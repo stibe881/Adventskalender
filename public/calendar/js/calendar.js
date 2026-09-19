@@ -2273,6 +2273,20 @@ function renderContent(type, c, dayNum) {
       return cardWrap("spotify-collab", "Gemeinsame Playlist", html);
     }
 
+    case "wichteln": {
+      const url = /^https?:\/\//.test(String(c.wichtelUrl || "")) ? c.wichtelUrl : "";
+      const title = c.wichtelTitle || "Du bist zum Wichteln eingeladen!";
+      const html = `<div style="text-align:center;padding:8px 0">
+        <div style="display:inline-flex;width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,.18);color:#6ee7b7;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px"><i data-icon="gift"></i></div>
+        <h3 style="font-size:1.25rem;font-weight:800;margin:0 0 8px">${escapeHtml(title)}</h3>
+        ${c.wichtelText ? `<p class="modal-muted" style="white-space:pre-line;margin-bottom:16px">${escapeHtml(c.wichtelText)}</p>` : ""}
+        ${url
+          ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#10b981;color:#052e16;font-weight:700;padding:12px 22px;border-radius:9999px;text-decoration:none"><i data-icon="party-popper"></i> Zur Wichtel-Runde</a>`
+          : `<p class="modal-muted">Der Einladungslink folgt noch.</p>`}
+      </div>`;
+      return cardWrap("wichtel", "Wichteln", html);
+    }
+
     case "empty":
     default:
       return cardWrap("empty", null, `<p class="modal-muted">Für Türchen ${dayNum} wurde noch keine Überraschung hinterlegt.</p>`);

@@ -1,18 +1,11 @@
 const crypto = require("crypto");
+const cfg = require("../wichteln/config");
 
-const MAX_PARTICIPANTS = 100;
-const RETENTION_OPTIONS = [30, 60, 90, 180];
-const GIFT_STEPS = {
-  personal: ["bought", "wrapped", "ready"],
-  post: ["bought", "wrapped", "sent", "delivered"],
-};
-const GIFT_STEP_LABELS = {
-  bought: "Geschenk besorgt",
-  wrapped: "Eingepackt",
-  ready: "Bereit zur Übergabe",
-  sent: "Verschickt",
-  delivered: "Angekommen",
-};
+// Kept for callers that import the constants from here.
+const MAX_PARTICIPANTS = cfg.maxParticipants;
+const RETENTION_OPTIONS = cfg.retentionOptions;
+const GIFT_STEPS = cfg.giftSteps;
+const GIFT_STEP_LABELS = cfg.giftStepLabels;
 
 function isEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || "").trim());
@@ -23,7 +16,7 @@ function cleanText(v, max = 200) {
 }
 
 function shortToken() {
-  return crypto.randomBytes(12).toString("base64url");
+  return crypto.randomBytes(cfg.participantTokenBytes).toString("base64url");
 }
 
 /**
@@ -94,7 +87,7 @@ function buildIcs({ uid, title, description, date, time, location, url }) {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Adventskalender//Wichteln//DE",
+    "PRODID:-//Advently//Wichteln//DE",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${uid}`,

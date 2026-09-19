@@ -10,7 +10,8 @@
     "dev:server": "nodemon server/src/index.js",
     "dev:css": "tailwindcss -i ./src/input.css -o ./public/shared/styles.css --watch",
     "build:css": "tailwindcss -i ./src/input.css -o ./public/shared/styles.css --minify",
-    "setup": "node server/src/setup.js"
+    "setup": "node server/src/setup.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

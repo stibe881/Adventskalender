@@ -132,11 +132,15 @@ function startCron() {
 }
 
 async function runWichtelJobs(now = new Date()) {
-  const { notifyParticipant, eventLine, removePhotoFiles } = require("./routes/wichteln");
+  const { notify, removePhotoFiles } = require("./routes/wichteln");
+  const wcfg = require("./wichteln/config");
   const groups = await db.getAllWichtelGroups();
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const tomorrowIso = new Intl.DateTimeFormat("en-CA", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(tomorrow);
+  const dayIso = (offsetDays) => new Intl.DateTimeFormat("en-CA", { timeZone: config.timezone, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date(now.getTime() + offsetDays * 24 * 60 * 60 * 1000));
+  const tomorrowIso = dayIso(wcfg.reminderDaysBefore);
+  const weekIso = dayIso(wcfg.giftReminderDaysBefore);
   let reminders = 0;
+  let giftReminders = 0;
   let deleted = 0;
   for (const g of groups) {
     // Retention over: wipe the whole group including photos.
@@ -146,20 +150,27 @@ async function runWichtelJobs(now = new Date()) {
       deleted++;
       continue;
     }
+    const active = (g.participants || []).filter((x) => !x.pending);
+    // The day before: everybody who wants to hear from us.
     if (g.eventDate === tomorrowIso && !g.reminderSentFor?.includes(tomorrowIso)) {
-      const line = eventLine(g);
-      for (const p of (g.participants || []).filter((x) => !x.pending && x.email && x.notify?.email !== false)) {
-        const target = g.status !== "draft" ? (g.participants || []).find((x) => x.id === p.assignedTo) : null;
-        await notifyParticipant(g, p, "Morgen ist Bescherung!",
-          `Hallo ${p.name}!\n\nMorgen ist es so weit: ${line}${target ? `\nDu beschenkst: ${target.name}` : ""}`,
-          `<p>Hallo ${p.name}!</p><p>Morgen ist es so weit: <strong>${line}</strong></p>${target ? `<p>Du beschenkst: <strong>${target.name}</strong></p>` : ""}`);
+      for (const p of active) {
+        await notify("reminderTomorrow", { group: g, p });
         reminders++;
       }
       await db.updateWichtelGroup(g.id, (x) => { x.reminderSentFor = [...(x.reminderSentFor || []), tomorrowIso]; return x; });
     }
+    // A week before: nudge givers who have not started on their gift.
+    if (g.eventDate === weekIso && g.status !== "draft" && !g.giftReminderSentFor?.includes(weekIso)) {
+      for (const p of active) {
+        if (!p.assignedTo || (p.giftStatus?.steps || []).length) continue;
+        await notify("giftReminder", { group: g, p });
+        giftReminders++;
+      }
+      await db.updateWichtelGroup(g.id, (x) => { x.giftReminderSentFor = [...(x.giftReminderSentFor || []), weekIso]; return x; });
+    }
   }
-  if (reminders || deleted) console.log(`[CRON] Wichteln: ${reminders} Erinnerungen, ${deleted} Runden gelöscht.`);
-  return { reminders, deleted };
+  if (reminders || giftReminders || deleted) console.log(`[CRON] Wichteln: ${reminders} Erinnerungen, ${giftReminders} Geschenk-Erinnerungen, ${deleted} Runden gelöscht.`);
+  return { reminders, giftReminders, deleted };
 }
 
 module.exports = { startCron, runWichtelJobs };

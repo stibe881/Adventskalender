@@ -22,6 +22,7 @@ const { initWebPush } = require("./push");
 if (!fs.existsSync(config.paths.uploadsDir)) fs.mkdirSync(config.paths.uploadsDir, { recursive: true });
 
 initWebPush();
+require("./migrations").runMigrations().catch((err) => console.error("[Migration] fehlgeschlagen:", err));
 
 const app = express();
 
