@@ -143,6 +143,10 @@ Die Datei `public/shared/native.js` verbindet die Web-Seiten mit der App.
 
 ## Hinweise für den Produktivbetrieb
 
+Nach jedem `git pull` auf dem Server: `npm run build:css` ausführen und den Node-Prozess neu
+starten, sonst läuft der alte Code weiter (Symptom: neue API-Routen antworten mit „Nicht
+gefunden.“). Bei Passenger-Hosting genügt `touch tmp/restart.txt` im Projektordner.
+
 - Setze `NODE_ENV=production` und eine öffentlich erreichbare `BASE_URL` in der `.env`, damit generierte Links korrekt sind und Cookies als `secure` gesetzt werden (HTTPS erforderlich).
 - `server/data/db.json` und `server/uploads/` enthalten alle Nutzdaten – für ein Backup reicht es, beide Ordner zu sichern.
 - Für viele parallele Kalender/hohen Traffic empfiehlt sich mittelfristig der Umstieg von der JSON-Datei auf eine echte Datenbank; die Zugriffsschicht ist dafür bereits in `server/src/db.js` gekapselt.
