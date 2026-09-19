@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const rateLimit = require("express-rate-limit");
 const config = require("../config");
-const { signUserToken, setAuthCookie, clearAuthCookie, requireAuth } = require("../middleware/auth");
+const { signUserToken, setAuthCookie, clearAuthCookie, requireAuth, isNativeApp } = require("../middleware/auth");
 const db = require("../db");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
@@ -120,7 +120,8 @@ router.post("/login", loginLimiter, async (req, res) => {
 
   user.username = user.email.split("@")[0];
 
-  const token = signUserToken(user, { remember: Boolean(remember) });
+  const app = isNativeApp(req);
+  const token = signUserToken(user, { remember: Boolean(remember) || app, app });
   setAuthCookie(res, token);
   res.json({ ok: true, email: user.email });
 });
@@ -138,6 +139,10 @@ router.post("/logout", (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   const user = await db.getUserByEmail(req.user.email);
   if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden" });
+  // In the app the session slides: renew the one-year cookie once a day.
+  if (req.user.app && Date.now() / 1000 - (req.user.iat || 0) > 24 * 60 * 60) {
+    setAuthCookie(res, signUserToken(user, { remember: true, app: true }));
+  }
   res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company, defaultApp: user.defaultApp === "wichteln" ? "wichteln" : "calendar" });
 });
 
@@ -171,7 +176,7 @@ router.put("/profile", requireAuth, async (req, res) => {
 
   // Update JWT cookie with new username if we use it
   const updatedUser = await db.getUserByEmail(req.user.email);
-  const token = signUserToken(updatedUser, { remember: req.user.remember });
+  const token = signUserToken(updatedUser, { remember: req.user.remember, app: req.user.app });
   setAuthCookie(res, token);
 
   res.json({ ok: true, message: "Profil erfolgreich aktualisiert." });

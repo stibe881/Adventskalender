@@ -9,31 +9,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/styles.css" />
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
+<body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="/admin/images/logo.png" alt="Logo" class="w-12 h-12 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="/admin/images/logo.png" alt="Logo" class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shadow-lg shadow-emerald-500/20 shrink-0" />
         <div>
           <h1 class="font-display font-bold text-lg leading-none">Wichteln</h1>
-          <p class="text-xs text-slate-400">Angemeldet als <span id="admin-name" class="font-medium text-emerald-400"></span></p>
+          <p class="text-xs text-slate-400 truncate max-w-[55vw] sm:max-w-none">Angemeldet als <span id="admin-name" class="font-medium text-emerald-400"></span></p>
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <nav class="app-switch flex bg-slate-800 rounded-lg p-1 border border-white/10 text-xs font-semibold" aria-label="Bereich wechseln">
-          <a href="/admin/dashboard.html" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-white">🎄 Adventskalender</a>
-          <a href="/admin/wichteln.html" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow">🎁 Wichteln</a>
+      <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+        <nav class="app-switch flex bg-slate-800 rounded-lg p-1 border border-white/10 text-xs font-semibold whitespace-nowrap" aria-label="Bereich wechseln">
+          <a href="/admin/dashboard.html" class="px-2.5 sm:px-3 py-1.5 rounded-md text-slate-400 hover:text-white">🎄 Adventskalender</a>
+          <a href="/admin/wichteln.html" class="px-2.5 sm:px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow">🎁 Wichteln</a>
         </nav>
-        <a href="/admin/account.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Konto</a>
-        <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Abmelden</button>
+        <a href="/admin/account.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors whitespace-nowrap">Konto</a>
+        <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white transition-colors whitespace-nowrap">Abmelden</button>
       </div>
     </div>
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
     <section>
-      <div class="flex items-center justify-between mb-6">
-        <div>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div class="min-w-0">
           <h2 class="font-display text-2xl font-semibold">Deine Wichtel-Runden</h2>
           <p class="text-sm text-slate-400 mt-1">Namen eintragen, auslosen lassen, fertig. Lose werden anonym verteilt, Wunschzettel, anonymer Chat und Foto-Wand inklusive.</p>
         </div>

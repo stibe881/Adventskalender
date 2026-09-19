@@ -15,17 +15,17 @@
     select.field option { background: #0f172a; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
+<body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3 min-w-0">
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
         <a href="/admin/wichteln.html" class="text-slate-400 hover:text-white text-sm whitespace-nowrap">← Zurück</a>
         <div class="min-w-0">
           <h1 id="group-title" class="font-display font-bold text-lg leading-none truncate">Wichtel-Runde</h1>
           <p class="text-xs text-slate-400 mt-1"><span id="status-badge" class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-700">…</span> <span id="participant-summary"></span></p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <a id="my-area-link" href="#" target="_blank" class="hidden text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg whitespace-nowrap">🎁 Mein Wichtel-Bereich</a>
         <button id="invite-card-btn" class="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg font-semibold whitespace-nowrap">Einladungskarte</button>
       </div>

@@ -44,6 +44,14 @@
     send({ type: "openExternal", url: u.href });
   }, true);
 
+  // The app keeps you signed in permanently – no need to ask.
+  const rememberRow = document.getElementById("remember-row");
+  if (rememberRow) {
+    rememberRow.style.display = "none";
+    const cb = document.getElementById("remember-me");
+    if (cb) cb.checked = true;
+  }
+
   // Helpers the web app can call.
   window.nativeShare = async ({ title, text, url }) => { send({ type: "share", title, text, url }); return true; };
   window.nativeHaptic = (style = "light") => send({ type: "haptic", style });
