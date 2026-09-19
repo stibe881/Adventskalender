@@ -22,21 +22,19 @@
     },
     "ios": {
       "bundleIdentifier": "ch.stibe.adventskalender",
-      "buildNumber": "1",
       "supportsTablet": true,
       "associatedDomains": [
         "applinks:mein-adventskalender.ch"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Zum Aufnehmen von Fotos für die Foto-Wand und Türchen-Antworten.",
-        "NSPhotoLibraryUsageDescription": "Zum Auswählen von Fotos für die Foto-Wand und Türchen-Antworten.",
-        "NSMicrophoneUsageDescription": "Für Sprachnachrichten in Türchen-Antworten."
+        "NSCameraUsageDescription": "Zum Aufnehmen von Fotos f\u00fcr die Foto-Wand und T\u00fcrchen-Antworten.",
+        "NSPhotoLibraryUsageDescription": "Zum Ausw\u00e4hlen von Fotos f\u00fcr die Foto-Wand und T\u00fcrchen-Antworten.",
+        "NSMicrophoneUsageDescription": "F\u00fcr Sprachnachrichten in T\u00fcrchen-Antworten."
       }
     },
     "android": {
       "package": "ch.stibe.adventskalender",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",

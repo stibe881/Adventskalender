@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAMID.ch.stibe.adventskalender",
+        "appID": "QF59FHQ44R.ch.stibe.adventskalender",
         "paths": ["/c/*", "/w/*", "/admin/*"]
       }
     ]

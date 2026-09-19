@@ -47,8 +47,8 @@ und einige native Module brauchen einen **Development Build** statt Expo Go:
 ```bash
 npm run build:android     # erzeugt ein signiertes .aab  (EAS verwaltet den Keystore)
 npm run build:ios         # erzeugt ein signiertes .ipa   (EAS fragt nach Apple-Login und legt Zertifikate an)
-npm run submit:android    # lädt in die Play Console hoch
-npm run submit:ios        # lädt zu App Store Connect / TestFlight hoch
+npm run submit:android    # lädt den neuesten fertigen Build in die Play Console hoch
+npm run submit:ios        # lädt den neuesten fertigen Build zu TestFlight hoch
 ```
 
 `npm run build:preview` baut eine Android-APK zum direkten Installieren ohne Store.
@@ -65,10 +65,9 @@ npm run release:android    # nur Android → Play Console, Track „Internes Tes
 `--auto-submit` reicht jeden fertigen Build ohne weiteres Zutun ein. Dafür einmalig in
 `eas.json` unter `submit.production` eintragen:
 
-- **iOS:** `appleId` (deine Apple-ID), `appleTeamId` (Team-ID aus dem Developer-Portal) und
-  `ascAppId` (die numerische App-ID aus App Store Connect; die App dort zuerst mit der
-  Bundle-ID `ch.stibe.adventskalender` anlegen). Fehlen die Werte, fragt EAS interaktiv nach.
-  Beim ersten Mal verlangt Apple ein app-spezifisches Passwort oder einen API-Key – EAS führt dich durch.
+- **iOS:** `appleId` und `appleTeamId` sind eingetragen. EAS sucht die App in App Store Connect
+  anhand der Bundle-ID `ch.stibe.adventskalender` und legt sie bei Bedarf an. Beim ersten
+  Mal verlangt Apple ein app-spezifisches Passwort oder einen API-Key – EAS führt dich durch.
 - **Android:** Einen Google-Cloud-Service-Account mit Zugriff auf die Play Console anlegen und
   dessen JSON-Schlüssel als `mobile/google-play-key.json` ablegen (ist per `.gitignore`
   ausgeschlossen). Wichtig: Den **allerersten** Build muss man einmal von Hand in der Play
