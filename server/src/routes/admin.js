@@ -429,7 +429,7 @@ router.post("/refresh", async (req, res) => {
       return res.status(404).json({ error: "Nutzer nicht gefunden." });
     }
 
-    const token = signUserToken(user);
+    const token = signUserToken(user, { remember: req.user.remember });
     setAuthCookie(res, token);
     
     res.json({ ok: true, isPro: user.isPro });
@@ -449,7 +449,7 @@ router.post("/dev-toggle-pro", async (req, res) => {
       u.isPro = !u.isPro;
       return u;
     });
-    const token = signUserToken(updatedUser);
+    const token = signUserToken(updatedUser, { remember: req.user.remember });
     setAuthCookie(res, token);
     res.json({ ok: true, isPro: updatedUser.isPro });
   } catch (err) {

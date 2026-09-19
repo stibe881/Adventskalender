@@ -54,6 +54,7 @@ const formTitle = document.getElementById("form-title");
 const registerFields = document.getElementById("register-fields");
 const registerPasswordConfirm = document.getElementById("register-password-confirm");
 const passwordConfirmInput = document.getElementById("password-confirm");
+const rememberRow = document.getElementById("remember-row");
 
 toggleBtn.addEventListener("click", () => {
   isRegisterMode = !isRegisterMode;
@@ -63,6 +64,7 @@ toggleBtn.addEventListener("click", () => {
     toggleBtn.textContent = "Schon einen Account? Zur Anmeldung";
     registerFields.classList.remove("hidden");
     registerPasswordConfirm.classList.remove("hidden");
+    rememberRow.classList.add("hidden");
     passwordConfirmInput.required = true;
   } else {
     formTitle.textContent = "Anmelden";
@@ -70,6 +72,7 @@ toggleBtn.addEventListener("click", () => {
     toggleBtn.textContent = "Noch keinen Account? Hier Registrieren";
     registerFields.classList.add("hidden");
     registerPasswordConfirm.classList.add("hidden");
+    rememberRow.classList.remove("hidden");
     passwordConfirmInput.required = false;
   }
   errorMsg.classList.add("hidden");
@@ -118,7 +121,7 @@ form.addEventListener("submit", async (e) => {
       document.getElementById("username").value = "";
       document.getElementById("company").value = "";
     } else {
-      await api.login(email, password);
+      await api.login(email, password, document.getElementById("remember-me").checked);
       window.location.href = "/admin/dashboard.html";
     }
   } catch (err) {

@@ -99,7 +99,7 @@ router.get("/verify", async (req, res) => {
 });
 
 router.post("/login", loginLimiter, async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, remember } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: "E-Mail und Passwort erforderlich." });
   }
@@ -120,7 +120,7 @@ router.post("/login", loginLimiter, async (req, res) => {
 
   user.username = user.email.split("@")[0];
 
-  const token = signUserToken(user);
+  const token = signUserToken(user, { remember: Boolean(remember) });
   setAuthCookie(res, token);
   res.json({ ok: true, email: user.email });
 });
@@ -169,7 +169,7 @@ router.put("/profile", requireAuth, async (req, res) => {
 
   // Update JWT cookie with new username if we use it
   const updatedUser = await db.getUserByEmail(req.user.email);
-  const token = signUserToken(updatedUser);
+  const token = signUserToken(updatedUser, { remember: req.user.remember });
   setAuthCookie(res, token);
 
   res.json({ ok: true, message: "Profil erfolgreich aktualisiert." });

@@ -36,7 +36,7 @@ async function request(method, url, body, isForm = false) {
 }
 
 const api = {
-  login: (email, password) => request("POST", "/auth/login", { email, password }),
+  login: (email, password, remember = false) => request("POST", "/auth/login", { email, password, remember }),
   register: (email, password, username, company) => request("POST", "/auth/register", { email, password, username, company }),
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
