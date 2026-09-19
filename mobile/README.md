@@ -89,6 +89,21 @@ Damit `https://deine-domain/c/<token>` und `/w/<token>` direkt in der App aufgeh
 
 Zusätzlich versteht die App das Schema `adventskalender://c/<token>`.
 
+### Sprungmarken (Wichteln)
+
+Push-Benachrichtigungen aus dem Wichtel-Modul tragen als `url` den persönlichen Link plus
+eine Sprungmarke, z. B. `https://deine-domain/w/<token>#chat`. Die App (und der Browser
+über den Service Worker) öffnet die Seite und scrollt direkt zum Bereich:
+
+| Sprungmarke     | Bereich                                   | Ereignis                              |
+|-----------------|-------------------------------------------|---------------------------------------|
+| `#wichtelkind`  | Los, Wunschzettel des Wichtelkinds, Status | Auslosung, geänderter Wunschzettel, Geschenk-Erinnerung |
+| `#wunschzettel` | Eigener Wunschzettel und Hinweise         | –                                     |
+| `#chat`         | Anonyme Chats                             | Neue Nachricht                        |
+| `#rueckblick`   | Dankeschöns und Foto-Wand                 | Dankeschön                            |
+
+Alle Texte und Sprungmarken stehen in `server/src/routes/wichteln/notify.js`.
+
 ## Push-Benachrichtigungen
 
 Die tägliche Türchen-Erinnerung (Editor → „Automatische tägliche Push-Erinnerung“)

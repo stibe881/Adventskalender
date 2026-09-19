@@ -80,14 +80,15 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       const target = (event.notification.data && event.notification.data.url) || "/";
-      // Focus the page if it is already open
+      const targetUrl = new URL(target, self.location.origin);
+      // Focus the page if it is already open, then jump to the section (#chat, …).
       for (const client of clientList) {
-        if (client.url.includes(target) && "focus" in client) {
-          return client.focus();
+        if (new URL(client.url).pathname === targetUrl.pathname && "focus" in client) {
+          return client.focus().then((c) => (c && c.navigate && targetUrl.hash ? c.navigate(targetUrl.href).catch(() => c) : c));
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow(target);
+        return clients.openWindow(targetUrl.href);
       }
     })
   );

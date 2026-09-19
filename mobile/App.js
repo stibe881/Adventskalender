@@ -36,10 +36,10 @@ function pathFromDeepLink(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    if (u.origin === SERVER_ORIGIN) return u.pathname + u.search;
+    if (u.origin === SERVER_ORIGIN) return u.pathname + u.search + u.hash;
     if (u.protocol === "adventskalender:") {
       const path = `/${(u.host || "") + u.pathname}`.replace(/\/{2,}/g, "/");
-      return path + u.search;
+      return path + u.search + u.hash;
     }
   } catch (_) { /* ignore */ }
   return null;

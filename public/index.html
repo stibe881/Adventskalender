@@ -439,6 +439,15 @@
     </div>
   </section>
 
+  <!-- Rounds this device already joined (from localStorage) -->
+  <section id="my-rounds" class="container" style="display:none; margin: 0 auto 48px;">
+    <div class="footer-box" style="text-align:left;">
+      <h4 style="display:flex; align-items:center; gap:8px;"><i data-icon="gift"></i> Meine Wichtel-Runden</h4>
+      <p>Auf diesem Gerät bist du bei diesen Runden dabei.</p>
+      <div id="my-rounds-list" style="display:grid; gap:10px; margin-top:14px;"></div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer class="footer container">
     <div class="footer-box">
@@ -465,6 +474,27 @@
   <script>
     // The start page always offers Login and Registrieren. Whoever is already
     // signed in lands on their dashboard as soon as the login page opens.
+    // Wichtel rounds this browser joined are listed for quick access.
+    (async () => {
+      let tokens = [];
+      try { tokens = JSON.parse(localStorage.getItem("wichtel_tokens") || "[]"); } catch (_) {}
+      if (!tokens.length) return;
+      const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      const rows = [];
+      for (const t of tokens) {
+        try {
+          const r = await fetch(`/api/wichteln/p/${encodeURIComponent(t)}`);
+          if (!r.ok) continue;
+          const d = await r.json();
+          const unread = (d.recipient?.unread || 0) + (d.santa?.unread || 0);
+          const status = d.me.pending ? "Warteraum" : d.group.status === "draft" ? "Auslosung steht aus" : d.recipient ? `Du beschenkst ${d.recipient.name}` : "Ausgelost";
+          rows.push(`<a href="/w/${encodeURIComponent(t)}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:12px 16px; color:#fff; text-decoration:none;"><span><b>${esc(d.group.title)}</b><br><span style="font-size:0.8rem; color:#94a3b8;">als ${esc(d.me.name)} · ${esc(status)}</span></span>${unread ? `<span style="background:#e11d48; color:#fff; border-radius:999px; font-size:0.7rem; font-weight:700; padding:2px 8px;">${unread} neu</span>` : `<span style="color:#34d399;">→</span>`}</a>`);
+        } catch (_) { /* skip dead links */ }
+      }
+      if (!rows.length) return;
+      document.getElementById("my-rounds-list").innerHTML = rows.join("");
+      document.getElementById("my-rounds").style.display = "";
+    })();
   </script>
   <script src="/shared/native.js"></script>
 </body>
