@@ -446,7 +446,13 @@ router.post("/:token/subscribe", async (req, res) => {
   const calendar = await db.getCalendarByToken(req.params.token);
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
   
-  const subscription = req.body;
+  // Either a Web-Push subscription ({ endpoint, keys }) or the native app's Expo token ({ expoToken }).
+  let subscription = req.body;
+  const { isExpoPushToken } = require("../push");
+  if (subscription && subscription.expoToken) {
+    if (!isExpoPushToken(subscription.expoToken)) return res.status(400).json({ error: "Invalid push token" });
+    subscription = { endpoint: `expo:${subscription.expoToken}`, expoToken: subscription.expoToken, platform: String(subscription.platform || "").slice(0, 10) };
+  }
   if (!subscription || !subscription.endpoint) return res.status(400).json({ error: "Invalid subscription" });
 
   await db.updateCalendar(calendar.id, (cal) => {

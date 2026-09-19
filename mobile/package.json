@@ -1,32 +1,36 @@
 {
-  "name": "adventskalender-mobile",
+  "name": "adventskalender-wichteln-app",
   "version": "1.0.0",
-  "private": true,
-  "description": "Native iOS/Android-Hülle (Capacitor) für Adventskalender & Wichteln",
-  "scripts": {
-    "sync": "cap sync",
-    "add:android": "cap add android",
-    "add:ios": "cap add ios",
-    "open:android": "cap open android",
-    "open:ios": "cap open ios",
-    "run:android": "cap run android",
-    "run:ios": "cap run ios",
-    "assets": "capacitor-assets generate --iconBackgroundColor '#0b1120' --iconBackgroundColorDark '#0b1120' --splashBackgroundColor '#0b1120' --splashBackgroundColorDark '#0b1120'",
-    "configure": "node configure.js"
-  },
+  "main": "index.js",
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/app": "^6.0.1",
-    "@capacitor/browser": "^6.0.3",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/haptics": "^6.0.1",
-    "@capacitor/ios": "^6.1.2",
-    "@capacitor/share": "^6.0.2",
-    "@capacitor/splash-screen": "^6.0.2",
-    "@capacitor/status-bar": "^6.0.1"
+    "@react-native-community/netinfo": "12.0.1",
+    "expo": "~57.0.24",
+    "expo-constants": "~57.0.19",
+    "expo-device": "~57.0.2",
+    "expo-haptics": "~57.0.3",
+    "expo-linking": "~57.0.10",
+    "expo-notifications": "~57.0.20",
+    "expo-sharing": "~57.0.21",
+    "expo-splash-screen": "~57.0.9",
+    "expo-status-bar": "~57.0.1",
+    "expo-web-browser": "~57.0.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-webview": "13.16.1"
   },
-  "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^6.1.2"
-  }
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "configure": "node configure.js",
+    "build:android": "eas build -p android --profile production",
+    "build:ios": "eas build -p ios --profile production",
+    "build:preview": "eas build -p android --profile preview",
+    "submit:android": "eas submit -p android",
+    "submit:ios": "eas submit -p ios",
+    "doctor": "npx expo-doctor"
+  },
+  "private": true
 }

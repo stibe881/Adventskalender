@@ -318,8 +318,19 @@ async function init() {
   initGlobalAudioPlayer();
 
   if (!isPreview) {
-    // Request Notification Permission and Web Push
-    if ("serviceWorker" in navigator && "PushManager" in window) {
+    // Inside the native app: native push via Expo token instead of Web Push.
+    if (window.__NATIVE_APP && typeof window.nativeRequestPushToken === "function") {
+      setTimeout(async () => {
+        const key = `expo_push_${routeId}`;
+        const token = await window.nativeRequestPushToken();
+        if (!token || localStorage.getItem(key) === token) return;
+        try {
+          await fetch(`/api/calendar/${routeId}/subscribe`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expoToken: token, platform: window.__NATIVE_APP.platform }) });
+          localStorage.setItem(key, token);
+        } catch (err) { console.warn("Push-Registrierung fehlgeschlagen:", err); }
+      }, 2000);
+    } else if ("serviceWorker" in navigator && "PushManager" in window) {
+      // Request Notification Permission and Web Push
       if (Notification.permission === "default" || Notification.permission === "granted") {
         setTimeout(() => {
           Notification.requestPermission().then(permission => {

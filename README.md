@@ -132,12 +132,14 @@ Eingeloggte Nutzer können oben im Kopfbereich zwischen **Adventskalender** und 
 
 Die Daten liegen in der Tabelle `wichtel_groups` (wird beim Start automatisch angelegt).
 
-## iOS- und Android-App
+## iOS- und Android-App (Expo)
 
-Im Ordner `mobile/` liegt eine Capacitor-Hülle, die den gehosteten Server als native App
-für iOS und Android verpackt (App-Icon, Splash, Deep Links, Teilen, Zurück-Taste).
-Einrichtung, Signierung und Store-Upload sind in [`mobile/README.md`](mobile/README.md) beschrieben.
-Die Datei `public/shared/native.js` verbindet die Web-Seiten mit den nativen Funktionen.
+Im Ordner `mobile/` liegt eine Expo/React-Native-App, die den gehosteten Server als native
+App für iOS und Android verpackt: App-Icon, Splash, Deep Links, Teilen, Zurück-Taste,
+Offline-Hinweis und native Push-Benachrichtigungen über den Expo-Push-Dienst (auch iOS).
+Store-Builds entstehen mit EAS Build in der Cloud, ein Mac ist nicht nötig.
+Einrichtung und Store-Upload: [`mobile/README.md`](mobile/README.md).
+Die Datei `public/shared/native.js` verbindet die Web-Seiten mit der App.
 
 ## Hinweise für den Produktivbetrieb
 

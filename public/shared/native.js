@@ -1,50 +1,30 @@
-/* Native bridge for the Capacitor apps (iOS/Android). Harmless in a normal browser.
- * Capacitor injects window.Capacitor into pages loaded from the configured server.url,
- * so this file can use the native plugins without any build step. */
+/* Native bridge for the Expo app (mobile/). Harmless in a normal browser.
+ * The app injects window.__NATIVE_APP = { platform, runtime } before the page loads
+ * and listens to window.ReactNativeWebView.postMessage(JSON). Replies arrive as
+ * "native-message" CustomEvents on window. */
 (function () {
-  const cap = window.Capacitor;
-  const isNative = Boolean(cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform());
+  const native = window.__NATIVE_APP;
+  const rn = window.ReactNativeWebView;
+  const isNative = Boolean(native && rn && typeof rn.postMessage === "function");
   document.documentElement.classList.toggle("is-native-app", isNative);
   if (!isNative) return;
-  const P = cap.Plugins || {};
-  const platform = cap.getPlatform();
+  const platform = native.platform || "unknown";
   document.documentElement.classList.add(`is-${platform}`);
+  const send = (msg) => { try { rn.postMessage(JSON.stringify(msg)); } catch (_) {} };
 
-  // Safe areas (notch / home indicator) for fixed elements.
+  // Layout tweaks for the app: the status bar area is handled natively, the
+  // home indicator (iOS) still needs room for fixed elements.
   const style = document.createElement("style");
   style.textContent = `
-    html.is-native-app body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-    html.is-native-app header.sticky { top: env(safe-area-inset-top); }
-    html.is-native-app #controls { top: calc(env(safe-area-inset-top) + 8px) !important; }
+    html.is-native-app body { padding-bottom: env(safe-area-inset-bottom); }
     html.is-native-app #digital-pet { bottom: calc(env(safe-area-inset-bottom) + 16px) !important; }
     html.is-native-app .w-toast, html.is-native-app .toast { bottom: calc(env(safe-area-inset-bottom) + 24px) !important; }
-    html.is-native-app a[href^="http"] { -webkit-touch-callout: none; }
+    html.is-native-app a { -webkit-touch-callout: none; }
+    html.is-native-app * { -webkit-tap-highlight-color: transparent; }
   `;
   document.head.appendChild(style);
 
-  // Status bar + splash
-  try { P.StatusBar && P.StatusBar.setStyle({ style: "DARK" }); } catch (_) {}
-  try { P.StatusBar && platform === "android" && P.StatusBar.setBackgroundColor({ color: "#0b1120" }); } catch (_) {}
-  window.addEventListener("load", () => { try { P.SplashScreen && P.SplashScreen.hide(); } catch (_) {} });
-
-  // Android hardware back button: go back in history, otherwise minimise the app.
-  if (P.App && P.App.addListener) {
-    P.App.addListener("backButton", ({ canGoBack }) => {
-      const openModal = document.querySelector(".fixed.inset-0:not(.hidden), #content-modal:not(.hidden), #shop-modal:not(.hidden)");
-      if (openModal) { openModal.classList.add("hidden"); return; }
-      if (canGoBack && window.history.length > 1) window.history.back();
-      else P.App.exitApp();
-    });
-    // Deep links (https://deine-domain/c/… or /w/…) opened from outside land here.
-    P.App.addListener("appUrlOpen", ({ url }) => {
-      try {
-        const u = new URL(url);
-        if (u.origin === window.location.origin) window.location.href = u.pathname + u.search;
-      } catch (_) {}
-    });
-  }
-
-  // External links open in the system browser; Spotify OAuth stays in-app (allowed in capacitor.config).
+  // External links (shops on the wish list etc.) open in the system browser.
   document.addEventListener("click", (e) => {
     const a = e.target.closest("a[href]");
     if (!a) return;
@@ -52,26 +32,46 @@
     if (!/^https?:/i.test(href)) return;
     let u;
     try { u = new URL(href, window.location.href); } catch (_) { return; }
-    if (u.origin === window.location.origin) return;
+    if (u.origin === window.location.origin) {
+      // Downloads (ICS) don't work inside the WebView – hand them to the system.
+      if (/\.ics$/i.test(u.pathname) || a.hasAttribute("download")) {
+        e.preventDefault();
+        send({ type: "download", url: u.href });
+      }
+      return;
+    }
     e.preventDefault();
-    if (P.Browser) P.Browser.open({ url: u.href, presentationStyle: "popover" });
-    else window.open(u.href, "_blank");
+    send({ type: "openExternal", url: u.href });
   }, true);
 
-  // Native share sheet for anything the web app wants to share.
-  window.nativeShare = async ({ title, text, url }) => {
-    if (P.Share) { await P.Share.share({ title, text, url, dialogTitle: title }); return true; }
-    if (navigator.share) { await navigator.share({ title, text, url }); return true; }
-    return false;
+  // Helpers the web app can call.
+  window.nativeShare = async ({ title, text, url }) => { send({ type: "share", title, text, url }); return true; };
+  window.nativeHaptic = (style = "light") => send({ type: "haptic", style });
+  window.nativeOpen = (url) => send({ type: "openExternal", url });
+
+  // Push: the app fetches an Expo push token and answers with { type: "pushToken", token }.
+  window.nativeRequestPushToken = () => new Promise((resolve) => {
+    const onMsg = (ev) => {
+      if (ev.detail?.type !== "pushToken") return;
+      window.removeEventListener("native-message", onMsg);
+      resolve(ev.detail.token || null);
+    };
+    window.addEventListener("native-message", onMsg);
+    send({ type: "requestPushToken" });
+    setTimeout(() => { window.removeEventListener("native-message", onMsg); resolve(null); }, 15000);
+  });
+
+  // Print views can't open pop-ups in the WebView: open them as normal navigation instead.
+  const origOpen = window.open;
+  window.open = function (url, target, features) {
+    if (!url || url === "" || url === "about:blank") return origOpen.call(window, url, target, features);
+    try {
+      const u = new URL(url, window.location.href);
+      if (u.origin === window.location.origin) { window.location.href = u.href; return null; }
+      send({ type: "openExternal", url: u.href });
+      return null;
+    } catch (_) {
+      return origOpen.call(window, url, target, features);
+    }
   };
-  window.nativeHaptic = (type = "light") => { try { P.Haptics && P.Haptics.impact({ style: type.toUpperCase() }); } catch (_) {} };
-
-  // Downloads (ICS, PDF prints) don't work inside the WebView – hand them to the system browser.
-  document.addEventListener("click", (e) => {
-    const a = e.target.closest("a[href$='.ics'], a[download]");
-    if (!a) return;
-    e.preventDefault();
-    const url = new URL(a.getAttribute("href"), window.location.href).href;
-    if (P.Browser) P.Browser.open({ url }); else window.open(url, "_blank");
-  }, true);
 })();

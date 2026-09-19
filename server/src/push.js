@@ -36,8 +36,31 @@ function getVapidPublicKey() {
   return vapidKeys ? vapidKeys.publicKey : null;
 }
 
+// Sends to a browser (Web Push) or to the native app (Expo push token).
 async function sendPushNotification(subscription, payload) {
+  if (subscription && subscription.expoToken) return sendExpoPush(subscription.expoToken, payload);
   return webpush.sendNotification(subscription, JSON.stringify(payload));
 }
 
-module.exports = { initWebPush, getVapidPublicKey, sendPushNotification };
+async function sendExpoPush(token, payload) {
+  const res = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ to: token, title: payload.title, body: payload.body, sound: "default", data: { url: payload.url || "/" } }),
+  });
+  const json = await res.json().catch(() => ({}));
+  const ticket = json.data && (Array.isArray(json.data) ? json.data[0] : json.data);
+  if (!res.ok || (ticket && ticket.status === "error")) {
+    const err = new Error(ticket?.message || json.errors?.[0]?.message || `Expo push HTTP ${res.status}`);
+    // Same contract as web-push: 410 tells the caller to drop the subscription.
+    if (ticket?.details?.error === "DeviceNotRegistered") err.statusCode = 410;
+    throw err;
+  }
+  return ticket;
+}
+
+function isExpoPushToken(v) {
+  return typeof v === "string" && /^(ExponentPushToken|ExpoPushToken)\[[\w-]+\]$/.test(v);
+}
+
+module.exports = { initWebPush, getVapidPublicKey, sendPushNotification, isExpoPushToken };

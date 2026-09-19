@@ -1,0 +1,102 @@
+{
+  "expo": {
+    "name": "Adventskalender & Wichteln",
+    "slug": "adventskalender-wichteln",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "adventskalender",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0b1120",
+    "newArchEnabled": true,
+    "extra": {
+      "serverUrl": "https://mein-adventskalender.ch",
+      "eas": {
+        "projectId": ""
+      }
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1120"
+    },
+    "ios": {
+      "bundleIdentifier": "ch.stibe.adventskalender",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "associatedDomains": [
+        "applinks:mein-adventskalender.ch"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Zum Aufnehmen von Fotos für die Foto-Wand und Türchen-Antworten.",
+        "NSPhotoLibraryUsageDescription": "Zum Auswählen von Fotos für die Foto-Wand und Türchen-Antworten.",
+        "NSMicrophoneUsageDescription": "Für Sprachnachrichten in Türchen-Antworten."
+      }
+    },
+    "android": {
+      "package": "ch.stibe.adventskalender",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#0b1120"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "POST_NOTIFICATIONS"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "mein-adventskalender.ch",
+              "pathPrefix": "/c/"
+            },
+            {
+              "scheme": "https",
+              "host": "mein-adventskalender.ch",
+              "pathPrefix": "/w/"
+            },
+            {
+              "scheme": "https",
+              "host": "mein-adventskalender.ch",
+              "pathPrefix": "/admin/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0b1120"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#059669",
+          "defaultChannel": "default"
+        }
+      ]
+    ]
+  }
+}

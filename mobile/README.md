@@ -1,89 +1,99 @@
-# Adventskalender & Wichteln als iOS- und Android-App
+# Adventskalender & Wichteln als iOS- und Android-App (Expo)
 
-Die App ist eine native Hülle (Capacitor) um die bestehende Web-App. Sie lädt den
-gehosteten Server, darum gibt es nur **eine** Codebasis: Alles, was du im Web änderst,
-ist sofort auch in der App – ohne neues Store-Release. Die Hülle liefert das, was eine
-Website nicht kann: App-Icon, Splash-Screen, Statusleiste, Zurück-Taste, native
-Teilen-Funktion, Deep Links (`/c/…`, `/w/…`) und einen Platz im App Store / Play Store.
+Die App ist eine native Hülle mit **Expo / React Native**. Sie lädt die gehostete Web-App
+in einer WebView – es bleibt **eine** Codebasis: Alles, was du im Web änderst, ist sofort
+auch in der App, ohne neues Store-Release. Nativ dazu kommen App-Icon, Splash-Screen,
+Deep Links (`/c/…`, `/w/…`), Zurück-Taste, Teilen, Haptik, Offline-Hinweis und
+**echte Push-Benachrichtigungen auf iOS und Android** (Expo Push).
+
+Mit **EAS Build** werden die Store-Dateien in der Cloud gebaut – für iOS brauchst du
+also **keinen Mac**.
 
 ## Voraussetzungen
 
-| Ziel     | Nötig                                                                 |
-|----------|-----------------------------------------------------------------------|
-| Beides   | Node 18+, ein per **HTTPS** erreichbarer Server mit dieser App        |
-| Android  | Android Studio (inkl. SDK), Java 17                                   |
-| iOS      | macOS mit Xcode 15+, CocoaPods (`sudo gem install cocoapods`), Apple-Developer-Konto (99 $/Jahr) |
+- Node 18+, ein per **HTTPS** erreichbarer Server mit dieser App
+- Kostenloses Expo-Konto: https://expo.dev (für EAS Build und Push)
+- Google-Play-Konto (einmalig 25 $) und Apple-Developer-Konto (99 $/Jahr) für die Stores
 
 ## Einrichtung (einmalig)
 
 ```bash
 cd mobile
 npm install
-npm run configure -- --url https://adventskalender.deine-domain.ch   # Server-URL setzen
-npx cap sync                                                          # Plugins + Assets in die nativen Projekte kopieren
+npm run configure -- --url https://adventskalender.deine-domain.ch   # Server-URL + Deep-Link-Hosts setzen
+npm install -g eas-cli
+eas login
+eas init            # legt das Expo-Projekt an und trägt extra.eas.projectId in app.json ein
 ```
 
-Icons und Splash-Screens sind bereits aus `resources/` generiert. Wenn du das Logo
-änderst: `resources/icon.png` (1024×1024) und `resources/splash.png` (2732×2732)
-ersetzen, dann `npm run assets`.
+Die App-ID ist `ch.stibe.adventskalender` (in `app.json` unter `ios.bundleIdentifier`
+und `android.package` änderbar).
 
-## Android
+## Auf dem eigenen Handy testen
 
 ```bash
-npm run open:android      # öffnet Android Studio
+npx expo start            # Expo Go auf dem Handy installieren und den QR-Code scannen
 ```
 
-1. In Android Studio **Build → Generate Signed Bundle / APK → Android App Bundle**.
-2. Beim ersten Mal einen Keystore erzeugen und **sicher aufbewahren** (ohne ihn gibt es keine Updates mehr).
-3. `.aab` in der Google Play Console hochladen (einmalig 25 $ Registrierung).
-4. App Links: Den SHA-256-Fingerprint des Signatur-Zertifikats (Play Console →
-   App-Signatur, oder `keytool -list -v -keystore …`) in `public/.well-known/assetlinks.json`
-   auf dem Server eintragen. Dann öffnen Kalender- und Wichtel-Links direkt in der App.
+Für lokale Tests mit deinem Rechner als Server:
+`npm run configure -- --url http://192.168.x.y:3000` (gleiches WLAN). Hinweis: Push-Token
+und einige native Module brauchen einen **Development Build** statt Expo Go:
+`eas build -p android --profile development` bzw. `-p ios`.
 
-Zum Testen auf einem Gerät im gleichen WLAN reicht `npm run configure -- --url http://192.168.x.y:3000`
-(erlaubt Klartext-HTTP, nur für Tests), `npx cap sync android`, `npm run run:android`.
-
-## iOS
+## Store-Builds (Cloud, kein Mac nötig)
 
 ```bash
-npm run open:ios          # öffnet Xcode (vorher: cd ios/App && pod install)
+npm run build:android     # erzeugt ein signiertes .aab  (EAS verwaltet den Keystore)
+npm run build:ios         # erzeugt ein signiertes .ipa   (EAS fragt nach Apple-Login und legt Zertifikate an)
+npm run submit:android    # lädt in die Play Console hoch
+npm run submit:ios        # lädt zu App Store Connect / TestFlight hoch
 ```
 
-1. In Xcode unter *Signing & Capabilities* dein Team wählen; Bundle-ID ist `ch.stibe.adventskalender`.
-2. Für Deep Links die Capability **Associated Domains** hinzufügen:
-   `applinks:adventskalender.deine-domain.ch`. Auf dem Server in
-   `public/.well-known/apple-app-site-association` `TEAMID` durch deine Apple-Team-ID ersetzen.
-3. **Product → Archive**, dann über den Organizer an App Store Connect hochladen und
-   in TestFlight bzw. zur Prüfung freigeben.
+`npm run build:preview` baut eine Android-APK zum direkten Installieren ohne Store.
+Die Versionsnummern erhöht EAS automatisch (`autoIncrement` in `eas.json`).
+
+## Deep Links einrichten
+
+Damit `https://deine-domain/c/<token>` und `/w/<token>` direkt in der App aufgehen:
+
+- **Android:** In `public/.well-known/assetlinks.json` auf dem Server den SHA-256-Fingerprint
+  eintragen. Den zeigt `eas credentials -p android` (bzw. die Play Console unter App-Signatur).
+- **iOS:** In `public/.well-known/apple-app-site-association` `TEAMID` durch deine
+  Apple-Team-ID ersetzen. Die Associated-Domains-Berechtigung setzt EAS aus `app.json`.
+
+Zusätzlich versteht die App das Schema `adventskalender://c/<token>`.
+
+## Push-Benachrichtigungen
+
+Die tägliche Türchen-Erinnerung (Editor → „Automatische tägliche Push-Erinnerung“)
+erreicht die App nativ: Die Kalenderseite holt sich in der App ein Expo-Push-Token und
+meldet es am Server an (`POST /api/calendar/:token/subscribe` mit `{ expoToken }`). Der
+Server verschickt über den Expo-Push-Dienst; ungültige Token werden automatisch entfernt.
+Für iOS-Push muss einmalig `eas credentials -p ios` den Push-Key anlegen (EAS macht das
+beim ersten Build automatisch, wenn du zustimmst).
 
 ## Was die App anders macht als der Browser
 
-`public/shared/native.js` wird auf jeder Seite geladen und erkennt die App automatisch:
+`public/shared/native.js` wird auf jeder Seite geladen und erkennt die App:
 
-- Sichere Bereiche (Notch, Home-Balken) werden berücksichtigt.
-- Android-Zurück-Taste schließt offene Fenster bzw. geht in der Historie zurück.
-- Externe Links (Shops auf dem Wunschzettel, Spotify) öffnen im System-Browser.
+- Externe Links (Shops auf dem Wunschzettel) öffnen im System-Browser, Spotify-Login bleibt in der App.
 - Downloads wie der Kalender-Export (ICS) werden an das System übergeben.
-- `window.nativeShare({title, text, url})` und `window.nativeHaptic()` stehen der Web-App zur Verfügung.
+- Druckansichten öffnen als normale Seite (kein Pop-up nötig).
+- `window.nativeShare(...)`, `window.nativeHaptic()`, `window.nativeOpen(url)` stehen der Web-App zur Verfügung.
+- Android-Zurück-Taste schließt offene Fenster bzw. geht in der Historie zurück.
 
-Deep Links: `https://deine-domain/c/<token>` und `/w/<token>` öffnen direkt die
-richtige Seite in der App, sobald App Links (Android) bzw. Universal Links (iOS)
-eingerichtet sind.
+## Hinweise für die Store-Prüfung
 
-## Bekannte Grenzen
+Apple lehnt reine Website-Hüllen gelegentlich ab (Richtlinie 4.2). Die App bringt native
+Push-Benachrichtigungen, Deep Links, Teilen und Zurück-Navigation mit. In der Review-Notiz
+Kalender- und Wichtel-Funktionen als App-Zweck beschreiben und einen Test-Login angeben.
 
-- **Push auf iOS:** Web-Push funktioniert in der iOS-App nicht (WKWebView). Dafür wäre
-  natives Push über APNs/Firebase nötig (Plugin `@capacitor/push-notifications` plus
-  Server-Anbindung). Auf Android funktionieren die bestehenden Web-Push-Erinnerungen.
-- **Offline:** Ohne Netz zeigt die App die Seite aus `www/index.html` mit „Erneut versuchen“.
-- **App-Store-Prüfung:** Apple lehnt reine Website-Hüllen gelegentlich ab (Richtlinie 4.2).
-  Die App bringt native Funktionen mit (Deep Links, Teilen, Zurück-Taste, Splash); in der
-  Review-Notiz die Kalender- und Wichtel-Funktionen als App-Zweck beschreiben und einen
-  Test-Login angeben.
-- Die Version steht in `android/app/build.gradle` (`versionCode`/`versionName`) und in
-  Xcode (*General → Version/Build*). Vor jedem Store-Upload erhöhen.
+## Dateien
 
-## Alternative ohne Stores: PWA
-
-Die Web-App ist bereits eine PWA (`manifest.json`, Service Worker). Auf Android und iOS
-kann sie über „Zum Home-Bildschirm“ installiert werden – ohne Store, ohne Signatur.
+| Datei            | Zweck                                                        |
+|------------------|--------------------------------------------------------------|
+| `App.js`         | WebView-Hülle, Deep Links, Push, Zurück-Taste, Offline-Seite |
+| `app.json`       | Name, IDs, Icons, Splash, Deep-Link-Hosts, Server-URL        |
+| `eas.json`       | Build-Profile für EAS                                        |
+| `configure.js`   | Setzt Server-URL und Deep-Link-Hosts                         |
+| `assets/`        | Icon, Adaptive Icon, Splash (aus dem Projekt-Logo erzeugt)   |
