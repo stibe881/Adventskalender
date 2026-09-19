@@ -118,18 +118,18 @@ function renderParticipants() {
     tr.className = p.pending ? "bg-amber-500/5" : "";
     const gp = p.giftProgress;
     tr.innerHTML = `
-      <td class="py-2 pr-3 font-medium text-white">${escapeHtml(p.name)}${p.isOrganizer ? ' <span class="text-[10px] text-slate-400">(Organisator)</span>' : ""}</td>
-      <td class="py-2 pr-3 text-slate-300">${escapeHtml(p.email || "–")}</td>
+      <td class="py-2 pr-3 font-medium text-white">${escapeHtml(p.name)}${p.isOrganizer ? ' <span class="text-[10px] text-slate-400">(Organisator)</span>' : ""}<div class="md:hidden text-[11px] text-slate-400 font-normal truncate max-w-[30vw]">${escapeHtml(p.email || "")}</div></td>
+      <td class="py-2 pr-3 text-slate-300 hidden md:table-cell">${escapeHtml(p.email || "–")}</td>
       <td class="py-2 pr-3">${participantStatus(p)}</td>
-      <td class="py-2 pr-3 text-slate-300">${p.wishlistCount} ${p.wishlistCount === 1 ? "Wunsch" : "Wünsche"}</td>
-      <td class="py-2 pr-3 text-slate-300">${group.status === "draft" ? "–" : `${gp.done}/${gp.total}`}</td>
-      <td class="py-2 text-right whitespace-nowrap">
+      <td class="py-2 pr-3 text-slate-300 hidden md:table-cell">${p.wishlistCount} ${p.wishlistCount === 1 ? "Wunsch" : "Wünsche"}</td>
+      <td class="py-2 pr-3 text-slate-300 hidden sm:table-cell">${group.status === "draft" ? "–" : `${gp.done}/${gp.total}`}</td>
+      <td class="py-2 text-right sm:whitespace-nowrap"><div class="flex flex-wrap justify-end gap-1">
         ${p.pending ? `<button data-act="approve" data-id="${p.id}" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded">Aufnehmen</button>` : ""}
         <button data-act="link" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Persönlichen Link kopieren">🔗</button>
         ${p.email && !p.isOrganizer ? `<button data-act="invite" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Einladung per E-Mail senden">📧</button>` : ""}
         <button data-act="edit" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Bearbeiten">✏️</button>
         ${!p.isOrganizer ? `<button data-act="remove" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-rose-600 border border-white/10 px-2 py-1 rounded" title="Entfernen">✕</button>` : ""}
-      </td>`;
+      </div></td>`;
     tbody.appendChild(tr);
   }
 }
