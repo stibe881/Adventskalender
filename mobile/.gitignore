@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Store-Zugangsdaten nie einchecken
+google-play-key.json

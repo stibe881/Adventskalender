@@ -54,6 +54,29 @@ npm run submit:ios        # lädt zu App Store Connect / TestFlight hoch
 `npm run build:preview` baut eine Android-APK zum direkten Installieren ohne Store.
 Die Versionsnummern erhöht EAS automatisch (`autoIncrement` in `eas.json`).
 
+### Bauen und direkt einreichen (TestFlight + Play Console)
+
+```bash
+npm run release            # iOS + Android bauen und nach dem Build automatisch einreichen
+npm run release:ios        # nur iOS  → TestFlight
+npm run release:android    # nur Android → Play Console, Track „Internes Testen“
+```
+
+`--auto-submit` reicht jeden fertigen Build ohne weiteres Zutun ein. Dafür einmalig in
+`eas.json` unter `submit.production` eintragen:
+
+- **iOS:** `appleId` (deine Apple-ID), `appleTeamId` (Team-ID aus dem Developer-Portal) und
+  `ascAppId` (die numerische App-ID aus App Store Connect; die App dort zuerst mit der
+  Bundle-ID `ch.stibe.adventskalender` anlegen). Fehlen die Werte, fragt EAS interaktiv nach.
+  Beim ersten Mal verlangt Apple ein app-spezifisches Passwort oder einen API-Key – EAS führt dich durch.
+- **Android:** Einen Google-Cloud-Service-Account mit Zugriff auf die Play Console anlegen und
+  dessen JSON-Schlüssel als `mobile/google-play-key.json` ablegen (ist per `.gitignore`
+  ausgeschlossen). Wichtig: Den **allerersten** Build muss man einmal von Hand in der Play
+  Console hochladen, erst danach erlaubt Google Uploads über die API.
+
+Der Fortschritt ist auf https://expo.dev unter *Builds* und *Submissions* sichtbar. Nach dem
+iOS-Submit dauert es meist 10–30 Minuten, bis der Build in TestFlight erscheint.
+
 ## Deep Links einrichten
 
 Damit `https://deine-domain/c/<token>` und `/w/<token>` direkt in der App aufgehen:

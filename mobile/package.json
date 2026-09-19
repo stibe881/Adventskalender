@@ -34,7 +34,10 @@
     "login": "eas login",
     "init": "eas init",
     "whoami": "eas whoami",
-    "credentials": "eas credentials"
+    "credentials": "eas credentials",
+    "release": "eas build --platform all --profile production --auto-submit",
+    "release:ios": "eas build --platform ios --profile production --auto-submit",
+    "release:android": "eas build --platform android --profile production --auto-submit"
   },
   "private": true,
   "devDependencies": {
