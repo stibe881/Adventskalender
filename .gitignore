@@ -6,3 +6,6 @@ server/uploads/*
 public/shared/styles.css
 .DS_Store
 *.log
+
+# Push-Schlüssel werden beim ersten Start automatisch erzeugt (privater Schlüssel!)
+server/data/vapid.json
