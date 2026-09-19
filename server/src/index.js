@@ -192,5 +192,5 @@ app.use((err, req, res, next) => {
 });
 
 server.listen(config.port, () => {
-  console.log(`🎄 Adventskalender läuft auf ${config.baseUrl} (Timezone: ${config.timezone})`);
+  console.log(`🎄 Advently läuft auf ${config.baseUrl} (Timezone: ${config.timezone})`);
 });

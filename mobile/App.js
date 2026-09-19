@@ -1,4 +1,4 @@
-// Adventskalender & Wichteln – native Hülle mit Expo.
+// Advently – native Hülle (Adventskalender & Wichteln) mit Expo.
 // Lädt die gehostete Web-App (extra.serverUrl in app.json) und ergänzt sie um
 // Deep Links, Zurück-Taste, Teilen, Haptik, externe Links, Downloads und Push.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -241,7 +241,7 @@ function Shell() {
       {failed && (
         <View style={styles.center}>
           <Text style={styles.icon}>🎄</Text>
-          <Text style={styles.title}>Adventskalender & Wichteln</Text>
+          <Text style={styles.title}>Advently</Text>
           <Text style={styles.msg}>{offline ? "Keine Internetverbindung. Bitte prüfe dein Netz." : `Der Server ist gerade nicht erreichbar.\n${failed}`}</Text>
           <Pressable style={styles.btn} onPress={() => { setFailed(null); setLoading(true); setReloadKey((k) => k + 1); }}>
             <Text style={styles.btnText}>Erneut versuchen</Text>

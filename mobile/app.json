@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Adventskalender & Wichteln",
+    "name": "Advently",
     "slug": "adventskalender-wichteln",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -28,9 +28,9 @@
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Zum Aufnehmen von Fotos f\u00fcr die Foto-Wand und T\u00fcrchen-Antworten.",
-        "NSPhotoLibraryUsageDescription": "Zum Ausw\u00e4hlen von Fotos f\u00fcr die Foto-Wand und T\u00fcrchen-Antworten.",
-        "NSMicrophoneUsageDescription": "F\u00fcr Sprachnachrichten in T\u00fcrchen-Antworten."
+        "NSCameraUsageDescription": "Zum Aufnehmen von Fotos für die Foto-Wand und Türchen-Antworten.",
+        "NSPhotoLibraryUsageDescription": "Zum Auswählen von Fotos für die Foto-Wand und Türchen-Antworten.",
+        "NSMicrophoneUsageDescription": "Für Sprachnachrichten in Türchen-Antworten."
       }
     },
     "android": {

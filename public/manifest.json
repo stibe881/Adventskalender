@@ -1,6 +1,6 @@
 {
-  "name": "Adventskalender",
-  "short_name": "Advent",
+  "name": "Advently",
+  "short_name": "Advently",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#000000",

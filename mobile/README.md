@@ -1,4 +1,6 @@
-# Adventskalender & Wichteln als iOS- und Android-App (Expo)
+# Advently – die iOS- und Android-App (Expo)
+
+Die App heisst **Advently** und bündelt Adventskalender und Wichteln.
 
 Die App ist eine native Hülle mit **Expo / React Native**. Sie lädt die gehostete Web-App
 in einer WebView – es bleibt **eine** Codebasis: Alles, was du im Web änderst, ist sofort
