@@ -83,6 +83,8 @@ const api = {
   unrevealWichtel: (id) => request("POST", `/wichteln/groups/${id}/unreveal`),
   wichtelInviteCard: (id) => request("GET", `/wichteln/groups/${id}/invite-card`),
   rotateWichtelInvite: (id) => request("POST", `/wichteln/groups/${id}/rotate-invite`),
+  wichtelChecklist: (id) => request("GET", `/wichteln/groups/${id}/checklist`),
+  duplicateWichtelGroup: (id, data) => request("POST", `/wichteln/groups/${id}/duplicate`, data || {}),
 
   spotifyStatus: (id) => request("GET", `/spotify/status?calendarId=${encodeURIComponent(id)}`),
   spotifyDisconnect: (id) => request("POST", "/spotify/disconnect", { calendarId: id }),
