@@ -295,11 +295,11 @@ function myWishlistCard() {
   const me = data.me;
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="clipboard-list"></i> Dein Wunschzettel</h2>
-    <p class="text-sm text-slate-400 mt-1">Shop-Link einfügen – Titel und Bild werden automatisch als Vorschau geladen. Preis und Notiz trägst du selbst ein.</p>
+    <p class="text-sm text-slate-400 mt-1">Trag ein, was du dir wünschst. Wenn du den Artikel in einem Online-Shop gefunden hast, füge den Link zur Produktseite ein – Titel und Bild werden dann automatisch geladen.</p>
     <div class="space-y-2 mt-3" id="my-wishes">${me.wishlist.length ? me.wishlist.map((w) => wishItem(w, true)).join("") : `<p class="text-sm text-slate-500">Noch keine Wünsche.</p>`}</div>
     <form id="wish-form" class="mt-4 space-y-2 bg-black/20 rounded-2xl p-3">
       <div class="flex gap-2">
-        <input name="url" type="url" class="w-input" placeholder="https://shop.example/…  (optional)">
+        <input name="url" type="url" class="w-input" placeholder="Link zum Produkt im Online-Shop (optional)">
         <button type="button" id="wish-preview" class="w-btn w-btn--ghost whitespace-nowrap">Vorschau laden</button>
       </div>
       <div class="grid sm:grid-cols-3 gap-2">
