@@ -86,13 +86,15 @@ function renderDraw(active) {
     drawBtn.disabled = active.length < 3;
     drawBtn.classList.toggle("opacity-50", active.length < 3);
     revealBtn.classList.add("hidden");
+    document.getElementById("unreveal-btn").classList.add("hidden");
     table.classList.add("hidden");
   } else {
-    hint.textContent = `Ausgelost am ${new Date(group.drawnAt).toLocaleString("de-DE")}. ${group.status === "revealed" ? "Die Auflösung ist für alle sichtbar." : "Wer wen gezogen hat, bleibt bis zur Enthüllung geheim – auch für dich."}`;
+    hint.textContent = `Ausgelost am ${new Date(group.drawnAt).toLocaleString("de-DE")}. ${group.status === "revealed" ? "Enthüllt – die Auflösung siehst nur du als Organisator." : "Wer wen gezogen hat, bleibt bis zur Enthüllung geheim – auch für dich."}`;
     drawBtn.textContent = "Neu auslosen";
     drawBtn.disabled = false;
     drawBtn.classList.remove("opacity-50");
     revealBtn.classList.toggle("hidden", group.status === "revealed");
+    document.getElementById("unreveal-btn").classList.toggle("hidden", group.status !== "revealed");
     if (group.status === "revealed") {
       table.classList.remove("hidden");
       table.innerHTML = `<h3 class="text-sm font-semibold text-amber-200 mb-2">Auflösung</h3><div class="grid sm:grid-cols-2 gap-1 text-sm">${active.map((p) => `<div class="bg-black/20 rounded-lg px-3 py-1.5">${escapeHtml(p.name)} <span class="text-slate-500">→</span> <b>${escapeHtml(p.assignedToName || "?")}</b></div>`).join("")}</div>`;
@@ -326,8 +328,17 @@ document.getElementById("draw-btn").addEventListener("click", async () => {
     toast(err.message, true);
   }
 });
+document.getElementById("unreveal-btn").addEventListener("click", async () => {
+  try {
+    group = await api.unrevealWichtel(groupId);
+    render();
+    toast("Die Auflösung ist wieder verborgen.");
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
 document.getElementById("reveal-btn").addEventListener("click", async () => {
-  if (!window.confirm("Enthüllen, wer wen gezogen hat? Das sehen danach alle Teilnehmenden.")) return;
+  if (!window.confirm("Enthüllen, wer wen gezogen hat? Die Auflösung siehst nur du. Du kannst sie jederzeit wieder zurücknehmen.")) return;
   try {
     group = await api.revealWichtel(groupId);
     render();

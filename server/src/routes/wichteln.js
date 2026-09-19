@@ -223,7 +223,8 @@ function participantView(group, me) {
     } : null,
     participants: activeParticipants(group).map((p) => ({ id: p.id, name: p.name, isOrganizer: Boolean(p.isOrganizer), joined: Boolean(p.joinedAt) })),
     photos: (group.photos || []).map((ph) => ({ id: ph.id, url: ph.url, caption: ph.caption, by: findParticipant(group, ph.by)?.name || "", mine: ph.by === me.id, at: ph.at })),
-    reveal: group.status === "revealed"
+    // The reveal is for the organizer only.
+    reveal: group.status === "revealed" && me.isOrganizer
       ? activeParticipants(group).map((p) => ({ giver: p.name, receiver: findParticipant(group, p.assignedTo)?.name || "?" }))
       : null,
   };
@@ -527,9 +528,19 @@ router.post("/groups/:id/reveal", requireAuth, async (req, res) => {
     g.revealedAt = new Date().toISOString();
     return g;
   });
-  for (const p of activeParticipants(updated)) {
-    notifyParticipant(updated, p, "Die Wichtel sind enthüllt", `Hallo ${p.name}!\n\nDer Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.</p>`).catch(() => {});
-  }
+  res.json(organizerView(updated));
+});
+
+// Take the reveal back: the draw stays, the assignments are hidden again.
+router.post("/groups/:id/unreveal", requireAuth, async (req, res) => {
+  const group = await loadOwnedGroup(req, res);
+  if (!group) return;
+  if (group.status !== "revealed") return res.status(400).json({ error: "Die Runde ist nicht enthüllt." });
+  const updated = await db.updateWichtelGroup(group.id, (g) => {
+    g.status = "drawn";
+    g.revealedAt = null;
+    return g;
+  });
   res.json(organizerView(updated));
 });
 

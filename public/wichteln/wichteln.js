@@ -352,7 +352,7 @@ function santaCard() {
 function revealCard() {
   return `<div class="w-card w-card--reveal">
     <h2 class="w-title text-xl"><i data-icon="drama"></i> Die Auflösung</h2>
-    <p class="text-sm text-slate-300 mt-1 mb-3">Der Organisator hat aufgelöst, wer wen beschenkt hat.</p>
+    <p class="text-sm text-slate-300 mt-1 mb-3">Nur für dich als Organisator sichtbar: wer wen beschenkt.</p>
     <div class="grid sm:grid-cols-2 gap-1">${data.reveal.map((r) => `<div class="w-reveal-row"><span>${esc(r.giver)}</span><span class="text-slate-500">→</span><b>${esc(r.receiver)}</b></div>`).join("")}</div>
   </div>`;
 }

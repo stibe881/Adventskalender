@@ -80,6 +80,7 @@ const api = {
   setWichtelExclusions: (id, exclusions) => request("PUT", `/wichteln/groups/${id}/exclusions`, { exclusions }),
   drawWichtel: (id) => request("POST", `/wichteln/groups/${id}/draw`),
   revealWichtel: (id) => request("POST", `/wichteln/groups/${id}/reveal`),
+  unrevealWichtel: (id) => request("POST", `/wichteln/groups/${id}/unreveal`),
   wichtelInviteCard: (id) => request("GET", `/wichteln/groups/${id}/invite-card`),
   rotateWichtelInvite: (id) => request("POST", `/wichteln/groups/${id}/rotate-invite`),
 
