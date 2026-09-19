@@ -76,9 +76,63 @@ function updateCoinDisplay() {
   }
 }
 
+// ---------- Economy (coins, purchases, worn items, claimed rewards) ----------
+// localStorage is the working copy. In company mode the server keeps a copy per
+// employee, so the state follows them across devices like the opened doors.
+let claimedRewards = [];
+let corpUser = null;
+let economySyncTimer = null;
+
+function readLocalEconomy() {
+  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10) || 0;
+  try { userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]"); } catch (e) { userInventory = []; }
+  try { claimedRewards = JSON.parse(localStorage.getItem(`claimed_${routeId}`) || "[]"); } catch (e) { claimedRewards = []; }
+  if (!Array.isArray(userInventory)) userInventory = [];
+  if (!Array.isArray(claimedRewards)) claimedRewards = [];
+}
+
+function loadEconomy(meta) {
+  corpUser = meta?.companyMode && !isPreview ? (localStorage.getItem(`adventskalender_user_${routeId}`) || null) : null;
+  if (corpUser) {
+    // The server copy wins, even when it is empty: a shared device must not leak
+    // the previous employee's coins into this account.
+    const eco = meta.economy || {};
+    localStorage.setItem(`coins_${routeId}`, String(eco.coins || 0));
+    localStorage.setItem(`inventory_${routeId}`, JSON.stringify(eco.inventory || []));
+    localStorage.setItem(`worn_${routeId}`, JSON.stringify(eco.worn || []));
+    localStorage.setItem(`claimed_${routeId}`, JSON.stringify(eco.claimed || []));
+  }
+  readLocalEconomy();
+}
+
+function syncEconomy() {
+  if (!corpUser) return;
+  clearTimeout(economySyncTimer);
+  economySyncTimer = setTimeout(() => {
+    let worn = [];
+    try { worn = JSON.parse(localStorage.getItem(`worn_${routeId}`) || "[]"); } catch (e) {}
+    fetchJson(`/api/calendar/${routeId}/economy`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user: corpUser, coins: userCoins, inventory: userInventory, worn, claimed: claimedRewards }),
+    }).catch((e) => console.warn("Economy-Sync fehlgeschlagen:", e.message));
+  }, 300);
+}
+
 function saveUserCoins() {
   localStorage.setItem(`coins_${routeId}`, userCoins);
   updateCoinDisplay();
+  syncEconomy();
+}
+
+function hasClaimed(key) {
+  return claimedRewards.includes(key);
+}
+
+function markClaimed(key) {
+  if (!claimedRewards.includes(key)) claimedRewards.push(key);
+  localStorage.setItem(`claimed_${routeId}`, JSON.stringify(claimedRewards));
+  syncEconomy();
 }
 
 function updateProgress() {
@@ -103,8 +157,7 @@ function updateProgress() {
 }
 
 async function init() {
-  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10);
-  try { userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]"); } catch(e) {}
+  readLocalEconomy();
   updateCoinDisplay();
   try {
     if (isPreview) {
@@ -190,12 +243,8 @@ async function init() {
     document.getElementById("preview-banner").classList.remove("hidden");
   }
 
-  // Load economy
-  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10);
-  try {
-    userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]");
-  } catch(e) { userInventory = []; }
-  
+  // Load economy (from the server for employees in company mode)
+  loadEconomy(calendarMeta);
   updateCoinDisplay();
   
   field = new ParticleField(canvas);
@@ -573,6 +622,7 @@ function toggleWear(item) {
     if (window.atmosphere) window.atmosphere.playClickSound();
   }
   localStorage.setItem(`worn_${routeId}`, JSON.stringify(wornItems));
+  syncEconomy();
   initPet();
   const emoji = document.getElementById("pet-emoji");
   emoji.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 400, easing: "ease-out" });
@@ -739,8 +789,8 @@ window.buyItem = function(itemId) {
     userCoins -= item.price;
   }
   userInventory.push(item.id);
-  saveUserCoins();
   localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
+  saveUserCoins();
   updateCoinDisplay();
   renderShop();
   initPet(calendarMeta?.streak || 0);
@@ -2092,8 +2142,8 @@ function renderContent(type, c, dayNum) {
     }
 
     case "coins": {
-      if (!isPreview && !door.coinsClaimed) {
-        door.coinsClaimed = true;
+      if (!isPreview && !hasClaimed(`coins:${dayNum}`)) {
+        markClaimed(`coins:${dayNum}`);
         userCoins += (c.coinAmount || 50);
         saveUserCoins();
       }
@@ -2349,8 +2399,8 @@ function setupQuiz(c, door) {
   const prizeEl = document.getElementById("quiz-prize");
   
   // Check if coins were already awarded for this door
-  const prizeKey = door ? `quiz_prize_${routeId}_${door.day}` : null;
-  const alreadyAwarded = prizeKey && localStorage.getItem(prizeKey) === "true";
+  const prizeKey = door ? `quiz:${door.day}` : null;
+  const alreadyAwarded = prizeKey && (hasClaimed(prizeKey) || localStorage.getItem(`quiz_prize_${routeId}_${door.day}`) === "true");
 
   if (alreadyAwarded && prizeEl) {
     buttons.forEach((b) => (b.disabled = true));
@@ -2386,7 +2436,7 @@ function setupQuiz(c, door) {
             saveUserCoins();
             updateCoinDisplay();
           }
-          if (prizeKey) localStorage.setItem(prizeKey, "true");
+          if (prizeKey) markClaimed(prizeKey);
         }
       }
     });

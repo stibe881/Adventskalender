@@ -16,6 +16,24 @@ function bonusDayView(calendar, user) {
   return isOpened ? { ...base, contentType: bonus.contentType, content: bonus.content } : base;
 }
 
+// Rudi's coins, purchases and worn items. Normally they live in the visitor's
+// browser; in company mode every employee gets their own copy in the database
+// so the state follows them from device to device like the opened doors do.
+const ECONOMY_MAX_ITEMS = 100;
+function cleanIdList(list) {
+  if (!Array.isArray(list)) return [];
+  return [...new Set(list.filter((x) => typeof x === "string" && /^[\w:-]{1,32}$/.test(x)))].slice(0, ECONOMY_MAX_ITEMS);
+}
+function economyView(calendar, user) {
+  const eco = (user && calendar.userStates && calendar.userStates[user] && calendar.userStates[user].economy) || {};
+  return {
+    coins: Number.isFinite(eco.coins) ? eco.coins : 0,
+    inventory: cleanIdList(eco.inventory),
+    worn: cleanIdList(eco.worn),
+    claimed: cleanIdList(eco.claimed),
+  };
+}
+
 const router = express.Router();
 
 const tokenLimiter = rateLimit({
@@ -148,6 +166,7 @@ router.get("/:token", async (req, res) => {
     serverNow: Date.now(),
     streak: streak,
     leaderboard: calendar.leaderboard || [],
+    economy: calendar.companyMode && user ? economyView(calendar, user) : null,
     bonusReferralsNeeded: BONUS_REFERRALS_NEEDED,
     days: [
       ...calendar.days.map((d) => publicDayView(calendar, d, user)),
@@ -296,6 +315,27 @@ router.post("/:token/days/:day/reply", async (req, res) => {
     return cal;
   });
   res.json({ success: true });
+});
+
+router.put("/:token/economy", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
+  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
+  if (!calendar.companyMode) return res.status(400).json({ error: "Nur im Firmenmodus verfügbar." });
+
+  const rawUser = String(req.body?.user || "").trim().toLowerCase();
+  const user = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(rawUser) ? rawUser : null;
+  if (!user) return res.status(400).json({ error: "Bitte melde dich mit deiner E-Mail-Adresse an." });
+
+  const coins = Math.max(0, Math.min(1_000_000, Math.floor(Number(req.body?.coins) || 0)));
+  const economy = { coins, inventory: cleanIdList(req.body?.inventory), worn: cleanIdList(req.body?.worn), claimed: cleanIdList(req.body?.claimed) };
+
+  const updated = await db.updateCalendar(calendar.id, (cal) => {
+    if (!cal.userStates) cal.userStates = {};
+    if (!cal.userStates[user]) cal.userStates[user] = { openedDays: [] };
+    cal.userStates[user].economy = { ...economy, updatedAt: new Date().toISOString() };
+    return cal;
+  });
+  res.json({ ok: true, economy: economyView(updated, user) });
 });
 
 router.post("/:token/score", async (req, res) => {

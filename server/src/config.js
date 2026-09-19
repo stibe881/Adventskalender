@@ -43,6 +43,11 @@ module.exports = {
     pass: process.env.SMTP_PASS || "",
     from: process.env.SMTP_FROM || '"Adventskalender" <noreply@adventskalender.local>',
   },
+  push: {
+    // Contact for push services (Apple, Google, Mozilla) if they need to reach the operator.
+    // Falls back to the SMTP sender address.
+    contact: process.env.VAPID_CONTACT || "",
+  },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
