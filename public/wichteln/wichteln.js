@@ -66,19 +66,19 @@ async function renderJoin() {
   try {
     info = await req("GET", "");
   } catch (err) {
-    app.innerHTML = `<div class="w-card text-center"><div class="text-4xl mb-3">🙈</div><h1 class="w-title text-xl mb-2">Einladung nicht gefunden</h1><p class="text-slate-400">${esc(err.message)}</p></div>`;
+    app.innerHTML = `<div class="w-card text-center"><div class="text-4xl mb-3 text-slate-500"><i data-icon="eye-off"></i></div><h1 class="w-title text-xl mb-2">Einladung nicht gefunden</h1><p class="text-slate-400">${esc(err.message)}</p></div>`;
     return;
   }
   document.title = `Wichteln: ${info.title}`;
   const details = [
-    info.eventDate ? `<span class="w-chip">📅 ${esc(eventLine(info))}</span>` : "",
-    info.budget ? `<span class="w-chip">💰 ${esc(info.budget)}</span>` : "",
-    info.motto ? `<span class="w-chip">🎨 ${esc(info.motto)}</span>` : "",
-    `<span class="w-chip">👥 ${info.participantCount} dabei</span>`,
+    info.eventDate ? `<span class="w-chip"><i data-icon="calendar"></i> ${esc(eventLine(info))}</span>` : "",
+    info.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(info.budget)}</span>` : "",
+    info.motto ? `<span class="w-chip"><i data-icon="palette"></i> ${esc(info.motto)}</span>` : "",
+    `<span class="w-chip"><i data-icon="users"></i> ${info.participantCount} dabei</span>`,
   ].filter(Boolean).join(" ");
   app.innerHTML = `
     <div class="w-card text-center">
-      <div class="text-5xl mb-2">🎁</div>
+      <div class="text-5xl mb-2 text-emerald-300"><i data-icon="gift"></i></div>
       <p class="text-sm text-emerald-300 uppercase tracking-widest font-semibold">Einladung zum Wichteln</p>
       <h1 class="w-title text-3xl mt-1">${esc(info.title)}</h1>
       <p class="text-slate-300 mt-2">${info.organizerName ? `${esc(info.organizerName)} lädt dich ein.` : "Du bist eingeladen."}</p>
@@ -91,7 +91,7 @@ async function renderJoin() {
           <h2 class="w-title text-lg">Ich bin dabei!</h2>
           <div><label class="block text-sm text-slate-300 mb-1">Dein Name</label><input name="name" required maxlength="60" class="w-input" placeholder="So sehen dich die anderen" autofocus></div>
           <div><label class="block text-sm text-slate-300 mb-1">E-Mail <span class="text-slate-500">(optional)</span></label><input name="email" type="email" class="w-input" placeholder="für dein Los und Benachrichtigungen"><p class="text-xs text-slate-500 mt-1">Ohne E-Mail: Speichere dir nach dem Eintragen deinen persönlichen Link – er ist dein Zugang.</p></div>
-          ${info.waitingRoom ? `<p class="text-xs text-slate-400">ℹ️ Diese Runde hat einen Warteraum: Der Organisator gibt dich frei, danach bist du dabei.</p>` : ""}
+          ${info.waitingRoom ? `<p class="text-xs text-slate-400"><i data-icon="lightbulb"></i> Diese Runde hat einen Warteraum: Der Organisator gibt dich frei, danach bist du dabei.</p>` : ""}
           <p id="join-error" class="hidden text-sm text-rose-400"></p>
           <button class="w-btn w-btn--primary w-full">Eintragen</button>
         </form>`}`;
@@ -126,7 +126,7 @@ function render() {
   if (me.pending) {
     app.innerHTML = `${headerCard()}
       <div class="w-card text-center">
-        <div class="text-5xl mb-3">⏳</div>
+        <div class="text-5xl mb-3 text-amber-300"><i data-icon="hourglass"></i></div>
         <h2 class="w-title text-xl">Du bist im Warteraum</h2>
         <p class="text-slate-300 mt-2">Der Organisator gibt dich gleich frei. Diese Seite prüft das automatisch.</p>
         <p class="text-xs text-slate-500 mt-4">Speichere dir diesen Link: <span class="text-slate-300 break-all">${esc(window.location.href)}</span></p>
@@ -152,19 +152,19 @@ function render() {
 function headerCard() {
   const g = data.group;
   const chips = [
-    g.eventDate ? `<span class="w-chip">📅 ${esc(eventLine(g))}</span>` : "",
-    g.budget ? `<span class="w-chip">💰 ${esc(g.budget)}</span>` : "",
-    g.motto ? `<span class="w-chip">🎨 ${esc(g.motto)}</span>` : "",
+    g.eventDate ? `<span class="w-chip"><i data-icon="calendar"></i> ${esc(eventLine(g))}</span>` : "",
+    g.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(g.budget)}</span>` : "",
+    g.motto ? `<span class="w-chip"><i data-icon="palette"></i> ${esc(g.motto)}</span>` : "",
   ].filter(Boolean).join(" ");
   return `<div class="w-card">
     <p class="text-xs text-emerald-300 uppercase tracking-widest font-semibold">Wichteln</p>
     <div class="flex flex-wrap items-start justify-between gap-3">
       <h1 class="w-title text-3xl">${esc(g.title)}</h1>
-      <span class="text-sm text-slate-400">Hallo <b class="text-white">${esc(data.me.name)}</b> 👋</span>
+      <span class="text-sm text-slate-400">Hallo <b class="text-white">${esc(data.me.name)}</b> <i data-icon="hand"></i></span>
     </div>
     ${chips ? `<div class="flex flex-wrap gap-2 mt-3">${chips}</div>` : ""}
     ${g.description ? `<p class="text-sm text-slate-300 mt-3 whitespace-pre-line">${esc(g.description)}</p>` : ""}
-    ${data.me.icsUrl ? `<div class="mt-4"><a href="${esc(data.me.icsUrl)}" class="w-btn w-btn--ghost w-btn--sm">📅 In meinen Kalender eintragen</a><span class="text-xs text-slate-500 ml-2">mit Motto, Budget, Wichtelkind und Erinnerung am Vortag</span></div>` : ""}
+    ${data.me.icsUrl ? `<div class="mt-4"><a href="${esc(data.me.icsUrl)}" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="calendar"></i> In meinen Kalender eintragen</a><span class="text-xs text-slate-500 ml-2">mit Motto, Budget, Wichtelkind und Erinnerung am Vortag</span></div>` : ""}
   </div>`;
 }
 
@@ -175,14 +175,14 @@ function stepper() {
   const cls = (i) => (i === 0 ? "is-done" : i === 1 ? (drawn ? "is-done" : "is-current") : eventPast || g.status === "revealed" ? "is-done" : drawn ? "is-current" : "");
   return `<div class="w-steps px-1">
     <div class="w-step ${cls(0)}">1 · Eingetragen</div>
-    <div class="w-step ${cls(1)}">2 · Auslosung${drawn ? " ✓" : " steht aus"}</div>
+    <div class="w-step ${cls(1)}">2 · Auslosung${drawn ? ' <i data-icon="check"></i>' : " steht aus"}</div>
     <div class="w-step ${cls(2)}">3 · Bescherung${g.eventDate ? ` ${formatDate(g.eventDate)}` : ""}</div>
   </div>`;
 }
 
 function notDrawnCard() {
   return `<div class="w-card w-card--gift text-center">
-    <div class="text-4xl mb-2">🎲</div>
+    <div class="text-4xl mb-2 text-emerald-300"><i data-icon="dices"></i></div>
     <h2 class="w-title text-xl">Die Auslosung steht noch aus</h2>
     <p class="text-slate-300 text-sm mt-2">Sobald der Organisator auslost, erfährst du hier${data.me.email ? " und per E-Mail" : ""}, wen du beschenkst. Nutze die Zeit für deinen Wunschzettel!</p>
   </div>`;
@@ -190,22 +190,22 @@ function notDrawnCard() {
 
 function wishItem(w, editable) {
   return `<div class="w-wish" data-wish="${esc(w.id)}">
-    ${w.image ? `<img src="${esc(w.image)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'w-wish-ph\\'>🎁</div>'">` : `<div class="w-wish-ph">🎁</div>`}
+    ${w.image ? `<img src="${esc(w.image)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'w-wish-ph\\'>'+icon('gift')+'</div>'">` : `<div class="w-wish-ph"><i data-icon="gift"></i></div>`}
     <div class="flex-1 min-w-0">
       ${w.url ? `<a href="${esc(w.url)}" target="_blank" rel="noopener nofollow" class="w-wish-title block truncate">${esc(w.title || w.url)}</a>` : `<div class="w-wish-title truncate">${esc(w.title)}</div>`}
       <div class="text-xs text-slate-400 mt-0.5">${w.price ? `<span class="text-emerald-300 font-semibold">${esc(w.price)}</span>` : ""}${w.price && w.note ? " · " : ""}${esc(w.note || "")}</div>
       ${w.url ? `<div class="text-[11px] text-slate-500 truncate">${esc(new URL(w.url).hostname)}</div>` : ""}
     </div>
-    ${editable ? `<button class="w-btn w-btn--ghost w-btn--sm self-start" data-act="remove-wish" data-id="${esc(w.id)}" title="Entfernen">✕</button>` : ""}
+    ${editable ? `<button class="w-btn w-btn--ghost w-btn--sm self-start" data-act="remove-wish" data-id="${esc(w.id)}" title="Entfernen"><i data-icon="x"></i></button>` : ""}
   </div>`;
 }
 
 function hintsBlock(h) {
   const rows = [
-    h.allergies ? ["🚫 Allergien / No-Gos", h.allergies] : null,
-    h.favorites ? ["😋 Lieblingsgeschmack", h.favorites] : null,
-    h.hobbies ? ["🎯 Hobbys", h.hobbies] : null,
-    h.notes ? ["💡 Sonstiges", h.notes] : null,
+    h.allergies ? [`<i data-icon="ban"></i> Allergien / No-Gos`, h.allergies] : null,
+    h.favorites ? [`<i data-icon="smile"></i> Lieblingsgeschmack`, h.favorites] : null,
+    h.hobbies ? [`<i data-icon="target"></i> Hobbys`, h.hobbies] : null,
+    h.notes ? [`<i data-icon="lightbulb"></i> Sonstiges`, h.notes] : null,
   ].filter(Boolean);
   if (!rows.length) return `<p class="text-sm text-slate-500">Keine Hinweise hinterlegt.</p>`;
   return `<dl class="grid sm:grid-cols-2 gap-2 text-sm">${rows.map(([k, v]) => `<div class="bg-black/20 rounded-xl p-3"><dt class="text-xs text-slate-400">${k}</dt><dd class="text-slate-100 mt-0.5 whitespace-pre-line">${esc(v)}</dd></div>`).join("")}</dl>`;
@@ -227,7 +227,7 @@ function recipientCard() {
   const chat = data.group.chatEnabled;
   return `<div class="w-card w-card--gift">
     <p class="text-xs text-emerald-300 uppercase tracking-widest font-semibold">Du beschenkst</p>
-    <div class="w-big-name mt-1">🎁 ${esc(r.name)}</div>
+    <div class="w-big-name mt-1"><i data-icon="gift"></i> ${esc(r.name)}</div>
     <p class="text-xs text-slate-400 mt-1">Psst – das bleibt unter uns.</p>
 
     <h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)}</h3>
@@ -240,8 +240,8 @@ function recipientCard() {
     <p class="text-xs text-slate-400 mb-2">Persönliche Übergabe oder Versand per Post – hak ab, wie weit du bist. ${esc(r.name)} sieht nur die Vorfreude-Anzeige, nie von wem sie kommt.</p>
     <div class="flex flex-wrap items-center gap-2 mb-2">
       <select id="gift-method" class="w-input" style="width:auto">
-        <option value="personal" ${gs.method === "personal" ? "selected" : ""}>🤝 Persönliche Übergabe</option>
-        <option value="post" ${gs.method === "post" ? "selected" : ""}>📦 Versand per Post</option>
+        <option value="personal" ${gs.method === "personal" ? "selected" : ""}>Persönliche Übergabe</option>
+        <option value="post" ${gs.method === "post" ? "selected" : ""}>Versand per Post</option>
       </select>
       <div class="flex-1 min-w-[140px]"><div class="w-progress"><div style="width:${Math.round((gs.done / gs.total) * 100)}%"></div></div></div>
     </div>
@@ -254,7 +254,7 @@ function recipientCard() {
 function myWishlistCard() {
   const me = data.me;
   return `<div class="w-card">
-    <h2 class="w-title text-xl">📝 Dein Wunschzettel</h2>
+    <h2 class="w-title text-xl"><i data-icon="clipboard-list"></i> Dein Wunschzettel</h2>
     <p class="text-sm text-slate-400 mt-1">Shop-Link einfügen – Titel und Bild werden automatisch als Vorschau geladen. Preis und Notiz trägst du selbst ein.</p>
     <div class="space-y-2 mt-3" id="my-wishes">${me.wishlist.length ? me.wishlist.map((w) => wishItem(w, true)).join("") : `<p class="text-sm text-slate-500">Noch keine Wünsche.</p>`}</div>
     <form id="wish-form" class="mt-4 space-y-2 bg-black/20 rounded-2xl p-3">
@@ -278,18 +278,18 @@ function myHintsCard() {
   const me = data.me;
   const h = me.hints;
   return `<div class="w-card">
-    <h2 class="w-title text-xl">💡 Hinweise für deinen Wichtel</h2>
+    <h2 class="w-title text-xl"><i data-icon="lightbulb"></i> Hinweise für deinen Wichtel</h2>
     <p class="text-sm text-slate-400 mt-1">Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte.</p>
     <form id="hints-form" class="grid sm:grid-cols-2 gap-2 mt-3">
-      <input name="allergies" maxlength="300" class="w-input" placeholder="🚫 Allergien / No-Gos" value="${esc(h.allergies || "")}">
-      <input name="favorites" maxlength="300" class="w-input" placeholder="😋 Lieblingsgeschmack" value="${esc(h.favorites || "")}">
-      <input name="hobbies" maxlength="300" class="w-input" placeholder="🎯 Hobbys" value="${esc(h.hobbies || "")}">
-      <input name="notes" maxlength="500" class="w-input" placeholder="💡 Sonstiges" value="${esc(h.notes || "")}">
+      <input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
+      <input name="favorites" maxlength="300" class="w-input" placeholder="Lieblingsgeschmack" value="${esc(h.favorites || "")}">
+      <input name="hobbies" maxlength="300" class="w-input" placeholder="Hobbys" value="${esc(h.hobbies || "")}">
+      <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">
       <div class="sm:col-span-2 border-t border-white/10 pt-3 mt-1 grid sm:grid-cols-2 gap-2 items-center">
         <input name="email" type="email" class="w-input" placeholder="E-Mail für Benachrichtigungen" value="${esc(me.email || "")}">
         <label class="w-check"><input type="checkbox" name="notifyEmail" ${me.notify.email !== false ? "checked" : ""}> <span class="text-sm">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin per E-Mail informieren</span></label>
       </div>
-      <div class="sm:col-span-2 flex items-center gap-3"><button class="w-btn w-btn--primary">Speichern</button><span id="hints-saved" class="hidden text-sm text-emerald-300">Gespeichert ✓</span></div>
+      <div class="sm:col-span-2 flex items-center gap-3"><button class="w-btn w-btn--primary">Speichern</button><span id="hints-saved" class="hidden text-sm text-emerald-300">Gespeichert <i data-icon="check"></i></span></div>
     </form>
   </div>`;
 }
@@ -298,10 +298,10 @@ function santaCard() {
   const s = data.santa;
   const chat = data.group.chatEnabled;
   const pct = Math.round((s.progress.done / s.progress.total) * 100);
-  const mood = pct === 0 ? "Dein Wichtel ist noch am Grübeln …" : pct < 100 ? "Dein Wichtel ist dran – die Vorfreude steigt!" : "Dein Geschenk ist bereit. 🎉";
+  const mood = pct === 0 ? "Dein Wichtel ist noch am Grübeln …" : pct < 100 ? "Dein Wichtel ist dran – die Vorfreude steigt!" : "Dein Geschenk ist bereit.";
   return `<div class="w-card w-card--santa">
     <p class="text-xs text-rose-300 uppercase tracking-widest font-semibold">Dein geheimer Wichtel</p>
-    <h2 class="w-title text-xl mt-1">🎅 Jemand kümmert sich um dich</h2>
+    <h2 class="w-title text-xl mt-1"><i data-icon="heart"></i> Jemand kümmert sich um dich</h2>
     <p class="text-sm text-slate-300 mt-3">${mood}</p>
     <div class="w-progress mt-2"><div style="width:${pct}%"></div></div>
     <p class="text-xs text-slate-400 mt-1">${s.progress.done} von ${s.progress.total} Schritten (${s.progress.method === "post" ? "Versand per Post" : "persönliche Übergabe"})</p>
@@ -311,7 +311,7 @@ function santaCard() {
 
 function revealCard() {
   return `<div class="w-card w-card--reveal">
-    <h2 class="w-title text-xl">🎭 Die Auflösung</h2>
+    <h2 class="w-title text-xl"><i data-icon="drama"></i> Die Auflösung</h2>
     <p class="text-sm text-slate-300 mt-1 mb-3">Der Organisator hat aufgelöst, wer wen beschenkt hat.</p>
     <div class="grid sm:grid-cols-2 gap-1">${data.reveal.map((r) => `<div class="w-reveal-row"><span>${esc(r.giver)}</span><span class="text-slate-500">→</span><b>${esc(r.receiver)}</b></div>`).join("")}</div>
   </div>`;
@@ -319,21 +319,21 @@ function revealCard() {
 
 function participantsCard() {
   return `<div class="w-card">
-    <h2 class="w-title text-xl">👥 Teilnehmende <span class="text-sm font-normal text-slate-400">(${data.participants.length})</span></h2>
-    <div class="flex flex-wrap gap-2 mt-3">${data.participants.map((p) => `<span class="w-chip">${p.joined ? "✅" : "⚪"} ${esc(p.name)}${p.isOrganizer ? " <span class='text-slate-500'>· Orga</span>" : ""}${p.id === data.me.id ? " <span class='text-emerald-300'>(du)</span>" : ""}</span>`).join("")}</div>
+    <h2 class="w-title text-xl"><i data-icon="users"></i> Teilnehmende <span class="text-sm font-normal text-slate-400">(${data.participants.length})</span></h2>
+    <div class="flex flex-wrap gap-2 mt-3">${data.participants.map((p) => `<span class="w-chip">${p.joined ? icon("circle-check", "text-emerald-300") : icon("circle", "text-slate-500")} ${esc(p.name)}${p.isOrganizer ? " <span class='text-slate-500'>· Orga</span>" : ""}${p.id === data.me.id ? " <span class='text-emerald-300'>(du)</span>" : ""}</span>`).join("")}</div>
   </div>`;
 }
 
 function photosCard() {
   return `<div class="w-card">
-    <h2 class="w-title text-xl">📸 Foto-Wand</h2>
+    <h2 class="w-title text-xl"><i data-icon="camera"></i> Foto-Wand</h2>
     <p class="text-sm text-slate-400 mt-1">Fotos der Bescherung schnell &amp; datensparend in der gemeinsamen Galerie teilen.</p>
     <form id="photo-form" class="flex flex-wrap gap-2 mt-3 items-center">
       <input name="photo" type="file" accept="image/png,image/jpeg,image/gif,image/webp" required class="text-sm text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-emerald-600 file:text-white">
       <input name="caption" maxlength="140" class="w-input" style="flex:1;min-width:160px" placeholder="Bildunterschrift (optional)">
       <button class="w-btn w-btn--primary">Hochladen</button>
     </form>
-    <div class="w-photos mt-4">${data.photos.length ? data.photos.map((ph) => `<figure class="w-photo"><a href="${esc(ph.url)}" target="_blank"><img src="${esc(ph.url)}" alt="${esc(ph.caption || "")}" loading="lazy"></a>${ph.caption || ph.by ? `<figcaption>${esc(ph.caption || "")}${ph.by ? ` <span class="opacity-70">– ${esc(ph.by)}</span>` : ""}</figcaption>` : ""}${ph.mine ? `<button data-act="remove-photo" data-id="${esc(ph.id)}" title="Löschen">✕</button>` : ""}</figure>`).join("") : `<p class="text-sm text-slate-500 col-span-full">Noch keine Fotos – nach der Bescherung ist hier Platz.</p>`}</div>
+    <div class="w-photos mt-4">${data.photos.length ? data.photos.map((ph) => `<figure class="w-photo"><a href="${esc(ph.url)}" target="_blank"><img src="${esc(ph.url)}" alt="${esc(ph.caption || "")}" loading="lazy"></a>${ph.caption || ph.by ? `<figcaption>${esc(ph.caption || "")}${ph.by ? ` <span class="opacity-70">– ${esc(ph.by)}</span>` : ""}</figcaption>` : ""}${ph.mine ? `<button data-act="remove-photo" data-id="${esc(ph.id)}" title="Löschen"><i data-icon="x"></i></button>` : ""}</figure>`).join("") : `<p class="text-sm text-slate-500 col-span-full">Noch keine Fotos – nach der Bescherung ist hier Platz.</p>`}</div>
   </div>`;
 }
 
@@ -384,7 +384,7 @@ function bindEvents() {
     try {
       data = await req("PUT", "/wishlist", { wishlist: [...data.me.wishlist, item] });
       render();
-      toast("Wunsch gespeichert ✓");
+      toast("Wunsch gespeichert");
     } catch (err) {
       toast(err.message, true);
     }
@@ -403,7 +403,7 @@ function bindEvents() {
       f.image.value = p.image || "";
       const box = document.getElementById("wish-preview-box");
       box.classList.remove("hidden");
-      box.innerHTML = `<div class="w-wish">${p.image ? `<img src="${esc(p.image)}" alt="">` : `<div class="w-wish-ph">🔗</div>`}<div class="min-w-0"><div class="w-wish-title truncate">${esc(p.title || url)}</div><div class="text-xs text-slate-400">${esc(p.note || "Vorschau geladen – Titel und Preis kannst du anpassen.")}</div></div></div>`;
+      box.innerHTML = `<div class="w-wish">${p.image ? `<img src="${esc(p.image)}" alt="">` : `<div class="w-wish-ph"><i data-icon="link"></i></div>`}<div class="min-w-0"><div class="w-wish-title truncate">${esc(p.title || url)}</div><div class="text-xs text-slate-400">${esc(p.note || "Vorschau geladen – Titel und Preis kannst du anpassen.")}</div></div></div>`;
     } catch (err) {
       toast(err.message, true);
     } finally {
@@ -446,7 +446,7 @@ function bindEvents() {
     try {
       data = await req("POST", "/photos", fd, true);
       render();
-      toast("Foto hochgeladen ✓");
+      toast("Foto hochgeladen");
     } catch (err) {
       toast(err.message, true);
     }
@@ -485,6 +485,6 @@ function startPolling() {
       startPolling();
     }
   } catch (err) {
-    app.innerHTML = `<div class="w-card text-center"><div class="text-4xl mb-3">🙈</div><h1 class="w-title text-xl mb-2">Link ungültig</h1><p class="text-slate-400">${esc(err.message)}</p></div>`;
+    app.innerHTML = `<div class="w-card text-center"><div class="text-4xl mb-3 text-slate-500"><i data-icon="eye-off"></i></div><h1 class="w-title text-xl mb-2">Link ungültig</h1><p class="text-slate-400">${esc(err.message)}</p></div>`;
   }
 })();

@@ -14,6 +14,7 @@
     .field:focus { outline: none; box-shadow: 0 0 0 2px #10b981; }
     select.field option { background: #0f172a; }
   </style>
+  <script src="/shared/icons.js"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
@@ -26,7 +27,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-        <a id="my-area-link" href="#" target="_blank" class="hidden text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg whitespace-nowrap flex-1 sm:flex-none text-center">🎁 Mein Wichtel-Bereich</a>
+        <a id="my-area-link" href="#" target="_blank" class="hidden text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg whitespace-nowrap flex-1 sm:flex-none text-center"><i data-icon="gift"></i> Mein Wichtel-Bereich</a>
         <button id="invite-card-btn" class="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg font-semibold whitespace-nowrap flex-1 sm:flex-none">Einladungskarte</button>
       </div>
     </div>
@@ -38,7 +39,7 @@
     <section id="draw-card" class="bg-gradient-to-br from-emerald-900/40 to-slate-900 border border-emerald-500/30 rounded-2xl p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 class="font-display text-xl font-semibold">🎲 Auslosung</h2>
+          <h2 class="font-display text-xl font-semibold"><i data-icon="dices"></i> Auslosung</h2>
           <p id="draw-hint" class="text-sm text-slate-300 mt-1"></p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -52,8 +53,8 @@
     <!-- Participants -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
       <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <h2 class="font-display text-xl font-semibold">👥 Teilnehmende <span id="participant-count" class="text-sm font-normal text-slate-400"></span></h2>
-        <button id="invite-all-btn" class="text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg">📧 Alle per E-Mail einladen</button>
+        <h2 class="font-display text-xl font-semibold"><i data-icon="users"></i> Teilnehmende <span id="participant-count" class="text-sm font-normal text-slate-400"></span></h2>
+        <button id="invite-all-btn" class="text-sm bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg"><i data-icon="mail"></i> Alle per E-Mail einladen</button>
       </div>
       <form id="add-participant-form" class="grid sm:grid-cols-5 gap-3 mb-4">
         <input name="name" required maxlength="60" placeholder="Name" class="sm:col-span-2 field" />
@@ -74,7 +75,7 @@
 
     <!-- Exclusions -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-1">🚫 Ausschlüsse</h2>
+      <h2 class="font-display text-xl font-semibold mb-1"><i data-icon="ban"></i> Ausschlüsse</h2>
       <p class="text-sm text-slate-400 mb-4">Paare oder Geschwister sollen sich nicht ziehen? Der Generator berücksichtigt es garantiert – in beide Richtungen.</p>
       <div class="flex flex-wrap items-center gap-2 mb-4">
         <select id="excl-a" class="field sm:w-56"></select>
@@ -87,7 +88,7 @@
 
     <!-- Settings -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-4">⚙️ Einstellungen</h2>
+      <h2 class="font-display text-xl font-semibold mb-4"><i data-icon="settings"></i> Einstellungen</h2>
       <form id="settings-form" class="grid sm:grid-cols-2 gap-4">
         <div class="sm:col-span-2"><label class="block text-sm text-slate-300 mb-1">Titel</label><input name="title" required maxlength="80" class="field" /></div>
         <div><label class="block text-sm text-slate-300 mb-1">Organisator (Name)</label><input name="organizerName" maxlength="60" class="field" /></div>
@@ -115,11 +116,11 @@
 
         <div class="sm:col-span-2 border-t border-white/10 pt-4 grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="chatEnabled" class="w-4 h-4 rounded bg-slate-900 border-white/10"> 💬 Anonymer Chat</label>
+            <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="chatEnabled" class="w-4 h-4 rounded bg-slate-900 border-white/10"> <i data-icon="message-circle"></i> Anonymer Chat</label>
             <p class="text-xs text-slate-500 mt-1 ml-6">Zwei getrennte Kanäle: mit dem Wichtelkind und mit dem eigenen geheimen Wichtel. Für Schulklassen o. ä. abschaltbar.</p>
           </div>
           <div>
-            <label class="block text-sm text-slate-300 mb-1">🗑️ Aufbewahrungsfrist nach der Bescherung</label>
+            <label class="block text-sm text-slate-300 mb-1"><i data-icon="trash-2"></i> Aufbewahrungsfrist nach der Bescherung</label>
             <select name="retentionDays" class="field">
               <option value="30">30 Tage</option><option value="60">60 Tage</option><option value="90">90 Tage</option><option value="180">180 Tage</option>
             </select>
@@ -129,7 +130,7 @@
 
         <div class="sm:col-span-2 flex items-center gap-3 pt-2">
           <button type="submit" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2">Speichern</button>
-          <span id="settings-saved" class="hidden text-sm text-emerald-400">Gespeichert ✓</span>
+          <span id="settings-saved" class="hidden text-sm text-emerald-400">Gespeichert <i data-icon="check"></i></span>
           <span id="settings-error" class="hidden text-sm text-rose-400"></span>
         </div>
       </form>
@@ -137,7 +138,7 @@
 
     <!-- Invitation -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-1">🔗 Einladung</h2>
+      <h2 class="font-display text-xl font-semibold mb-1"><i data-icon="link"></i> Einladung</h2>
       <p class="text-sm text-slate-400 mb-4">Link teilen oder Einladungskarte mit QR-Code ausdrucken, verteilen, abscannen – fertig ist der Beitritt ohne Tippen.</p>
       <div class="flex flex-col sm:flex-row gap-3 items-start">
         <div class="flex-1 w-full">
@@ -153,7 +154,7 @@
 
     <!-- Prints -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-1">🖨️ Druckansichten &amp; PDF</h2>
+      <h2 class="font-display text-xl font-semibold mb-1"><i data-icon="printer"></i> Druckansichten &amp; PDF</h2>
       <p class="text-sm text-slate-400 mb-4">Öffnet eine Druckansicht – über „Als PDF speichern“ im Druckdialog wird daraus ein PDF.</p>
       <div class="flex flex-wrap gap-2">
         <button data-print="participants" class="print-btn bg-slate-800 hover:bg-slate-700 border border-white/10 px-3 py-2 rounded-lg text-sm">Teilnehmerliste</button>
@@ -165,7 +166,7 @@
 
     <!-- Photos -->
     <section class="bg-white/5 border border-white/10 rounded-2xl p-6">
-      <h2 class="font-display text-xl font-semibold mb-1">📸 Foto-Wand</h2>
+      <h2 class="font-display text-xl font-semibold mb-1"><i data-icon="camera"></i> Foto-Wand</h2>
       <p class="text-sm text-slate-400 mb-4">Fotos, die Teilnehmende in der gemeinsamen Galerie geteilt haben.</p>
       <div id="photo-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
     </section>
@@ -183,7 +184,7 @@
   <!-- Invite card modal -->
   <div id="card-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md p-6 relative text-center">
-      <button id="card-close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <button id="card-close" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl"><i data-icon="x"></i></button>
       <h2 class="font-display text-xl font-semibold mb-3">Einladungskarte</h2>
       <img id="card-qr" alt="QR-Code" class="w-48 h-48 mx-auto rounded-lg bg-white p-2" />
       <p id="card-link" class="text-xs text-slate-400 break-all mt-3"></p>

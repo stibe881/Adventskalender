@@ -16,6 +16,7 @@
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
     }
   </script>
+  <script src="/shared/icons.js"></script>
 </head>
 <body>
   <div id="scene" aria-hidden="true"></div>
@@ -23,10 +24,10 @@
 
   <div id="controls" class="fixed top-4 right-4 z-50 flex gap-2">
     <button id="shop-btn" class="bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-full p-2 px-4 backdrop-blur transition-colors" title="Nordpol-Shop">
-      🪙 <span id="coin-display">0</span>
+      <i data-icon="coins"></i> <span id="coin-display">0</span>
     </button>
     <button id="pixel-art-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-2 backdrop-blur transition-colors" title="Community Leinwand">
-      🎨
+      <i data-icon="palette"></i>
     </button>
     <button id="toggle-effects-btn" class="bg-black/40 hover:bg-black/60 text-white rounded-full p-2 backdrop-blur transition-colors" title="Effekte an/ausschalten (Batterie sparen)">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/><path d="m4.93 19.07 14.14-14.14"/></svg>
@@ -105,7 +106,7 @@
   </div>
 
   <div id="app-root">
-    <div id="preview-banner" class="hidden">👁 Admin-Vorschau – Zeitsperre ist deaktiviert</div>
+    <div id="preview-banner" class="hidden"><i data-icon="eye"></i> Admin-Vorschau – Zeitsperre ist deaktiviert</div>
 
     <header id="calendar-header" class="hero"></header>
 
@@ -128,7 +129,7 @@
       </div>
     </div>
     <audio id="gp-audio" class="hidden"></audio>
-    <button id="gp-close" class="text-slate-400 hover:text-white flex-shrink-0">✕</button>
+    <button id="gp-close" class="text-slate-400 hover:text-white flex-shrink-0"><i data-icon="x"></i></button>
   </div>
 
   <div id="lock-toast" class="hidden" role="status" aria-live="polite"></div>
@@ -142,7 +143,7 @@
     <div class="bg-slate-900 border border-indigo-500/50 rounded-2xl p-4 w-full max-w-2xl flex flex-col items-center">
       <div class="flex justify-between w-full mb-4">
         <h2 class="text-xl font-bold text-white">Community Leinwand</h2>
-        <button id="pixel-close" class="text-slate-400 hover:text-white">✕</button>
+        <button id="pixel-close" class="text-slate-400 hover:text-white"><i data-icon="x"></i></button>
       </div>
       <p class="text-slate-300 text-sm mb-4 text-center">Jedes geöffnete Türchen gibt dir 10 Pixel. Male gemeinsam mit allen anderen an diesem Bild!</p>
       <div class="flex items-center gap-4 mb-4">
@@ -168,9 +169,9 @@
       <div class="p-6" style="display:flex;flex-direction:column;min-height:0;">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-black">Nordpol-Shop</h2>
-          <button id="shop-close" class="text-amber-700 hover:text-amber-900 text-xl font-bold">✕</button>
+          <button id="shop-close" class="text-amber-700 hover:text-amber-900 text-xl font-bold"><i data-icon="x"></i></button>
         </div>
-        <p class="text-sm mb-4">Kaufe Ausrüstung für Rudi, dein Rentier! Gekauftes erscheint unter seinem Stall – antippen, und Rudi benutzt es: Der Schlitten fährt, die Skier machen Slalom, die Flügel tragen ihn über den Kalender. Dein Guthaben: <b id="shop-balance">0</b> 🪙</p>
+        <p class="text-sm mb-4">Kaufe Ausrüstung für Rudi, dein Rentier! Gekauftes erscheint unter seinem Stall – antippen, und Rudi benutzt es: Der Schlitten fährt, die Skier machen Slalom, die Flügel tragen ihn über den Kalender. Dein Guthaben: <b id="shop-balance">0</b> <i data-icon="coins"></i></p>
         <div id="shop-items" class="slim-scroll flex flex-col gap-2 pr-1" style="overflow-y:auto;min-height:0;max-height:55vh;"></div>
       </div>
     </div>
@@ -178,7 +179,7 @@
 
   <div id="content-modal" class="hidden" role="dialog" aria-modal="true">
     <div id="modal-card">
-      <button id="modal-close" aria-label="Schließen">✕</button>
+      <button id="modal-close" aria-label="Schließen"><i data-icon="x"></i></button>
       <div id="modal-body"></div>
       <div id="modal-feedback" class="hidden border-t border-white/10 mt-6 pt-4 flex items-center justify-between">
         <div class="flex gap-2">
@@ -188,7 +189,7 @@
           <button class="feedback-emoji text-2xl hover:scale-125 transition-transform">🎉</button>
         </div>
         <button id="feedback-voice" class="rounded-full bg-rose-600/20 text-rose-500 hover:bg-rose-600/30 p-2 transition-colors flex items-center gap-2 text-sm font-semibold">
-          🎙 Antworten
+          <i data-icon="mic"></i> Antworten
         </button>
       </div>
     </div>

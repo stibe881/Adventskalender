@@ -35,7 +35,7 @@ function toast(msg, isError = false) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    toast("Kopiert ✓");
+    toast("Kopiert");
   } catch (_) {
     window.prompt("Link kopieren:", text);
   }
@@ -103,9 +103,9 @@ function renderDraw(active) {
 }
 
 function participantStatus(p) {
-  if (p.pending) return `<span class="text-amber-300">⏳ Warteraum</span>`;
-  if (p.joinedAt) return `<span class="text-emerald-300">✓ Dabei</span>`;
-  if (p.invitedAt) return `<span class="text-sky-300">📧 Eingeladen</span>`;
+  if (p.pending) return `<span class="text-amber-300"><i data-icon="hourglass"></i> Warteraum</span>`;
+  if (p.joinedAt) return `<span class="text-emerald-300"><i data-icon="check"></i> Dabei</span>`;
+  if (p.invitedAt) return `<span class="text-sky-300"><i data-icon="mail"></i> Eingeladen</span>`;
   return `<span class="text-slate-400">Eingetragen</span>`;
 }
 
@@ -125,10 +125,10 @@ function renderParticipants() {
       <td class="py-2 pr-3 text-slate-300 hidden sm:table-cell">${group.status === "draft" ? "–" : `${gp.done}/${gp.total}`}</td>
       <td class="py-2 text-right sm:whitespace-nowrap"><div class="flex flex-wrap justify-end gap-1">
         ${p.pending ? `<button data-act="approve" data-id="${p.id}" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 rounded">Aufnehmen</button>` : ""}
-        <button data-act="link" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Persönlichen Link kopieren">🔗</button>
-        ${p.email && !p.isOrganizer ? `<button data-act="invite" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Einladung per E-Mail senden">📧</button>` : ""}
-        <button data-act="edit" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Bearbeiten">✏️</button>
-        ${!p.isOrganizer ? `<button data-act="remove" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-rose-600 border border-white/10 px-2 py-1 rounded" title="Entfernen">✕</button>` : ""}
+        <button data-act="link" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Persönlichen Link kopieren"><i data-icon="link"></i></button>
+        ${p.email && !p.isOrganizer ? `<button data-act="invite" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Einladung per E-Mail senden"><i data-icon="mail"></i></button>` : ""}
+        <button data-act="edit" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-white/10 px-2 py-1 rounded" title="Bearbeiten"><i data-icon="pencil"></i></button>
+        ${!p.isOrganizer ? `<button data-act="remove" data-id="${p.id}" class="text-xs bg-slate-800 hover:bg-rose-600 border border-white/10 px-2 py-1 rounded" title="Entfernen"><i data-icon="x"></i></button>` : ""}
       </div></td>`;
     tbody.appendChild(tr);
   }
@@ -213,7 +213,7 @@ function renderExclusions(active) {
   const list = document.getElementById("exclusion-list");
   const nameOf = (id) => group.participants.find((p) => p.id === id)?.name || "?";
   list.innerHTML = group.exclusions.length
-    ? group.exclusions.map(([x, y], i) => `<span class="inline-flex items-center gap-2 bg-slate-800 border border-white/10 rounded-full px-3 py-1 text-sm">${escapeHtml(nameOf(x))} ⇄ ${escapeHtml(nameOf(y))} <button data-idx="${i}" class="text-slate-400 hover:text-rose-300" title="Entfernen">✕</button></span>`).join("")
+    ? group.exclusions.map(([x, y], i) => `<span class="inline-flex items-center gap-2 bg-slate-800 border border-white/10 rounded-full px-3 py-1 text-sm">${escapeHtml(nameOf(x))} ⇄ ${escapeHtml(nameOf(y))} <button data-idx="${i}" class="text-slate-400 hover:text-rose-300" title="Entfernen"><i data-icon="x"></i></button></span>`).join("")
     : `<span class="text-sm text-slate-500">Keine Ausschlüsse.</span>`;
 }
 
@@ -369,7 +369,7 @@ function printShell(title, body) {
 function openPrint(kind) {
   const g = group;
   const active = g.participants.filter((p) => !p.pending);
-  const head = `<h1>🎁 ${escapeHtml(g.title)}</h1><p class="muted">${[g.organizerName ? `Organisation: ${escapeHtml(g.organizerName)}` : "", g.eventDate ? `Bescherung: ${escapeHtml(eventLine(g))}` : "", g.budget ? `Budget: ${escapeHtml(g.budget)}` : "", g.motto ? `Motto: ${escapeHtml(g.motto)}` : ""].filter(Boolean).join(" · ")}</p>`;
+  const head = `<h1>${escapeHtml(g.title)}</h1><p class="muted">${[g.organizerName ? `Organisation: ${escapeHtml(g.organizerName)}` : "", g.eventDate ? `Bescherung: ${escapeHtml(eventLine(g))}` : "", g.budget ? `Budget: ${escapeHtml(g.budget)}` : "", g.motto ? `Motto: ${escapeHtml(g.motto)}` : ""].filter(Boolean).join(" · ")}</p>`;
   let title = g.title;
   let body = "";
   if (kind === "participants") {
@@ -382,13 +382,13 @@ function openPrint(kind) {
     title = `Ziehungsmatrix – ${g.title}`;
     const revealed = g.status === "revealed";
     const excluded = (a, b) => g.exclusions.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
-    body = `${head}<h2>${revealed ? "Ziehungsmatrix (Auflösung)" : "Ausschluss-Matrix"}</h2><p class="muted">${revealed ? "Zeile = zieht, Spalte = beschenkt. ● markiert das Los, ✕ einen Ausschluss." : "✕ = darf sich nicht ziehen (in beide Richtungen). Die Lose werden erst nach der Enthüllung gezeigt."}</p>
+    body = `${head}<h2>${revealed ? "Ziehungsmatrix (Auflösung)" : "Ausschluss-Matrix"}</h2><p class="muted">${revealed ? "Zeile = zieht, Spalte = beschenkt. ● markiert das Los, × einen Ausschluss." : "× = darf sich nicht ziehen (in beide Richtungen). Die Lose werden erst nach der Enthüllung gezeigt."}</p>
       <table class="matrix"><tr><th class="row">zieht ↓ / beschenkt →</th>${active.map((p) => `<th title="${escapeHtml(p.name)}">${escapeHtml(p.name.slice(0, 3))}</th>`).join("")}</tr>
-      ${active.map((row) => `<tr><th class="row">${escapeHtml(row.name)}</th>${active.map((col) => `<td>${row.id === col.id ? "–" : revealed && row.assignedTo === col.id ? "●" : excluded(row.id, col.id) ? '<span class="x">✕</span>' : ""}</td>`).join("")}</tr>`).join("")}</table>`;
+      ${active.map((row) => `<tr><th class="row">${escapeHtml(row.name)}</th>${active.map((col) => `<td>${row.id === col.id ? "–" : revealed && row.assignedTo === col.id ? "●" : excluded(row.id, col.id) ? '<span class="x">×</span>' : ""}</td>`).join("")}</tr>`).join("")}</table>`;
   } else if (kind === "card") {
     title = `Einladungskarte – ${g.title}`;
     const qr = inviteCard?.qr || "";
-    body = `<div class="card">${qr ? `<img src="${qr}" alt="QR-Code">` : ""}<div class="title">🎁 ${escapeHtml(g.title)}</div><div>${g.organizerName ? `${escapeHtml(g.organizerName)} lädt dich zum Wichteln ein.` : "Du bist zum Wichteln eingeladen."}</div><div style="margin-top:10px">${[g.eventDate ? `📅 ${escapeHtml(eventLine(g))}` : "", g.budget ? `💰 ${escapeHtml(g.budget)}` : "", g.motto ? `🎨 ${escapeHtml(g.motto)}` : ""].filter(Boolean).join("<br>")}</div><div style="margin-top:14px">QR-Code scannen oder Link öffnen und eintragen:</div><div class="link">${escapeHtml(g.inviteLink)}</div></div>`;
+    body = `<div class="card">${qr ? `<img src="${qr}" alt="QR-Code">` : ""}<div class="title">${escapeHtml(g.title)}</div><div>${g.organizerName ? `${escapeHtml(g.organizerName)} lädt dich zum Wichteln ein.` : "Du bist zum Wichteln eingeladen."}</div><div style="margin-top:10px">${[g.eventDate ? `Wann: ${escapeHtml(eventLine(g))}` : "", g.budget ? `Budget: ${escapeHtml(g.budget)}` : "", g.motto ? `Motto: ${escapeHtml(g.motto)}` : ""].filter(Boolean).join("<br>")}</div><div style="margin-top:14px">QR-Code scannen oder Link öffnen und eintragen:</div><div class="link">${escapeHtml(g.inviteLink)}</div></div>`;
   }
   const w = window.open("", "_blank");
   if (!w) return toast("Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.", true);

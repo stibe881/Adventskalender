@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/shared/icons.js"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
@@ -21,8 +22,8 @@
       </div>
       <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
         <nav class="app-switch flex bg-slate-800 rounded-lg p-1 border border-white/10 text-xs font-semibold whitespace-nowrap" aria-label="Bereich wechseln">
-          <a href="/admin/dashboard.html" class="px-2.5 sm:px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow">🎄 Adventskalender</a>
-          <a href="/admin/wichteln.html" class="px-2.5 sm:px-3 py-1.5 rounded-md text-slate-400 hover:text-white">🎁 Wichteln</a>
+          <a href="/admin/dashboard.html" class="px-2.5 sm:px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow"><i data-icon="tree-pine"></i> Adventskalender</a>
+          <a href="/admin/wichteln.html" class="px-2.5 sm:px-3 py-1.5 rounded-md text-slate-400 hover:text-white"><i data-icon="gift"></i> Wichteln</a>
         </nav>
         <button id="admin-toggle-pro" class="hidden text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded whitespace-nowrap">Dev: PRO</button>
         <a href="/admin/account.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors whitespace-nowrap">Konto</a>
@@ -66,7 +67,7 @@
         </table>
       </div>
       <div id="empty-state" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl mt-4">
-        <div class="text-4xl mb-3">🎁</div>
+        <div class="text-4xl mb-3 text-emerald-400"><i data-icon="gift"></i></div>
         <h3 class="text-lg font-semibold text-white mb-1">Noch keine Kalender</h3>
         <p class="text-slate-400 text-sm mb-4">Erstelle deinen ersten Adventskalender, um loszulegen.</p>
         <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">
@@ -79,7 +80,7 @@
   <!-- Create Modal -->
   <div id="create-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
-      <button onclick="document.getElementById('create-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <button onclick="document.getElementById('create-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl"><i data-icon="x"></i></button>
       <h2 class="font-display text-xl font-semibold mb-6">Neuen Kalender erstellen</h2>
       <form id="create-form" class="grid sm:grid-cols-4 gap-4 items-end">
         <div class="sm:col-span-2">
@@ -147,7 +148,7 @@
   <!-- Analytics Modal -->
   <div id="analytics-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
-      <button onclick="document.getElementById('analytics-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <button onclick="document.getElementById('analytics-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl"><i data-icon="x"></i></button>
       <h3 class="font-display text-xl font-semibold mb-4">Statistiken</h3>
       <div class="bg-slate-800 rounded-lg p-4 mb-4">
         <canvas id="analyticsChart" width="400" height="200"></canvas>

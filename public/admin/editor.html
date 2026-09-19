@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/styles.css" />
+  <script src="/shared/icons.js"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
@@ -35,7 +36,7 @@
     
     <details class="bg-white/5 border border-white/10 rounded-2xl group mb-4">
       <summary class="p-5 font-display text-lg font-semibold cursor-pointer list-none flex justify-between items-center outline-none">
-        <span>⚙️ Kalender-Einstellungen einblenden</span>
+        <span><i data-icon="settings"></i> Kalender-Einstellungen einblenden</span>
         <span class="transform group-open:rotate-180 transition-transform">▼</span>
       </summary>
       <div class="p-5 pt-0 border-t border-white/10 mt-2 space-y-4">
@@ -71,7 +72,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="strictMode" name="strictMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="strictMode" class="text-sm text-slate-300">🔒 Strict Mode</label>
+                <label for="strictMode" class="text-sm text-slate-300"><i data-icon="lock"></i> Strict Mode</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Türchen lassen sich erst am jeweiligen Dezember-Tag öffnen. Verhindert vorzeitiges Spicken.</p>
             </div>
@@ -79,7 +80,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="randomLayout" class="text-sm text-slate-300">🔀 Zahlen mischen</label>
+                <label for="randomLayout" class="text-sm text-slate-300"><i data-icon="shuffle"></i> Zahlen mischen</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
             </div>
@@ -87,7 +88,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="snowfall" name="snowfall" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="snowfall" class="text-sm text-slate-300">❄️ Schneefall aktivieren</label>
+                <label for="snowfall" class="text-sm text-slate-300"><i data-icon="snowflake"></i> Schneefall aktivieren</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Lässt im Hintergrund des Kalenders dekorative Schneeflocken rieseln.</p>
             </div>
@@ -95,7 +96,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="rudiEnabled" name="rudiEnabled" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="rudiEnabled" class="text-sm text-slate-300">🦌 Rudi, das Rentier</label>
+                <label for="rudiEnabled" class="text-sm text-slate-300"><i data-icon="reindeer"></i> Rudi, das Rentier</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Zeigt Rudi in seinem Rentierstall unter dem Kalender. Er wacht mit jedem geöffneten Türchen weiter auf und lässt sich mit Artikeln aus dem Nordpol-Shop ausstatten. Deaktiviert verschwinden Stall und Shop.</p>
             </div>
@@ -103,7 +104,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="syncOpen" class="text-sm text-slate-300">👥 Multiplayer: Synchronisiertes Öffnen</label>
+                <label for="syncOpen" class="text-sm text-slate-300"><i data-icon="users"></i> Multiplayer: Synchronisiertes Öffnen</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Zwei Personen (oder mehr) müssen gleichzeitig auf das Türchen klicken, damit es sich öffnet.</p>
             </div>
@@ -111,7 +112,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="metaPuzzle" name="metaPuzzle" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="metaPuzzle" class="text-sm text-slate-300">🧩 Meta-Rätsel aktivieren</label>
+                <label for="metaPuzzle" class="text-sm text-slate-300"><i data-icon="puzzle"></i> Meta-Rätsel aktivieren</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Verteilt ein 23-stelliges Lösungswort automatisch über die ersten 23 Türchen. Das letzte Türchen fragt dieses Passwort ab.</p>
               <div id="metaPuzzleConfig" class="hidden mt-2 ml-6">
@@ -122,7 +123,7 @@
             <div class="hidden" id="company-mode-block">
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="companyMode" name="companyMode" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="companyMode" class="text-sm text-slate-300">🏢 Firmenmodus (Jeder Mitarbeitende hat seinen eigenen Fortschritt)</label>
+                <label for="companyMode" class="text-sm text-slate-300"><i data-icon="building-2"></i> Firmenmodus (Jeder Mitarbeitende hat seinen eigenen Fortschritt)</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Mitarbeitende melden sich beim ersten Besuch mit ihrer E-Mail-Adresse an. Der Fortschritt wird geräteübergreifend in der Datenbank gespeichert – nicht lokal. Angezeigt werden das Logo und der Firmenname aus deinen Kontoeinstellungen.</p>
             </div>
@@ -130,7 +131,7 @@
             <div class="hidden" id="community-canvas-block">
               <div class="flex items-center gap-2">
                 <input type="checkbox" id="communityCanvas" name="communityCanvas" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="communityCanvas" class="text-sm text-slate-300">🎨 Community-Leinwand</label>
+                <label for="communityCanvas" class="text-sm text-slate-300"><i data-icon="palette"></i> Community-Leinwand</label>
               </div>
               <p class="text-xs text-slate-500 mt-1 ml-6">Gemeinsames Pixelbild für das ganze Team: Pro geöffnetem Türchen erhält jede Person 10 Pixel, die live für alle sichtbar gesetzt werden.</p>
             </div>
@@ -150,7 +151,7 @@
                   <input type="hidden" id="calendarLogo" name="calendarLogo" />
                   <div id="logoPreview" class="hidden relative group w-12 h-12 rounded bg-white p-1">
                     <img id="logoPreviewImg" src="" class="w-full h-full object-contain" />
-                    <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                    <button type="button" id="removeLogoBtn" class="pro-feature-input absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"><i data-icon="x"></i></button>
                   </div>
                 </div>
               </div>
@@ -199,7 +200,7 @@
             <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl space-y-3">
               <div class="flex items-center gap-3">
                 <input type="checkbox" id="dailyReminderEnabled" name="dailyReminderEnabled" class="w-4 h-4 text-indigo-600 rounded bg-slate-900 border-white/10 focus:ring-indigo-500 focus:ring-2">
-                <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300">🔔 Automatische tägliche Push-Erinnerung</label>
+                <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300"><i data-icon="bell"></i> Automatische tägliche Push-Erinnerung</label>
               </div>
               <p class="text-xs text-slate-400 ml-7">Der Empfänger bekommt jeden Tag im Dezember (1–24) eine Push-Benachrichtigung, wenn das Türchen noch nicht geöffnet wurde. Nur aktiv, wenn der Empfänger Push-Benachrichtigungen erlaubt hat.</p>
               <div class="ml-7 flex items-center gap-3" id="reminderTimeRow">
@@ -213,14 +214,14 @@
 
         <div class="mt-8 pt-4 border-t border-white/10 flex items-center">
           <button type="submit" form="settings-form" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 transition-colors">Speichern</button>
-          <span id="settings-saved" class="hidden text-sm text-emerald-400 ml-2">Gespeichert ✓</span>
+          <span id="settings-saved" class="hidden text-sm text-emerald-400 ml-2">Gespeichert <i data-icon="check"></i></span>
         </div>
       </div>
     </details>
 
     <details class="bg-indigo-900/30 border border-indigo-500/50 rounded-2xl group mb-8">
       <summary class="p-5 font-display text-lg font-semibold text-indigo-300 cursor-pointer list-none flex justify-between items-center outline-none">
-        <span>Live Web-Push senden 🔔</span>
+        <span><i data-icon="bell"></i> Live Web-Push senden</span>
         <span class="transform group-open:rotate-180 transition-transform">▼</span>
       </summary>
       <div class="p-5 pt-0 border-t border-indigo-500/50 mt-2">
@@ -249,7 +250,7 @@
     <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-display text-xl font-semibold">Türchen <span id="modal-day"></span></h3>
-        <button id="modal-close" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
+        <button id="modal-close" class="text-slate-400 hover:text-white text-xl leading-none"><i data-icon="x"></i></button>
       </div>
 
       <label class="block text-sm text-slate-300 mb-1">Inhaltstyp</label>
@@ -263,7 +264,7 @@
       <div id="type-fields" class="space-y-3"></div>
 
       <div class="mt-6 pt-4 border-t border-white/10 space-y-3">
-        <h4 class="text-sm font-semibold text-slate-300">✨ Überraschungs-Effekte</h4>
+        <h4 class="text-sm font-semibold text-slate-300"><i data-icon="sparkles"></i> Überraschungs-Effekte</h4>
         <div class="flex items-center gap-2 mb-2">
           <input type="checkbox" id="f-isScratchable" class="w-4 h-4 rounded bg-slate-800 border-white/10 text-emerald-500 focus:ring-emerald-500" />
           <label for="f-isScratchable" class="text-sm text-slate-300 cursor-pointer">Aufrubbel-Effekt aktivieren (Inhalt ist verdeckt)</label>
@@ -275,7 +276,7 @@
       </div>
 
       <div class="mt-6 pt-4 border-t border-white/10 space-y-3">
-        <h4 class="text-sm font-semibold text-slate-300">🔒 Escape Room (Passwortschutz)</h4>
+        <h4 class="text-sm font-semibold text-slate-300"><i data-icon="lock"></i> Escape Room (Passwortschutz)</h4>
         <div>
           <label class="block text-sm text-slate-300 mb-1">Passwort-Schutz (optional)</label>
           <input type="text" id="f-lockPassword" class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2" placeholder="Geheimes Lösungswort..." />
@@ -388,7 +389,7 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
       <div class="mb-6 flex flex-col items-center">
-        <div class="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-3xl mb-4">🔗</div>
+        <div class="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-3xl mb-4"><i data-icon="link"></i></div>
         <h3 class="text-2xl font-bold text-white text-center">Wichtel-Link generiert!</h3>
         <p class="text-slate-400 text-center mt-2 text-sm">Schicke diesen Link an eine Person deiner Wahl. Sie kann dann ganz einfach dieses eine Türchen für dich befüllen (ohne Anmeldung!).</p>
       </div>

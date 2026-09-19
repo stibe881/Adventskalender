@@ -260,10 +260,10 @@ function renderDoorGrid() {
     btn.dataset.day = door.day;
     if (isBonus) btn.title = "Geheimes Türchen 25 – erscheint, sobald der Beschenkte 3 Freunde eingeladen hat. Ohne eigenen Inhalt wird ein Standard-Dankeschön gezeigt.";
     btn.innerHTML = `
-      <span class="text-lg">${meta ? meta.icon : isBonus ? "⭐" : "🚪"}</span>
+      <span class="text-lg">${meta ? meta.icon : isBonus ? icon("star") : icon("door-open")}</span>
       <span class="text-xs font-semibold">${isBonus ? "25 · Geheim" : door.day}</span>
-      ${door.opened ? '<span class="absolute top-1 right-1 text-[10px]" title="Bereits geöffnet">👁️</span>' : ""}
-      ${door.openedAt ? `<span class="absolute bottom-1 right-1 text-[8px] text-slate-400" title="Geöffnet am">🕒 ${new Date(door.openedAt).toLocaleDateString()}</span>` : ""}
+      ${door.opened ? '<span class="absolute top-1 right-1 text-[10px]" title="Bereits geöffnet"><i data-icon="eye"></i></span>' : ""}
+      ${door.openedAt ? `<span class="absolute bottom-1 right-1 text-[8px] text-slate-400" title="Geöffnet am"><i data-icon="clock"></i> ${new Date(door.openedAt).toLocaleDateString()}</span>` : ""}
     `;
     
     // Hover Preview Logic
@@ -454,7 +454,7 @@ function getSpecificPreviewMockup(type) {
     case "image":
     case "gallery":
       return `<div class="w-full aspect-video bg-slate-200 rounded-xl shadow-sm border border-slate-100 flex items-center justify-center">
-        <span class="text-4xl">🖼️</span>
+        <span class="text-4xl"><i data-icon="image"></i></span>
       </div>
       <div class="flex gap-2 mt-2 w-full justify-center">
         <div class="w-8 h-8 bg-slate-300 rounded-full"></div>
@@ -481,7 +481,7 @@ function getSpecificPreviewMockup(type) {
       return `<div class="w-full space-y-2">
         <div class="w-full h-10 bg-indigo-100 rounded-xl border border-indigo-200 flex items-center px-4"><div class="w-1/2 h-3 bg-indigo-300 rounded"></div></div>
         <div class="w-full h-10 bg-indigo-100 rounded-xl border border-indigo-200 flex items-center px-4"><div class="w-2/3 h-3 bg-indigo-300 rounded"></div></div>
-        <div class="w-full h-10 bg-emerald-100 rounded-xl border border-emerald-400 flex items-center px-4"><div class="w-1/3 h-3 bg-emerald-500 rounded"></div><span class="ml-auto text-emerald-600">✓</span></div>
+        <div class="w-full h-10 bg-emerald-100 rounded-xl border border-emerald-400 flex items-center px-4"><div class="w-1/3 h-3 bg-emerald-500 rounded"></div><span class="ml-auto text-emerald-600"><i data-icon="check"></i></span></div>
         <div class="w-full h-10 bg-indigo-100 rounded-xl border border-indigo-200 flex items-center px-4"><div class="w-1/2 h-3 bg-indigo-300 rounded"></div></div>
       </div>`;
     case "scratchcard":
@@ -492,12 +492,12 @@ function getSpecificPreviewMockup(type) {
       </div>`;
     case "memory":
       return `<div class="w-full grid grid-cols-4 gap-2">
-        ${Array(8).fill(0).map((_, i) => `<div class="aspect-square rounded-lg ${i===2 || i===5 ? 'bg-emerald-400 border-2 border-emerald-500' : 'bg-indigo-500 border-b-4 border-indigo-700'} flex items-center justify-center text-white text-xl">${i===2||i===5 ? '🌟' : '?'}</div>`).join('')}
+        ${Array(8).fill(0).map((_, i) => `<div class="aspect-square rounded-lg ${i===2 || i===5 ? 'bg-emerald-400 border-2 border-emerald-500' : 'bg-indigo-500 border-b-4 border-indigo-700'} flex items-center justify-center text-white text-xl">${i===2||i===5 ? icon('star') : '?'}</div>`).join('')}
       </div>`;
     case "catcher":
       return `<div class="w-full h-40 bg-sky-100 rounded-xl shadow-inner relative overflow-hidden border border-sky-200">
-        <div class="absolute top-4 left-1/4 text-2xl animate-bounce">🎁</div>
-        <div class="absolute top-12 right-1/3 text-2xl animate-bounce" style="animation-delay: 0.2s">❄️</div>
+        <div class="absolute top-4 left-1/4 text-2xl animate-bounce"><i data-icon="gift"></i></div>
+        <div class="absolute top-12 right-1/3 text-2xl animate-bounce" style="animation-delay: 0.2s"><i data-icon="snowflake"></i></div>
         <div class="absolute bottom-2 left-1/3 w-16 h-8 bg-red-500 rounded-t-xl border-x-4 border-t-4 border-red-700 flex justify-center"><div class="w-12 h-2 bg-red-800 rounded-full mt-1"></div></div>
       </div>`;
     case "puzzle":
@@ -508,12 +508,12 @@ function getSpecificPreviewMockup(type) {
       return `<div class="w-full aspect-square bg-slate-800 rounded-xl relative overflow-hidden flex items-center justify-center">
         <div class="absolute inset-0 opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTAgMEwyMCAyME0yMCAwTDAgMjAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIwLjUiPjwvcGF0aD48L3N2Zz4=')]"></div>
         <div class="w-24 h-24 border-2 border-emerald-500 rounded-lg absolute animate-pulse"></div>
-        <div class="text-5xl drop-shadow-xl transform hover:scale-110 transition-transform">🦖</div>
+        <div class="text-5xl drop-shadow-xl transform hover:scale-110 transition-transform"><i data-icon="box"></i></div>
         <div class="absolute bottom-2 text-[10px] text-white/50 bg-black/50 px-2 py-1 rounded-full">AR Ansicht</div>
       </div>`;
     case "product":
       return `<div class="w-full bg-white rounded-xl shadow-md border border-slate-100 overflow-hidden flex flex-col">
-        <div class="h-24 bg-slate-200 flex items-center justify-center text-3xl">👟</div>
+        <div class="h-24 bg-slate-200 flex items-center justify-center text-3xl"><i data-icon="footprints"></i></div>
         <div class="p-3 text-left">
           <div class="w-3/4 h-3 bg-slate-800 rounded mb-2"></div>
           <div class="flex items-end gap-2"><div class="w-1/3 h-4 bg-emerald-600 rounded"></div><div class="w-1/4 h-3 bg-slate-400 rounded line-through"></div></div>
@@ -532,7 +532,7 @@ function getSpecificPreviewMockup(type) {
     case "spotify-collab":
       return `<div class="w-full bg-zinc-900 rounded-xl p-4 flex flex-col gap-3 border border-zinc-800">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-black text-xl">♫</div>
+          <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-black text-xl"><i data-icon="music"></i></div>
           <div class="flex-1 space-y-2"><div class="w-3/4 h-3 bg-zinc-100 rounded-full"></div><div class="w-1/2 h-2 bg-zinc-400 rounded-full"></div></div>
         </div>
         <div class="w-full h-8 bg-zinc-800 rounded-full flex items-center px-3"><div class="w-4 h-4 rounded-full bg-zinc-500 mr-2"></div><div class="w-1/3 h-2 bg-zinc-600 rounded"></div></div>
@@ -542,7 +542,7 @@ function getSpecificPreviewMockup(type) {
         <div class="absolute -left-3 -top-3 w-8 h-8 bg-white rounded-full"></div>
         <div class="absolute -right-3 -top-3 w-8 h-8 bg-white rounded-full"></div>
         <div class="text-amber-800 font-black text-2xl uppercase tracking-widest border-y-2 border-amber-600 py-2">GUTSCHEIN</div>
-        <div class="mt-4 text-4xl">🎫</div>
+        <div class="mt-4 text-4xl"><i data-icon="ticket"></i></div>
       </div>`;
     case "qrcode":
       return `<div class="w-full aspect-square max-w-[200px] bg-white p-4 rounded-xl shadow-md flex items-center justify-center border-4 border-slate-900 mx-auto">
@@ -550,7 +550,7 @@ function getSpecificPreviewMockup(type) {
       </div>`;
     case "challenge":
       return `<div class="w-full bg-rose-100 p-6 rounded-xl border border-rose-300 text-center">
-        <div class="text-4xl mb-3">🎯</div>
+        <div class="text-4xl mb-3"><i data-icon="target"></i></div>
         <div class="w-5/6 h-5 bg-rose-200 rounded mx-auto mb-4"></div>
         <div class="w-full h-10 bg-rose-500 rounded-lg shadow-md flex items-center justify-center text-white font-bold">Aufgabe erledigt!</div>
       </div>`;
@@ -558,20 +558,20 @@ function getSpecificPreviewMockup(type) {
       return `<div class="w-full aspect-video bg-emerald-100 rounded-xl relative overflow-hidden border border-emerald-300 flex items-center justify-center">
         <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PHBhdGggZD0iTTAgMEwyMCAyME0yMCAwTDAgMjAiIHN0cm9rZT0iIzA1OTY2OSIgc3Ryb2tlLXdpZHRoPSIwLjUiPjwvcGF0aD48L3N2Zz4=')]"></div>
         <div class="w-32 h-32 border-4 border-emerald-500 rounded-full absolute animate-ping opacity-30"></div>
-        <div class="text-5xl drop-shadow-xl z-10 text-emerald-600">📍</div>
+        <div class="text-5xl drop-shadow-xl z-10 text-emerald-600"><i data-icon="map-pin"></i></div>
       </div>`;
     case "giveaway":
       return `<div class="w-full bg-indigo-600 p-6 rounded-xl text-center text-white relative overflow-hidden shadow-lg border-2 border-indigo-400">
-        <div class="absolute -top-10 -right-10 text-8xl opacity-10">🍀</div>
+        <div class="absolute -top-10 -right-10 text-8xl opacity-10"><i data-icon="clover"></i></div>
         <h3 class="font-black text-2xl mb-2 text-indigo-100 uppercase italic">GEWINNSPIEL</h3>
         <div class="w-full h-10 bg-white/20 rounded-lg mb-2 flex items-center px-3"><div class="w-1/2 h-3 bg-white/40 rounded"></div></div>
         <div class="w-full h-10 bg-white rounded-lg text-indigo-800 font-bold flex items-center justify-center">Jetzt teilnehmen</div>
       </div>`;
     case "coins":
       return `<div class="w-full h-32 bg-yellow-100 rounded-xl border border-yellow-300 flex flex-col items-center justify-center relative shadow-inner">
-        <div class="absolute top-2 right-2 text-xl animate-bounce" style="animation-delay: 0.1s">🪙</div>
-        <div class="absolute bottom-4 left-4 text-2xl animate-bounce" style="animation-delay: 0.3s">🪙</div>
-        <div class="text-5xl drop-shadow-lg z-10">💰</div>
+        <div class="absolute top-2 right-2 text-xl animate-bounce" style="animation-delay: 0.1s"><i data-icon="coins"></i></div>
+        <div class="absolute bottom-4 left-4 text-2xl animate-bounce" style="animation-delay: 0.3s"><i data-icon="coins"></i></div>
+        <div class="text-5xl drop-shadow-lg z-10"><i data-icon="wallet"></i></div>
         <div class="font-black text-yellow-700 text-lg mt-2">+50 Münzen</div>
       </div>`;
     case "diary":
@@ -598,12 +598,12 @@ function getSpecificPreviewMockup(type) {
     case "timecapsule":
       return `<div class="w-full h-40 bg-purple-900 rounded-xl border border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)] flex flex-col items-center justify-center relative overflow-hidden">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-600/30 to-transparent opacity-50 animate-pulse"></div>
-        <div class="text-5xl z-10 drop-shadow-xl mb-2">⏳</div>
+        <div class="text-5xl z-10 drop-shadow-xl mb-2"><i data-icon="hourglass"></i></div>
         <div class="w-3/4 h-8 bg-black/40 backdrop-blur rounded-lg border border-purple-500/50 flex items-center justify-center text-purple-200 font-mono text-sm font-bold">Öffnet in 365 Tagen</div>
       </div>`;
     case "printplay":
       return `<div class="w-full aspect-[3/4] max-h-[250px] bg-white mx-auto rounded shadow-lg border border-slate-200 flex flex-col p-4">
-        <div class="w-full h-1/2 border-2 border-dashed border-slate-300 rounded flex items-center justify-center mb-3">✂️</div>
+        <div class="w-full h-1/2 border-2 border-dashed border-slate-300 rounded flex items-center justify-center mb-3"><i data-icon="scissors"></i></div>
         <div class="w-full h-3 bg-slate-200 rounded mb-2"></div>
         <div class="w-3/4 h-3 bg-slate-200 rounded mb-4"></div>
         <div class="w-full h-8 bg-slate-800 rounded mt-auto text-white flex items-center justify-center text-xs font-bold">PDF HERUNTERLADEN</div>
@@ -611,7 +611,7 @@ function getSpecificPreviewMockup(type) {
     case "iot-box":
       return `<div class="w-full bg-slate-800 rounded-xl p-6 shadow-inner border border-slate-700 text-center relative">
         <div class="absolute top-4 right-4 w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
-        <div class="text-6xl mb-4 drop-shadow-lg">🧰</div>
+        <div class="text-6xl mb-4 drop-shadow-lg"><i data-icon="wrench"></i></div>
         <div class="w-full h-10 bg-blue-600 rounded-lg text-white font-bold flex items-center justify-center gap-2"><span>Bluetooth verbinden</span></div>
       </div>`;
     default:
@@ -758,7 +758,7 @@ function attachDropzone(id, onFiles, acceptsPdf = false) {
     
     const statusText = dropzone.querySelector("p.text-sm");
     const prevText = statusText.textContent;
-    statusText.textContent = "Lade hoch... ⏳";
+    statusText.textContent = "Lade hoch…";
     
     await onFiles(fileArray);
     
@@ -825,7 +825,7 @@ function renderSpotifyLog(log) {
   const rows = log
     .map((e) => {
       const time = new Date(e.at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-      return `<li class="${e.ok ? "text-emerald-300" : "text-rose-300"}">${e.ok ? "✓" : "✗"} ${time} · ${escapeHtml(e.track)}${e.ok ? "" : ` – ${escapeHtml(e.reason)}`}</li>`;
+      return `<li class="${e.ok ? "text-emerald-300" : "text-rose-300"}">${e.ok ? icon("check") : icon("circle-x")} ${time} · ${escapeHtml(e.track)}${e.ok ? "" : ` – ${escapeHtml(e.reason)}`}</li>`;
     })
     .join("");
   return `<details class="mt-3 text-xs"><summary class="cursor-pointer text-slate-400">Letzte Übertragungen (${log.length})</summary><ul class="mt-2 space-y-1 font-mono">${rows}</ul></details>`;
@@ -894,12 +894,12 @@ async function loadSpotifyStatus() {
     try {
       const r = await api.spotifyCheck(calendarId, playlistUrl);
       if (r.ok) {
-        out.innerHTML = `<span class="text-emerald-300">✓ Schreibzugriff auf „${escapeHtml(r.playlist.name)}“ (${r.playlist.tracks} Songs, Besitzer: ${escapeHtml(r.playlist.owner)}) als ${escapeHtml(r.account.displayName)}.</span>`;
+        out.innerHTML = `<span class="text-emerald-300"><i data-icon="check"></i> Schreibzugriff auf „${escapeHtml(r.playlist.name)}“ (${r.playlist.tracks} Songs, Besitzer: ${escapeHtml(r.playlist.owner)}) als ${escapeHtml(r.account.displayName)}.</span>`;
       } else {
-        out.innerHTML = `<span class="text-rose-300">✗ ${escapeHtml(r.problem)}</span>`;
+        out.innerHTML = `<span class="text-rose-300"><i data-icon="circle-x"></i> ${escapeHtml(r.problem)}</span>`;
       }
     } catch (err) {
-      out.innerHTML = `<span class="text-rose-300">✗ ${escapeHtml(err.message)}</span>`;
+      out.innerHTML = `<span class="text-rose-300"><i data-icon="circle-x"></i> ${escapeHtml(err.message)}</span>`;
     }
   });
   const syncBtn = document.getElementById("spotify-sync");
@@ -1146,10 +1146,10 @@ function renderVideoFields(c) {
           stream.getTracks().forEach(t => t.stop());
         };
         mediaRecorder.start();
-        recBtn.textContent = "Aufnahme stoppen ⏹";
+        recBtn.innerHTML = `<i data-icon="square"></i> Aufnahme stoppen`;
         recBtn.classList.replace("bg-rose-600", "bg-emerald-600");
         recBtn.classList.replace("hover:bg-rose-500", "hover:bg-emerald-500");
-        recStatus.textContent = "Nimmt auf... 🔴";
+        recStatus.innerHTML = `<i data-icon="circle-dot" class="text-rose-500"></i> Nimmt auf…`;
       } catch (err) {
         alert("Kamera konnte nicht gestartet werden: " + err.message);
       }
@@ -1238,10 +1238,10 @@ function renderAudioFields(c) {
           stream.getTracks().forEach(t => t.stop());
         };
         mediaRecorder.start();
-        recBtn.textContent = "Aufnahme stoppen ⏹";
+        recBtn.innerHTML = `<i data-icon="square"></i> Aufnahme stoppen`;
         recBtn.classList.replace("bg-rose-600", "bg-emerald-600");
         recBtn.classList.replace("hover:bg-rose-500", "hover:bg-emerald-500");
-        recStatus.textContent = "Nimmt auf... 🔴";
+        recStatus.innerHTML = `<i data-icon="circle-dot" class="text-rose-500"></i> Nimmt auf…`;
       } catch (err) {
         alert("Mikrofon konnte nicht gestartet werden: " + err.message);
       }
@@ -1280,7 +1280,7 @@ function renderGalleryPreview() {
     wrap.className = "relative";
     wrap.innerHTML = `
       <img src="${url}" class="w-16 h-16 object-cover rounded-lg border border-white/10" />
-      <button type="button" class="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 text-xs leading-none">✕</button>
+      <button type="button" class="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 text-xs leading-none"><i data-icon="x"></i></button>
     `;
     wrap.querySelector("button").addEventListener("click", () => {
       currentContent.images.splice(idx, 1);
@@ -1316,7 +1316,7 @@ function renderQuizFields(c) {
     fieldWrap("Nachricht bei richtiger Antwort", `<textarea id="f-successMessage" rows="2" class="${inputClass}">${escapeHtml(c.successMessage)}</textarea>`) +
     fieldWrap("Nachricht bei falscher Antwort", `<textarea id="f-failMessage" rows="2" class="${inputClass}">${escapeHtml(c.failMessage)}</textarea>`) +
     `<div class="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3">
-      <p class="text-sm font-semibold text-amber-300">🏆 Preis für die richtige Antwort (optional)</p>
+      <p class="text-sm font-semibold text-amber-300"><i data-icon="trophy"></i> Preis für die richtige Antwort (optional)</p>
       ${fieldWrap('Preis-Beschreibung (z. B. "Ein Glas selbstgemachte Marmelade!")', `<input id="f-prizeText" value="${escapeHtml(c.prizeText)}" class="${inputClass}" placeholder="Leer lassen = kein Preis anzeigen" />`)}
       ${fieldWrap("Bonus-Münzen bei richtiger Antwort (0 = keine)", `<input id="f-prizeCoins" type="number" min="0" max="1000" value="${c.prizeCoins ?? 0}" class="${inputClass}" />`)}
     </div>`;
@@ -1507,7 +1507,7 @@ if (wBtn) {
       const copyHandler = async () => {
         await navigator.clipboard.writeText(res.url);
         const span = copyBtn.querySelector("span");
-        span.textContent = "Kopiert! ✓";
+        span.textContent = "Kopiert!";
         setTimeout(() => span.textContent = "Kopieren", 2000);
       };
       

@@ -47,8 +47,8 @@ async function loadGroups() {
         <span class="text-[11px] font-semibold px-2 py-1 rounded-full ${st.cls}">${st.text}</span>
       </div>
       <div class="flex items-center gap-4 mt-4 text-sm text-slate-300">
-        <span>👥 ${g.participantCount} Teilnehmende</span>
-        ${g.pendingCount ? `<span class="text-amber-300">⏳ ${g.pendingCount} im Warteraum</span>` : ""}
+        <span><i data-icon="users"></i> ${g.participantCount} Teilnehmende</span>
+        ${g.pendingCount ? `<span class="text-amber-300"><i data-icon="hourglass"></i> ${g.pendingCount} im Warteraum</span>` : ""}
       </div>
       ${g.deleteAt ? `<p class="text-[11px] text-slate-500 mt-3">Automatische Löschung am ${new Date(g.deleteAt).toLocaleDateString("de-DE")}</p>` : ""}`;
     list.appendChild(card);

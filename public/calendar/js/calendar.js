@@ -11,7 +11,7 @@ async function resolveRouteId() {
     if (data.token) {
       routeId = data.token;
     } else {
-      document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0a1a;color:#fff;font-family:sans-serif;text-align:center;padding:2rem;"><div><h1 style="font-size:2rem;margin-bottom:1rem">🎄 Kalender nicht gefunden</h1><p style="color:#94a3b8;">Diese Domain ist keinem Adventskalender zugeordnet.</p></div></div>`;
+      document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0a1a;color:#fff;font-family:sans-serif;text-align:center;padding:2rem;"><div><h1 style="font-size:2rem;margin-bottom:1rem">Kalender nicht gefunden</h1><p style="color:#94a3b8;">Diese Domain ist keinem Adventskalender zugeordnet.</p></div></div>`;
     }
   } catch (e) {
     console.error("Custom domain resolution failed:", e);
@@ -205,7 +205,7 @@ async function init() {
       document.getElementById("app-root").innerHTML = `
         <div class="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
           <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl p-6 text-center border border-white/10">
-            <div class="text-5xl mb-4">🔒</div>
+            <div class="text-5xl mb-4"><i data-icon="lock"></i></div>
             <h1 class="text-xl font-bold mb-2">Passwort erforderlich</h1>
             <p class="text-sm text-slate-400 mb-6">Dieser Kalender ist durch ein Passwort geschützt.</p>
             <form id="pwd-form" class="flex flex-col gap-3">
@@ -389,7 +389,7 @@ function renderFatalError(err) {
     <div class="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-white">
       <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-rose-500/30 text-center">
         <div class="bg-rose-500/10 p-6 border-b border-rose-500/30">
-          <div class="text-6xl mb-2 text-rose-500">❌</div>
+          <div class="text-6xl mb-2 text-rose-500"><i data-icon="circle-x"></i></div>
           <h1 class="text-2xl font-black text-rose-400">Ein Fehler ist aufgetreten</h1>
         </div>
         <div class="p-6">
@@ -545,7 +545,7 @@ function initPet(streak = calendarMeta?.streak || 0) {
   } else {
     emoji.textContent = `${worn}🦌✨`;
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
-    petEl.title = `Rudi: On Fire! 🔥 ${activityText}`;
+    petEl.title = `Rudi: On Fire! ${activityText}`;
   }
 
   // Shrink the row when Rudi wears several things so he still fits in the stall.
@@ -601,7 +601,7 @@ function renderShop() {
             <span class="block text-xs text-amber-700/80 truncate">${owned && action ? action.label : item.desc}</span>
           </span>
         </span>
-        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? "▶ Benutzen" : `${item.price} 🪙`}</span>
+        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? `${icon("play")} Benutzen` : `${item.price} ${icon("coins")}`}</span>
       </button>`;
   }).join("");
 }
@@ -794,7 +794,7 @@ window.buyItem = function(itemId) {
   // The admin preview has unlimited coins so every item can be tried out.
   if (!isPreview) {
     if (userCoins < item.price) {
-      alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} 🪙.`);
+      alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} Münzen.`);
       return;
     }
     userCoins -= item.price;
@@ -948,7 +948,7 @@ function initGlobalAudioPlayer() {
   playBtn.onclick = () => {
     if (audioEl.paused) {
       audioEl.play();
-      playBtn.textContent = "⏸️";
+      playBtn.innerHTML = icon("pause");
     } else {
       audioEl.pause();
       playBtn.textContent = "▶️";
@@ -990,7 +990,7 @@ function renderFatalError(err) {
   document.getElementById("app-root").innerHTML = `
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px">
       <div>
-        <div style="font-size:3rem;margin-bottom:12px">🔒</div>
+        <div style="font-size:3rem;margin-bottom:12px"><i data-icon="lock"></i></div>
         <h1 class="modal-title" style="margin-bottom:8px">${err.status === 401 ? "Bitte anmelden" : "Kalender nicht gefunden"}</h1>
         <p class="modal-muted">${err.status === 401 ? "Diese Vorschau ist nur für den Schenker sichtbar." : "Der Link ist ungültig oder der Kalender wurde entfernt."}</p>
         ${err.status === 401 ? '<a href="/admin/" style="display:inline-block;margin-top:16px;padding:8px 16px;background:#151515;color:#fff;border-radius:6px;text-decoration:none">Zum Login</a>' : ""}
@@ -1036,7 +1036,7 @@ function showCorporateLoginModal(meta = {}) {
       <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:${escapeHtml(accent)};"></div>
       ${logo
         ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(company)}" style="max-height:72px;max-width:220px;object-fit:contain;margin:4px auto 18px;display:block;">`
-        : `<div style="font-size:3rem;margin-bottom:12px;">🏢</div>`}
+        : `<div style="font-size:3rem;margin-bottom:12px;"><i data-icon="building-2"></i></div>`}
       <h2 style="font-size:1.5rem;font-weight:900;margin:0 0 8px;">Willkommen!</h2>
       <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.5;margin:0 0 20px;">Dies ist der Firmen-Adventskalender${company ? ` von <strong style="color:#fff;">${escapeHtml(company)}</strong>` : ""}. Melde dich mit deiner E-Mail-Adresse an um mitzumachen.<br>Wir wünschen dir eine besinnliche Adventszeit.</p>
       <form id="corp-login-form" novalidate style="display:flex;flex-direction:column;gap:12px;">
@@ -1248,13 +1248,13 @@ async function handleDoorClick(dayNum, sceneEl) {
   let requestBody = {};
   
   if (dayNum === 24 && calendarMeta.metaPuzzle && !isPreview) {
-    const pwd = prompt(`🔐 Das 24. Türchen ist durch das Meta-Rätsel versiegelt!\n\nSetze alle Buchstaben aus den Tagen 1-23 zusammen.\n\nPasswort eingeben:`);
+    const pwd = prompt(`Das 24. Türchen ist durch das Meta-Rätsel versiegelt!\n\nSetze alle Buchstaben aus den Tagen 1-23 zusammen.\n\nPasswort eingeben:`);
     if (!pwd) return;
     requestBody.metaPassword = pwd;
   }
 
   if (door.isLocked) {
-    const pwd = prompt(`🔒 Dieses Türchen ist durch ein Passwort geschützt!\n\nHinweis: ${door.lockHint || 'Kein Hinweis'}\n\nPasswort eingeben:`);
+    const pwd = prompt(`Dieses Türchen ist durch ein Passwort geschützt!\n\nHinweis: ${door.lockHint || 'Kein Hinweis'}\n\nPasswort eingeben:`);
     if (!pwd) return;
     requestBody.password = pwd;
   }
@@ -1339,7 +1339,7 @@ async function promptVoiceLock(doorEl) {
     modal.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4";
     modal.innerHTML = `
       <div class="bg-slate-900 border border-indigo-500/50 rounded-2xl p-6 text-center max-w-sm w-full">
-        <div class="text-6xl mb-4">🎤</div>
+        <div class="text-6xl mb-4"><i data-icon="mic"></i></div>
         <h3 class="text-xl font-bold text-white mb-2">Voice-Unlock aktiv!</h3>
         <p class="text-slate-300 mb-6 text-sm">Puste ins Mikrofon oder singe einen Weihnachtssong für 3 Sekunden, um das Türchen zu öffnen.</p>
         <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden mb-6 border border-white/10">
@@ -1545,7 +1545,7 @@ async function promptGeoAR(doorEl, lat, lon) {
       modal.innerHTML = `
         <h3 class="text-white text-xl font-bold mb-4 absolute top-10 text-center w-full">Fange das Geschenk!<br><span class="text-sm font-normal text-slate-300">Drehe dein Handy, um es zu finden.</span></h3>
         <div class="relative w-full h-full overflow-hidden">
-          <div id="ar-target" class="absolute text-6xl cursor-pointer transition-transform transform -translate-x-1/2 -translate-y-1/2" style="left:50%; top:50%;">🎁</div>
+          <div id="ar-target" class="absolute text-6xl cursor-pointer transition-transform transform -translate-x-1/2 -translate-y-1/2" style="left:50%; top:50%;"><i data-icon="gift"></i></div>
         </div>
         <button id="ar-cancel" class="absolute bottom-10 bg-slate-800 text-white px-6 py-2 rounded-full">Abbrechen</button>
       `;
@@ -1781,7 +1781,7 @@ function setupFeedback(dayNum) {
   newVoiceBtn.addEventListener("click", async () => {
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.stop();
-      newVoiceBtn.innerHTML = "🎙 Antworten";
+      newVoiceBtn.innerHTML = `${icon("mic")} Antworten`;
       newVoiceBtn.classList.replace("bg-emerald-600/20", "bg-rose-600/20");
       newVoiceBtn.classList.replace("text-emerald-500", "text-rose-500");
       showLockToast("Wird gesendet...");
@@ -1808,7 +1808,7 @@ function setupFeedback(dayNum) {
           stream.getTracks().forEach(t => t.stop());
         };
         mediaRecorder.start();
-        newVoiceBtn.innerHTML = "⏹ Stopp & Senden";
+        newVoiceBtn.innerHTML = `${icon("square")} Stopp & Senden`;
         newVoiceBtn.classList.replace("bg-rose-600/20", "bg-emerald-600/20");
         newVoiceBtn.classList.replace("text-rose-500", "text-emerald-500");
       } catch (err) {
@@ -1844,7 +1844,7 @@ function openLeaderboardModal() {
               <div class="text-xs text-slate-400">${escapeHtml(entry.game)}</div>
             </div>
           </div>
-          <div class="font-bold text-lg text-emerald-400">${entry.score} 🪙</div>
+          <div class="font-bold text-lg text-emerald-400">${entry.score} ${icon("coins")}</div>
         </div>
       `).join("")}
     </div>`;
@@ -1864,7 +1864,7 @@ function openLeaderboardModal() {
 
   modalBody.innerHTML = cardWrap(
     "coins",
-    "🏆 Top 10 Rangliste",
+    "Top 10 Rangliste",
     `${rows}
      ${nameForm}
      <div class="mt-6 text-center">
@@ -1900,7 +1900,7 @@ function openLeaderboardModal() {
     try {
       const res = await fetchJson('/api/global-stats');
       const resEl = document.getElementById("global-stats-result");
-      resEl.textContent = `Weltweit wurden bereits ${res.totalOpened} Türchen geöffnet! 🌍`;
+      resEl.textContent = `Weltweit wurden bereits ${res.totalOpened} Türchen geöffnet!`;
       resEl.classList.remove("hidden");
     } catch (e) {
       console.error(e);
@@ -2019,7 +2019,7 @@ function renderContent(type, c, dayNum) {
         <p id="quiz-result" class="quiz-result hidden"></p>
         ${c.prizeText ? `
         <div id="quiz-prize" class="quiz-prize hidden">
-          <div class="quiz-prize-icon">🏆</div>
+          <div class="quiz-prize-icon"><i data-icon="trophy"></i></div>
           <div class="quiz-prize-text">${escapeHtml(c.prizeText)}</div>
           ${c.prizeCoins ? `<div class="quiz-prize-coins">+${c.prizeCoins} Münzen</div>` : ''}
         </div>` : ''}`
@@ -2117,7 +2117,7 @@ function renderContent(type, c, dayNum) {
            <canvas id="catcher-canvas" style="width:100%;height:100%;display:block;"></canvas>
            <div id="catcher-score" style="position:absolute;top:10px;left:10px;font-weight:bold;color:white;font-size:1.2rem;">0 / ${c.targetScore}</div>
          </div>
-         <p id="catcher-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">Gewonnen! 🎉</p>`
+         <p id="catcher-success" class="modal-muted hidden mt-4" style="color: #10b981; font-weight: bold;">Gewonnen! <i data-icon="party-popper"></i></p>`
       );
 
     case "product":
@@ -2131,7 +2131,7 @@ function renderContent(type, c, dayNum) {
              ${c.oldPrice ? `<span style="color: #ef4444; text-decoration: line-through; font-size: 1rem;">${escapeHtml(c.oldPrice)} CHF</span>` : ''}
              ${c.newPrice ? `<span style="font-size: 1.75rem; font-weight: 900; color: #10b981;">${escapeHtml(c.newPrice)} CHF</span>` : ''}
            </div>
-           ${c.discount ? `<div style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 2px dashed rgba(99, 102, 241, 0.5); font-family: monospace; padding: 8px 16px; border-radius: 8px; margin-bottom: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;"><span>🏷️</span> ${escapeHtml(c.discount)}</div>` : ''}
+           ${c.discount ? `<div style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: 2px dashed rgba(99, 102, 241, 0.5); font-family: monospace; padding: 8px 16px; border-radius: 8px; margin-bottom: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;"><span><i data-icon="tag"></i></span> ${escapeHtml(c.discount)}</div>` : ''}
            ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" style="width: 100%; text-align: center; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; padding: 14px 24px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">Zum Shop <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></a>` : ''}
          </div>`
       );
@@ -2163,7 +2163,7 @@ function renderContent(type, c, dayNum) {
         "coins",
         "Münz-Schatz gefunden!",
         `<div style="text-align: center; padding: 32px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.3);">
-          <div style="font-size: 3.75rem; margin-bottom: 16px;">🪙</div>
+          <div style="font-size: 3.75rem; margin-bottom: 16px;"><i data-icon="coins"></i></div>
           <h3 style="font-size: 1.5rem; font-weight: 900; color: #f59e0b; margin-bottom: 8px;">+${escapeHtml(c.coinAmount || 50)} Münzen</h3>
           <p class="modal-muted">Du kannst diese Münzen oben rechts im Nordpol-Shop ausgeben!</p>
          </div>`
@@ -2175,10 +2175,10 @@ function renderContent(type, c, dayNum) {
       let html = `<p class="modal-muted mb-4" style="text-align: center; margin-bottom: 24px; font-size: 1.1rem; font-style: italic;">${escapeHtml(c.diaryQuestion)}</p>
          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; margin: 0 auto;">
            <textarea id="diary-ans-${dayNum}" rows="4" placeholder="Deine Antwort..." style="width: 100%; padding: 16px; border-radius: 12px; border: 2px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--modal-text); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--modal-accent)'" onblur="this.style.borderColor='rgba(128,128,128,0.2)'">${escapeHtml(savedAns)}</textarea>
-           <button onclick="saveDiary(${dayNum})" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Eintrag speichern ✍🏽</button>`;
+           <button onclick="saveDiary(${dayNum})" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><i data-icon="pen-line"></i> Eintrag speichern</button>`;
       
       if (dayNum === 24) {
-        html += `<button onclick="printDiaryPdf()" style="width: 100%; padding: 16px; border-radius: 12px; border: 2px dashed var(--modal-accent); background: transparent; color: var(--modal-text); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='transparent'"><span>🖨️</span> Gesamtes Tagebuch drucken</button>`;
+        html += `<button onclick="printDiaryPdf()" style="width: 100%; padding: 16px; border-radius: 12px; border: 2px dashed var(--modal-accent); background: transparent; color: var(--modal-text); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='transparent'"><span><i data-icon="printer"></i></span> Gesamtes Tagebuch drucken</button>`;
       }
       
       html += `</div>`;
@@ -2191,7 +2191,7 @@ function renderContent(type, c, dayNum) {
         escapeHtml(c.ppTitle || "Spielteil"),
         `<div class="text-center">
            <img src="${escapeHtml(c.ppImage)}" class="w-full max-w-sm mx-auto rounded-xl border-4 border-white/20 mb-4" />
-           <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl w-full shadow-lg">🖨️ Ausdrucken (Print & Play)</button>
+           <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl w-full shadow-lg"><i data-icon="printer"></i> Ausdrucken (Print & Play)</button>
          </div>`
       );
     }
@@ -2199,17 +2199,17 @@ function renderContent(type, c, dayNum) {
     case "timecapsule": {
       return cardWrap(
         "timecapsule",
-        "Zeitreise ins nächste Jahr ⏳",
+        "Zeitreise ins nächste Jahr",
         `<p class="modal-muted mb-4">Hinterlasse eine Nachricht für dich selbst. Wir speichern sie sicher und erinnern dich nächstes Jahr am 1. Dezember daran!</p>
          <textarea id="tc-msg" rows="4" class="w-full bg-slate-800 border border-white/10 rounded-xl p-3 text-white mb-4" placeholder="Liebes Zukunfts-Ich..."></textarea>
-         <button onclick="saveTimeCapsule(${dayNum})" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-colors">Nachricht in die Zukunft senden 🚀</button>`
+         <button onclick="saveTimeCapsule(${dayNum})" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-colors"><i data-icon="rocket"></i> Nachricht in die Zukunft senden</button>`
       );
     }
 
     case "duel": {
       return cardWrap(
         "duel",
-        "Schneeball-Duell! ⛄",
+        "Schneeball-Duell!",
         `<div id="duel-ui" class="text-center p-6 bg-blue-900/30 rounded-2xl border border-blue-500/30">
           <p class="mb-4 text-blue-200">Suche Gegner für ein Live-Duell...</p>
           <div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -2221,10 +2221,10 @@ function renderContent(type, c, dayNum) {
     case "iot-box": {
       return cardWrap(
         "iot-box",
-        "Die physische Schatztruhe 📦",
+        "Die physische Schatztruhe",
         `<div id="iot-ui" style="text-align: center; padding: 24px; background: rgba(128,128,128,0.1); border-radius: 16px; border: 1px solid rgba(128,128,128,0.2);">
           <p class="modal-muted" style="margin-bottom: 16px;">Dieser Inhalt ist an eine echte Bluetooth-Schatzkiste gekoppelt!</p>
-          <div style="font-size: 3.75rem; margin-bottom: 24px;">🧲</div>
+          <div style="font-size: 3.75rem; margin-bottom: 24px;"><i data-icon="magnet"></i></div>
           <button onclick="connectIotBox()" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: #0ea5e9; color: #fff; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             <span>Bluetooth Scanner starten</span>
           </button>
@@ -2237,7 +2237,7 @@ function renderContent(type, c, dayNum) {
       const hasAdded = localStorage.getItem(`spotify_${routeId}_${dayNum}`) === "true";
       
       let html = `<div style="background: rgba(0,0,0,0.5); padding: 24px; border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); color: #fff;">
-        <h3 style="font-size: 1.25rem; font-weight: bold; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span>🎵</span> Familien-Playlist</h3>`;
+        <h3 style="font-size: 1.25rem; font-weight: bold; color: #4ade80; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;"><span><i data-icon="music"></i></span> Familien-Playlist</h3>`;
         
       if (!hasAdded || isPreview) {
         html += `<div style="margin-bottom: 24px;">
@@ -2271,7 +2271,7 @@ function renderContent(type, c, dayNum) {
             <div style="color: #64748b; width: 16px; text-align: right; font-size: 0.75rem; font-family: ui-monospace, monospace; flex-shrink: 0;">${i + 1}</div>
             ${song.image
               ? `<img src="${escapeHtml(song.image)}" alt="" style="width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
-              : `<div style="width:36px;height:36px;border-radius:6px;background:#334155;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;">♪</div>`}
+              : `<div style="width:36px;height:36px;border-radius:6px;background:#334155;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;"><i data-icon="music"></i></div>`}
             <div style="flex: 1; min-width: 0;">
               <div style="font-weight: 700; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.url ? `<a href="${escapeHtml(song.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHtml(song.title)}</a>` : escapeHtml(song.title)}</div>
               <div style="font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(song.artist)}</div>
@@ -2317,7 +2317,7 @@ function wireContentInteractions(door) {
     const tick = () => {
       const diff = target - Date.now();
       if (diff <= 0) {
-        el.textContent = "Es ist soweit! 🎉";
+        el.textContent = "Es ist soweit!";
         clearInterval(countdownInterval);
         return;
       }
@@ -2344,7 +2344,7 @@ function setupScratchcard() {
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.font = "bold 16px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("✨ Rubbeln zum Aufdecken ✨", canvasEl.width / 2, canvasEl.height / 2 + 6);
+  ctx.fillText("Rubbeln zum Aufdecken", canvasEl.width / 2, canvasEl.height / 2 + 6);
 
   let revealed = false;
   let drawing = false;
@@ -2415,7 +2415,7 @@ function setupQuiz(c, door) {
 
   if (alreadyAwarded && prizeEl) {
     buttons.forEach((b) => (b.disabled = true));
-    resultEl.textContent = "Bereits gelöst! 🌟";
+    resultEl.textContent = "Bereits gelöst!";
     resultEl.classList.remove("hidden");
     prizeEl.classList.remove("hidden");
     return;
@@ -2430,7 +2430,7 @@ function setupQuiz(c, door) {
       if (!correct && c.correctIndex >= 0 && c.correctIndex < buttons.length) {
         buttons[c.correctIndex].classList.add("correct");
       }
-      resultEl.textContent = correct ? c.successMessage || "Richtig! ✨" : c.failMessage || "Leider falsch 😢 aber schön geraten!";
+      resultEl.textContent = correct ? c.successMessage || "Richtig!" : c.failMessage || "Leider falsch, aber schön geraten!";
       resultEl.classList.remove("hidden");
       if (correct) {
         const rect = btn.getBoundingClientRect();
@@ -2835,7 +2835,7 @@ window.saveTimeCapsule = async function(day) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: msg })
     });
-    alert("Deine Nachricht wurde sicher verschlossen und wird dir in exakt 1 Jahr zugestellt! 🚀");
+    alert("Deine Nachricht wurde sicher verschlossen und wird dir in exakt 1 Jahr zugestellt!");
   } catch (err) {
     alert("Fehler: " + err.message);
   }
@@ -2869,7 +2869,7 @@ window.startDuelSearch = function(day) {
               <div class="text-3xl font-black text-white" id="duel-opp">${oppScore}</div>
             </div>
           </div>
-          <button id="duel-throw" class="w-full h-24 bg-blue-500 hover:bg-blue-400 active:bg-white active:scale-95 text-white font-black text-2xl rounded-2xl shadow-[0_10px_0_#1e3a8a] active:shadow-[0_0px_0_#1e3a8a] active:translate-y-[10px] transition-all">❄️ WIRF!</button>
+          <button id="duel-throw" class="w-full h-24 bg-blue-500 hover:bg-blue-400 active:bg-white active:scale-95 text-white font-black text-2xl rounded-2xl shadow-[0_10px_0_#1e3a8a] active:shadow-[0_0px_0_#1e3a8a] active:translate-y-[10px] transition-all"><i data-icon="snowflake"></i> WIRF!</button>
         `;
         
         document.getElementById("duel-throw").onclick = () => {
@@ -2893,11 +2893,11 @@ window.startDuelSearch = function(day) {
           clearInterval(intv);
           socket.off("opponent_hit");
           if (myScore > oppScore) {
-            ui.innerHTML = `<h3 class="text-3xl font-black text-emerald-400 mb-4">GEWONNEN! 🏆</h3><p class="text-white mb-4">Du hast deinen Gegner besiegt.</p><button onclick="alert('Inhalt freigeschaltet! (Dies ist eine Simulation)')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full">Geschenk öffnen</button>`;
+            ui.innerHTML = `<h3 class="text-3xl font-black text-emerald-400 mb-4">GEWONNEN! <i data-icon="trophy"></i></h3><p class="text-white mb-4">Du hast deinen Gegner besiegt.</p><button onclick="alert('Inhalt freigeschaltet! (Dies ist eine Simulation)')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full">Geschenk öffnen</button>`;
           } else if (myScore < oppScore) {
-            ui.innerHTML = `<h3 class="text-3xl font-black text-rose-400 mb-4">VERLOREN! 🧊</h3><p class="text-white">Dein Gegner war schneller. Komm morgen wieder oder nutze den Shop.</p>`;
+            ui.innerHTML = `<h3 class="text-3xl font-black text-rose-400 mb-4">VERLOREN! <i data-icon="snowflake"></i></h3><p class="text-white">Dein Gegner war schneller. Komm morgen wieder oder nutze den Shop.</p>`;
           } else {
-            ui.innerHTML = `<h3 class="text-3xl font-black text-amber-400 mb-4">UNENTSCHIEDEN! 🤝</h3><p class="text-white">Beide waren gleich schnell.</p>`;
+            ui.innerHTML = `<h3 class="text-3xl font-black text-amber-400 mb-4">UNENTSCHIEDEN! <i data-icon="handshake"></i></h3><p class="text-white">Beide waren gleich schnell.</p>`;
           }
         } else {
           renderDuel();
@@ -2931,7 +2931,7 @@ window.connectIotBox = async function() {
     
     setTimeout(() => {
       ui.innerHTML = `
-        <div class="text-6xl mb-6 animate-bounce">🔓</div>
+        <div class="text-6xl mb-6 animate-bounce"><i data-icon="lock-open"></i></div>
         <h3 class="text-2xl font-black text-emerald-400 mb-2">Truhe geöffnet!</h3>
         <p class="text-slate-300">Das Bluetooth-Signal (0xFF) wurde erfolgreich gesendet.</p>
       `;

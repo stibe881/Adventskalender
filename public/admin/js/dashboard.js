@@ -177,7 +177,7 @@ window.upgradeCalendar = async (id) => {
 };
 
 window.deleteCalendar = async (id, isPro) => {
-  let msg = "Möchtest du diesen Kalender wirklich löschen?\n\n⚠️ Achtung: Dieser Schritt kann nicht rückgängig gemacht werden!";
+  let msg = "Möchtest du diesen Kalender wirklich löschen?\n\nAchtung: Dieser Schritt kann nicht rückgängig gemacht werden!";
   if (isPro) {
     msg += "\n\nWICHTIG: Dieser Kalender hat PRO-Status. Wenn du ihn löschst, verfällt das Upgrade unwiderruflich!";
   }
@@ -302,7 +302,7 @@ function renderTableRow(cal) {
           <a href="/admin/editor.html?id=${cal.id}" class="block px-4 py-2 hover:bg-slate-700 text-white">Bearbeiten</a>
           <button onclick="copyLink('${cal.shareUrl}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white">Link kopieren</button>
           <a href="${cal.shareUrl}" target="_blank" class="block px-4 py-2 hover:bg-slate-700 text-white">Ansehen</a>
-          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-500 font-bold border-t border-white/10">⭐ PRO Upgrade</button>` : ``}
+          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-500 font-bold border-t border-white/10"><i data-icon="star"></i> PRO Upgrade</button>` : ``}
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
           <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
           <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
@@ -351,10 +351,10 @@ function renderCard(cal) {
     <div class="flex flex-wrap gap-2 mt-1">
       <a href="/admin/editor.html?id=${cal.id}" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-3 py-1.5 transition-colors">Bearbeiten</a>
       <a href="/c/preview/${cal.id}" target="_blank" rel="noopener" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">Vorschau</a>
-      <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">🔗 Link</button>
-      <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren">📑 Kopieren</button>
+      <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="link"></i> Link</button>
+      <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren"><i data-icon="copy"></i> Kopieren</button>
       <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
-      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-medium px-3 py-1.5 transition-colors">⭐ PRO</button>` : `<span class="px-3 py-1.5 text-xs text-amber-500 font-bold bg-amber-500/10 rounded-lg">PRO</span>`}
+      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="star"></i> PRO</button>` : `<span class="px-3 py-1.5 text-xs text-amber-500 font-bold bg-amber-500/10 rounded-lg">PRO</span>`}
     </div>
   `;
 
