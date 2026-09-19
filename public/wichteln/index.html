@@ -21,6 +21,9 @@
 
   <div id="toast" class="w-toast hidden"></div>
 
+  <script>
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  </script>
   <script src="/wichteln/wichteln.js"></script>
   <script src="/shared/native.js"></script>
 </body>

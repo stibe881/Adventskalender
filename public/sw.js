@@ -68,7 +68,7 @@ self.addEventListener("push", (event) => {
     badge: "/icons/icon-192x192.png",
     vibrate: [100, 50, 100],
     data: {
-      url: "/"
+      url: payload.url || "/"
     }
   };
 
@@ -79,15 +79,15 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // Focus if already open
+      const target = (event.notification.data && event.notification.data.url) || "/";
+      // Focus the page if it is already open
       for (const client of clientList) {
-        if (client.url.includes("/c/") && "focus" in client) {
+        if (client.url.includes(target) && "focus" in client) {
           return client.focus();
         }
       }
-      // Otherwise open new tab
       if (clients.openWindow) {
-        return clients.openWindow("/");
+        return clients.openWindow(target);
       }
     })
   );

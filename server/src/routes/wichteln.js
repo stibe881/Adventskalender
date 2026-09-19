@@ -80,12 +80,38 @@ function eventLine(group) {
   return `${formatDate(group.eventDate)}${group.eventTime ? ` um ${group.eventTime} Uhr` : ""}${group.eventPlace ? `, ${group.eventPlace}` : ""}`;
 }
 
-async function notifyParticipant(group, p, subject, textBody, htmlBody) {
-  if (!p || !p.email || p.notify?.email === false) return false;
+// E-mail (with the personal link) plus push to every device the person
+// registered: the native app (Expo token) or a browser (Web Push).
+async function notifyParticipant(group, p, subject, textBody, htmlBody, pushBody) {
+  if (!p) return false;
   const link = participantLink(p);
-  const text = `${textBody}\n\nDein persönlicher Wichtel-Bereich:\n${link}`;
-  const html = layout(group.title, `${htmlBody}<p style="margin-top:20px"><a href="${link}" style="background:#059669;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Zum Wichtel-Bereich</a></p>`);
+  pushParticipant(group, p, subject, pushBody || textBody.split("\n").filter(Boolean).slice(-1)[0] || subject).catch(() => {});
+  if (!p.email || p.notify?.email === false) return false;
+  const text = `${textBody}\n\nDein persönlicher Wichtel-Bereich (dein Link):\n${link}`;
+  const html = layout(group.title, `${htmlBody}<p style="margin-top:20px"><a href="${link}" style="background:#059669;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Zum Wichtel-Bereich</a></p><p style="font-size:12px;color:#94a3b8">Dein persönlicher Link: <a href="${link}" style="color:#6ee7b7">${link}</a></p>`);
   return sendMail({ to: p.email, subject: `[${group.title}] ${subject}`, text, html });
+}
+
+async function pushParticipant(group, p, title, body) {
+  const subs = p.subscriptions || [];
+  if (!subs.length || p.notify?.push === false) return;
+  const { sendPushNotification } = require("../push");
+  const dead = [];
+  for (const sub of subs) {
+    try {
+      await sendPushNotification(sub, { title: `${group.title}: ${title}`, body, url: participantLink(p) });
+    } catch (err) {
+      if (err.statusCode === 410 || err.statusCode === 404) dead.push(sub.endpoint);
+      else console.warn("[Wichteln] Push fehlgeschlagen:", err.message);
+    }
+  }
+  if (dead.length) {
+    await db.updateWichtelGroup(group.id, (g) => {
+      const x = findParticipant(g, p.id);
+      if (x) x.subscriptions = (x.subscriptions || []).filter((s) => !dead.includes(s.endpoint));
+      return g;
+    });
+  }
 }
 
 async function sendInvitation(group, p) {
@@ -646,7 +672,7 @@ router.put("/p/:token/profile", async (req, res) => {
         notes: cleanText(b.hints.notes, 500),
       };
     }
-    if (b.notify && typeof b.notify === "object") p.notify = { email: b.notify.email !== false };
+    if (b.notify && typeof b.notify === "object") p.notify = { email: b.notify.email !== false, push: b.notify.push !== false };
     return g;
   });
   res.json(participantView(updated, findParticipant(updated, found.me.id)));
@@ -716,7 +742,7 @@ router.post("/p/:token/messages", async (req, res) => {
   const other = toRecipient ? findParticipant(updated, me.assignedTo) : santa;
   if (other) {
     const who = toRecipient ? "Dein geheimer Wichtel" : me.name;
-    notifyParticipant(updated, other, "Neue anonyme Nachricht", `Hallo ${other.name}!\n\n${who} hat dir geschrieben:\n„${text}“`, `<p>Hallo ${escapeHtml(other.name)}!</p><p><strong>${escapeHtml(who)}</strong> hat dir geschrieben:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${escapeHtml(text)}</blockquote>`).catch(() => {});
+    notifyParticipant(updated, other, "Neue anonyme Nachricht", `Hallo ${other.name}!\n\n${who} hat dir geschrieben:\n„${text}“\n\nAntworten kannst du direkt in deinem Wichtel-Bereich.`, `<p>Hallo ${escapeHtml(other.name)}!</p><p><strong>${escapeHtml(who)}</strong> hat dir geschrieben:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${escapeHtml(text)}</blockquote><p>Antworten kannst du direkt in deinem Wichtel-Bereich.</p>`, `${who}: ${text.slice(0, 120)}`).catch(() => {});
   }
   res.status(201).json(participantView(updated, findParticipant(updated, me.id)));
 });
@@ -778,6 +804,34 @@ router.get("/p/:token/event.ics", async (req, res) => {
   res.setHeader("Content-Type", "text/calendar; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="wichteln-${group.id.slice(0, 8)}.ics"`);
   res.send(ics);
+});
+
+// ── Push registration (native app via Expo token, browsers via Web Push) ────
+
+router.get("/vapidPublicKey", (req, res) => {
+  const { getVapidPublicKey } = require("../push");
+  res.json({ publicKey: getVapidPublicKey() });
+});
+
+router.post("/p/:token/push", async (req, res) => {
+  const found = await loadByParticipantToken(req, res);
+  if (!found) return;
+  const { isExpoPushToken } = require("../push");
+  let sub = req.body || {};
+  if (sub.expoToken) {
+    if (!isExpoPushToken(sub.expoToken)) return res.status(400).json({ error: "Ungültiges Push-Token." });
+    sub = { endpoint: `expo:${sub.expoToken}`, expoToken: sub.expoToken, platform: String(sub.platform || "").slice(0, 10) };
+  } else if (sub.endpoint && sub.keys) {
+    sub = { endpoint: String(sub.endpoint).slice(0, 1000), keys: { p256dh: String(sub.keys.p256dh || ""), auth: String(sub.keys.auth || "") }, expirationTime: null };
+  } else {
+    return res.status(400).json({ error: "Kein Push-Abo übermittelt." });
+  }
+  await db.updateWichtelGroup(found.group.id, (g) => {
+    const p = findParticipant(g, found.me.id);
+    p.subscriptions = (p.subscriptions || []).filter((s) => s.endpoint !== sub.endpoint).concat([{ ...sub, addedAt: new Date().toISOString() }]).slice(-10);
+    return g;
+  });
+  res.status(201).json({ ok: true });
 });
 
 // ── Link preview for wish lists ─────────────────────────────────────────────

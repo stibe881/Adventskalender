@@ -119,6 +119,52 @@ async function load() {
   rememberToken(token);
   document.title = `Wichteln: ${data.group.title}`;
   render();
+  setupPush();
+}
+
+// ── Push: the app registers on its own, browsers after a tap on the bell ────
+const PUSH_KEY = `wichtel_push_${token}`;
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+async function registerWebPush() {
+  const swReg = await navigator.serviceWorker.ready;
+  const r = await fetch("/api/wichteln/vapidPublicKey");
+  const { publicKey } = await r.json();
+  if (!publicKey) throw new Error("Push ist auf dem Server nicht eingerichtet.");
+  const sub = (await swReg.pushManager.getSubscription()) || (await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
+  await req("POST", "/push", sub.toJSON());
+  localStorage.setItem(PUSH_KEY, "web");
+}
+async function setupPush() {
+  if (data?.me?.pending) return;
+  if (window.__NATIVE_APP && typeof window.nativeRequestPushToken === "function") {
+    const t = await window.nativeRequestPushToken();
+    if (t && localStorage.getItem(PUSH_KEY) !== t) {
+      try { await req("POST", "/push", { expoToken: t, platform: window.__NATIVE_APP.platform }); localStorage.setItem(PUSH_KEY, t); } catch (_) { /* retry next visit */ }
+    }
+    return;
+  }
+  const btn = document.getElementById("push-btn");
+  if (!btn) return;
+  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  if (!supported || Notification.permission === "denied") return;
+  if (Notification.permission === "granted" && localStorage.getItem(PUSH_KEY) === "web") return;
+  btn.classList.remove("hidden");
+  btn.addEventListener("click", async () => {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return toast("Benachrichtigungen wurden nicht erlaubt.", true);
+      await registerWebPush();
+      btn.classList.add("hidden");
+      toast("Benachrichtigungen sind aktiv.");
+    } catch (err) {
+      toast(err.message, true);
+    }
+  });
 }
 
 function render() {
@@ -165,7 +211,7 @@ function navBar() {
   try { known = JSON.parse(localStorage.getItem("wichtel_tokens") || "[]"); } catch (_) {}
   const others = known.filter((t) => t !== token);
   if (others.length) links.push(`<button type="button" data-act="switch" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="refresh-cw"></i> Andere Runde</button>`);
-  if (!links.length) return "";
+  links.push(`<button type="button" id="push-btn" class="hidden w-btn w-btn--ghost w-btn--sm" title="Bei neuen Nachrichten benachrichtigt werden"><i data-icon="bell"></i> Benachrichtigungen</button>`);
   return `<div class="flex flex-wrap gap-2" id="w-nav">${links.join("")}</div><div id="w-switch" class="hidden w-card space-y-2"></div>`;
 }
 
@@ -327,7 +373,7 @@ function myHintsCard() {
       <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">
       <div class="sm:col-span-2 border-t border-white/10 pt-3 mt-1 grid sm:grid-cols-2 gap-2 items-center">
         <input name="email" type="email" class="w-input" placeholder="E-Mail für Benachrichtigungen" value="${esc(me.email || "")}">
-        <label class="w-check"><input type="checkbox" name="notifyEmail" ${me.notify.email !== false ? "checked" : ""}> <span class="text-sm">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin per E-Mail informieren</span></label>
+        <label class="w-check"><input type="checkbox" name="notifyEmail" ${me.notify.email !== false ? "checked" : ""}> <span class="text-sm">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin informieren (E-Mail und, falls aktiv, Push)</span></label>
       </div>
       <div class="sm:col-span-2 flex items-center gap-3"><button class="w-btn w-btn--primary">Speichern</button><span id="hints-saved" class="hidden text-sm text-emerald-300">Gespeichert <i data-icon="check"></i></span></div>
     </form>
@@ -477,7 +523,7 @@ function bindEvents() {
       data = await req("PUT", "/profile", {
         email: f.email.value.trim(),
         hints: { allergies: f.allergies.value, favorites: f.favorites.value, hobbies: f.hobbies.value, notes: f.notes.value },
-        notify: { email: f.notifyEmail.checked },
+        notify: { email: f.notifyEmail.checked, push: f.notifyEmail.checked },
       });
       const ok = document.getElementById("hints-saved");
       ok.classList.remove("hidden");
