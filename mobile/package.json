@@ -1,0 +1,32 @@
+{
+  "name": "adventskalender-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native iOS/Android-Hülle (Capacitor) für Adventskalender & Wichteln",
+  "scripts": {
+    "sync": "cap sync",
+    "add:android": "cap add android",
+    "add:ios": "cap add ios",
+    "open:android": "cap open android",
+    "open:ios": "cap open ios",
+    "run:android": "cap run android",
+    "run:ios": "cap run ios",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#0b1120' --iconBackgroundColorDark '#0b1120' --splashBackgroundColor '#0b1120' --splashBackgroundColorDark '#0b1120'",
+    "configure": "node configure.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/browser": "^6.0.3",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/haptics": "^6.0.1",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/share": "^6.0.2",
+    "@capacitor/splash-screen": "^6.0.2",
+    "@capacitor/status-bar": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2"
+  }
+}

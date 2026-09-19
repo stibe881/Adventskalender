@@ -132,6 +132,13 @@ Eingeloggte Nutzer können oben im Kopfbereich zwischen **Adventskalender** und 
 
 Die Daten liegen in der Tabelle `wichtel_groups` (wird beim Start automatisch angelegt).
 
+## iOS- und Android-App
+
+Im Ordner `mobile/` liegt eine Capacitor-Hülle, die den gehosteten Server als native App
+für iOS und Android verpackt (App-Icon, Splash, Deep Links, Teilen, Zurück-Taste).
+Einrichtung, Signierung und Store-Upload sind in [`mobile/README.md`](mobile/README.md) beschrieben.
+Die Datei `public/shared/native.js` verbindet die Web-Seiten mit den nativen Funktionen.
+
 ## Hinweise für den Produktivbetrieb
 
 - Setze `NODE_ENV=production` und eine öffentlich erreichbare `BASE_URL` in der `.env`, damit generierte Links korrekt sind und Cookies als `secure` gesetzt werden (HTTPS erforderlich).

@@ -65,6 +65,11 @@ app.get("/api/global-stats", async (req, res) => {
 });
 
 // Static assets
+// App/Universal Links for the native apps live in a dotfolder, which express.static skips by default.
+app.use("/.well-known", express.static(path.join(config.paths.publicDir, ".well-known"), {
+  dotfiles: "allow",
+  setHeaders: (res, filePath) => { if (filePath.endsWith("apple-app-site-association")) res.setHeader("Content-Type", "application/json"); },
+}));
 app.use(express.static(config.paths.publicDir));
 app.use("/uploads", express.static(config.paths.uploadsDir));
 app.use("/vendor/gsap", express.static(path.join(config.paths.root, "node_modules", "gsap", "dist")));

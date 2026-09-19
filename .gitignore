@@ -9,3 +9,4 @@ public/shared/styles.css
 
 # Push-Schlüssel werden beim ersten Start automatisch erzeugt (privater Schlüssel!)
 server/data/vapid.json
+mobile/node_modules/
