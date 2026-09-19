@@ -850,8 +850,11 @@ body {
   z-index: 1;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
 }
-.stable-rudi.is-crowded { font-size: 1.75rem; }
-.stable-rudi.is-packed { font-size: 1.35rem; }
+.rudi-svg { width: 2.4em; height: 2.4em; display: block; }
+.rudi-travel { width: 1.7em; height: 1.7em; }
+.rudi-gear { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; }
+.stable-item .rudi-gear { width: 1.3em; height: 1.3em; }
+.shop-gear .rudi-gear { width: 1.15em; height: 1.15em; }
 .stable-status {
   margin-top: 6px;
   text-align: center;
@@ -882,8 +885,6 @@ body {
 @media (max-width: 640px) {
   .rudi-stable { width: 140px; }
   .stable-rudi { font-size: 1.9rem; }
-  .stable-rudi.is-crowded { font-size: 1.35rem; }
-  .stable-rudi.is-packed { font-size: 1.05rem; }
   .stable-status { max-width: 140px; font-size: 0.68rem; }
 }
 #pet-emoji { display: inline-block; }

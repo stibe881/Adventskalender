@@ -269,8 +269,9 @@ router.post("/:token/days/:day/reaction", async (req, res) => {
   if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden" });
   
   const dayNum = parseInt(req.params.day, 10);
-  const emoji = req.body.emoji;
-  if (!emoji) return res.status(400).json({ error: "Emoji fehlt" });
+  const REACTIONS = { heart: "heart", laugh: "laugh", touched: "touched", party: "party", "❤️": "heart", "😂": "laugh", "🥺": "touched", "🎉": "party" };
+  const emoji = REACTIONS[String(req.body.emoji || "").trim()];
+  if (!emoji) return res.status(400).json({ error: "Unbekannte Reaktion" });
 
   await db.updateCalendar(calendar.id, (cal) => {
     const idx = cal.days.findIndex((d) => d.day === dayNum);

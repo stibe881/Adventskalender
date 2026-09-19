@@ -98,15 +98,15 @@ async function sendInvitation(group, p) {
   ].filter(Boolean);
   const text = `Hallo ${p.name}!\n\n${intro}\nRunde: ${group.title}\n${details.join("\n")}\n\nÜber deinen persönlichen Link kannst du deinen Wunschzettel pflegen und siehst nach der Auslosung, wen du beschenkst.`;
   const html = `<p>Hallo ${escapeHtml(p.name)}!</p><p>${escapeHtml(intro)}</p><p><strong>${escapeHtml(group.title)}</strong></p><ul>${details.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul><p>Über deinen persönlichen Link kannst du deinen Wunschzettel pflegen und siehst nach der Auslosung, wen du beschenkst.</p>`;
-  return notifyParticipant(group, p, "Einladung zum Wichteln 🎁", text, html);
+  return notifyParticipant(group, p, "Einladung zum Wichteln", text, html);
 }
 
 async function sendDrawMail(group, p) {
   const target = findParticipant(group, p.assignedTo);
   if (!target) return false;
   const text = `Hallo ${p.name}!\n\nDie Auslosung ist erledigt. Du beschenkst: ${target.name}\n${group.budget ? `Budget: ${group.budget}\n` : ""}${group.eventDate ? `Bescherung: ${eventLine(group)}\n` : ""}\nPsst – das bleibt unter uns.`;
-  const html = `<p>Hallo ${escapeHtml(p.name)}!</p><p>Die Auslosung ist erledigt. Du beschenkst:</p><p style="font-size:22px;font-weight:700;color:#34d399">🎁 ${escapeHtml(target.name)}</p>${group.budget ? `<p>Budget: ${escapeHtml(group.budget)}</p>` : ""}${group.eventDate ? `<p>Bescherung: ${escapeHtml(eventLine(group))}</p>` : ""}<p>Psst – das bleibt unter uns.</p>`;
-  return notifyParticipant(group, p, "Dein Los ist da 🎲", text, html);
+  const html = `<p>Hallo ${escapeHtml(p.name)}!</p><p>Die Auslosung ist erledigt. Du beschenkst:</p><p style="font-size:22px;font-weight:700;color:#34d399">${escapeHtml(target.name)}</p>${group.budget ? `<p>Budget: ${escapeHtml(group.budget)}</p>` : ""}${group.eventDate ? `<p>Bescherung: ${escapeHtml(eventLine(group))}</p>` : ""}<p>Psst – das bleibt unter uns.</p>`;
+  return notifyParticipant(group, p, "Dein Los ist da", text, html);
 }
 
 // What the organizer sees. Assignments stay hidden until the reveal so the
@@ -358,7 +358,7 @@ router.put("/groups/:id", requireAuth, async (req, res) => {
   if (updated.eventDate && dateAfter !== dateBefore && updated.status !== "draft") {
     const line = eventLine(updated);
     for (const p of activeParticipants(updated)) {
-      notifyParticipant(updated, p, "Neuer Termin für die Bescherung 📅", `Hallo ${p.name}!\n\nDer Termin für die Bescherung wurde geändert:\n${line}`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Termin für die Bescherung wurde geändert:</p><p><strong>${escapeHtml(line)}</strong></p>`).catch(() => {});
+      notifyParticipant(updated, p, "Neuer Termin für die Bescherung", `Hallo ${p.name}!\n\nDer Termin für die Bescherung wurde geändert:\n${line}`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Termin für die Bescherung wurde geändert:</p><p><strong>${escapeHtml(line)}</strong></p>`).catch(() => {});
     }
   }
   res.json(organizerView(updated));
@@ -436,7 +436,7 @@ router.post("/groups/:id/participants/:pid/approve", requireAuth, async (req, re
     return g;
   });
   const p = findParticipant(updated, target.id);
-  notifyParticipant(updated, p, "Du bist dabei! 🎉", `Hallo ${p.name}!\n\nDer Organisator hat dich in die Wichtel-Runde aufgenommen.`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Organisator hat dich in die Wichtel-Runde aufgenommen.</p>`).catch(() => {});
+  notifyParticipant(updated, p, "Du bist dabei!", `Hallo ${p.name}!\n\nDer Organisator hat dich in die Wichtel-Runde aufgenommen.`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Organisator hat dich in die Wichtel-Runde aufgenommen.</p>`).catch(() => {});
   res.json(organizerView(updated));
 });
 
@@ -528,7 +528,7 @@ router.post("/groups/:id/reveal", requireAuth, async (req, res) => {
     return g;
   });
   for (const p of activeParticipants(updated)) {
-    notifyParticipant(updated, p, "Die Wichtel sind enthüllt 🎭", `Hallo ${p.name}!\n\nDer Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.</p>`).catch(() => {});
+    notifyParticipant(updated, p, "Die Wichtel sind enthüllt", `Hallo ${p.name}!\n\nDer Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.`, `<p>Hallo ${escapeHtml(p.name)}!</p><p>Der Organisator hat aufgelöst, wer wen beschenkt hat. Schau in deinem Wichtel-Bereich nach.</p>`).catch(() => {});
   }
   res.json(organizerView(updated));
 });
@@ -664,7 +664,7 @@ router.put("/p/:token/wishlist", async (req, res) => {
   const me = findParticipant(updated, found.me.id);
   if (santa && (!me.wishlistNotifiedAt || Date.now() - new Date(me.wishlistNotifiedAt).getTime() > 60 * 60 * 1000)) {
     await db.updateWichtelGroup(updated.id, (g) => { findParticipant(g, me.id).wishlistNotifiedAt = new Date().toISOString(); return g; });
-    notifyParticipant(updated, santa, "Wunschzettel aktualisiert 📝", `Hallo ${santa.name}!\n\n${me.name} hat den Wunschzettel geändert. Schau mal rein.`, `<p>Hallo ${escapeHtml(santa.name)}!</p><p><strong>${escapeHtml(me.name)}</strong> hat den Wunschzettel geändert. Schau mal rein.</p>`).catch(() => {});
+    notifyParticipant(updated, santa, "Wunschzettel aktualisiert", `Hallo ${santa.name}!\n\n${me.name} hat den Wunschzettel geändert. Schau mal rein.`, `<p>Hallo ${escapeHtml(santa.name)}!</p><p><strong>${escapeHtml(me.name)}</strong> hat den Wunschzettel geändert. Schau mal rein.</p>`).catch(() => {});
   }
   res.json(participantView(updated, me));
 });
@@ -705,7 +705,7 @@ router.post("/p/:token/messages", async (req, res) => {
   const other = toRecipient ? findParticipant(updated, me.assignedTo) : santa;
   if (other) {
     const who = toRecipient ? "Dein geheimer Wichtel" : me.name;
-    notifyParticipant(updated, other, "Neue anonyme Nachricht 💬", `Hallo ${other.name}!\n\n${who} hat dir geschrieben:\n„${text}“`, `<p>Hallo ${escapeHtml(other.name)}!</p><p><strong>${escapeHtml(who)}</strong> hat dir geschrieben:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${escapeHtml(text)}</blockquote>`).catch(() => {});
+    notifyParticipant(updated, other, "Neue anonyme Nachricht", `Hallo ${other.name}!\n\n${who} hat dir geschrieben:\n„${text}“`, `<p>Hallo ${escapeHtml(other.name)}!</p><p><strong>${escapeHtml(who)}</strong> hat dir geschrieben:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${escapeHtml(text)}</blockquote>`).catch(() => {});
   }
   res.status(201).json(participantView(updated, findParticipant(updated, me.id)));
 });
@@ -763,7 +763,7 @@ router.get("/p/:token/event.ics", async (req, res) => {
     target ? `Du beschenkst: ${target.name}` : null,
     `Wichtel-Bereich: ${participantLink(me)}`,
   ].filter(Boolean).join("\n");
-  const ics = buildIcs({ uid: `wichteln-${group.id}-${me.id}@adventskalender`, title: `🎁 Wichteln: ${group.title}`, description, date: group.eventDate, time: group.eventTime, location: group.eventPlace, url: participantLink(me) });
+  const ics = buildIcs({ uid: `wichteln-${group.id}-${me.id}@adventskalender`, title: `Wichteln: ${group.title}`, description, date: group.eventDate, time: group.eventTime, location: group.eventPlace, url: participantLink(me) });
   res.setHeader("Content-Type", "text/calendar; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="wichteln-${group.id.slice(0, 8)}.ics"`);
   res.send(ics);

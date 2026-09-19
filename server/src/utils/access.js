@@ -33,7 +33,7 @@ const BONUS_REFERRALS_NEEDED = 3;
 const DEFAULT_BONUS_CONTENT = {
   contentType: "text",
   content: {
-    message: "Wahnsinn! Du hast 3 Freunde eingeladen! Als Dankeschön: Hier ist dein geheimes 25. Türchen 🎄✨",
+    message: "Wahnsinn! Du hast 3 Freunde eingeladen! Als Dankeschön: Hier ist dein geheimes 25. Türchen!",
     sender: "Team Adventskalender",
   },
 };

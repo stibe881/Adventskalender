@@ -56,7 +56,7 @@ function renderHeader(themeKey, theme, meta) {
   let headerTopHtml = `<div class="flex items-center justify-center gap-3 mb-4">`;
   if (meta.streak > 1) {
     headerTopHtml += `<div class="inline-flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full text-sm font-bold text-orange-400 border border-orange-400/30 backdrop-blur">
-      🔥 ${meta.streak} Tage Streak!
+      <i data-icon="flame"></i> ${meta.streak} Tage Streak!
     </div>`;
   }
   headerTopHtml += `</div>`;
@@ -134,7 +134,7 @@ function renderFooter(meta) {
     const refLink = `${window.location.origin}/c/${meta.id}?ref=1`;
     footer.innerHTML += `<div class="mt-4">
       <button onclick="prompt('Teile diesen Link mit 3 Freunden, um ein geheimes Türchen 25 freizuschalten!', '${refLink}')" class="bg-indigo-600/30 hover:bg-indigo-500/50 text-indigo-200 border border-indigo-500/30 px-4 py-2 rounded-full text-sm font-bold backdrop-blur transition-colors">
-        🌟 Lade Freunde ein (${refs}/3) für Türchen 25
+        <i data-icon="star"></i> Lade Freunde ein (${refs}/3) für Türchen 25
       </button>
     </div>`;
   }

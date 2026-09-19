@@ -482,18 +482,18 @@ function applyEffects(enabled) {
 // ---------- Tamagotchi reindeer ----------
 
 const SHOP_ITEMS = [
-  { id: "bow", name: "Schleife", emoji: "🎀", slot: "neck", price: 20, desc: "Hübsch verpackt." },
-  { id: "scarf", name: "Kuschelschal", emoji: "🧣", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
-  { id: "santahat", name: "Weihnachtsmann", emoji: "🎅", slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
-  { id: "hat", name: "Zylinder", emoji: "🎩", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
-  { id: "bell", name: "Glöckchen", emoji: "🔔", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
-  { id: "skis", name: "Schlittschuhe", emoji: "⛸️", slot: "feet", price: 90, desc: "Elegant übers Eis gleiten." },
-  { id: "glasses", name: "Sonnenbrille", emoji: "🕶️", slot: "face", price: 100, desc: "Cool bleiben, auch bei Schnee." },
-  { id: "lights", name: "Lichterkette", emoji: "✨", slot: "aura", price: 120, desc: "Funkelt bei jedem Schritt." },
-  { id: "sleigh", name: "Schlitten", emoji: "🛷", slot: "ride", price: 150, desc: "Rentiere ziehen, Rentiere fahren." },
-  { id: "wings", name: "Engelsflügel", emoji: "🪽", slot: "aura", price: 180, desc: "Fast schon himmlisch." },
-  { id: "crown", name: "Krone", emoji: "👑", slot: "head", price: 200, desc: "König der Weihnachtswiese." },
-  { id: "star", name: "Weihnachtsstern", emoji: "🌟", slot: "aura", price: 250, desc: "Das seltenste Stück im Shop." },
+  { id: "bow", name: "Schleife", slot: "neck", price: 20, desc: "Hübsch verpackt." },
+  { id: "scarf", name: "Kuschelschal", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
+  { id: "santahat", name: "Weihnachtsmann", slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
+  { id: "hat", name: "Zylinder", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
+  { id: "bell", name: "Glöckchen", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
+  { id: "skis", name: "Schlittschuhe", slot: "feet", price: 90, desc: "Elegant übers Eis gleiten." },
+  { id: "glasses", name: "Sonnenbrille", slot: "face", price: 100, desc: "Cool bleiben, auch bei Schnee." },
+  { id: "lights", name: "Lichterkette", slot: "aura", price: 120, desc: "Funkelt bei jedem Schritt." },
+  { id: "sleigh", name: "Schlitten", slot: "ride", price: 150, desc: "Rentiere ziehen, Rentiere fahren." },
+  { id: "wings", name: "Engelsflügel", slot: "aura", price: 180, desc: "Fast schon himmlisch." },
+  { id: "crown", name: "Krone", slot: "head", price: 200, desc: "König der Weihnachtswiese." },
+  { id: "star", name: "Weihnachtsstern", slot: "aura", price: 250, desc: "Das seltenste Stück im Shop." },
 ];
 
 function initPet(streak = calendarMeta?.streak || 0) {
@@ -533,26 +533,17 @@ function initPet(streak = calendarMeta?.streak || 0) {
   }
 
   loadWorn();
-  const worn = wornEmoji();
   emoji.style.filter = "";
+  emoji.innerHTML = RudiArt.rudi({ worn: wornItems, state: petState });
   if (petState === "sleepy") {
-    emoji.textContent = `${worn}🦌💤`;
     emoji.style.filter = "grayscale(0.45)";
     petEl.title = "Rudi schläft – öffne ein Türchen!";
   } else if (petState === "happy") {
-    emoji.textContent = `${worn}🦌`;
     petEl.title = `Rudi ist glücklich · ${activityText}`;
   } else {
-    emoji.textContent = `${worn}🦌✨`;
     emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
     petEl.title = `Rudi: On Fire! ${activityText}`;
   }
-
-  // Shrink the row when Rudi wears several things so he still fits in the stall.
-  const glyphs = Array.from(emoji.textContent.replace(/[‍️]/g, "")).length;
-  const wrap = emoji.parentElement;
-  wrap.classList.toggle("is-crowded", glyphs === 3);
-  wrap.classList.toggle("is-packed", glyphs >= 4);
 
   renderPetItems();
 }
@@ -566,7 +557,7 @@ function renderPetItems() {
     .map((item) => {
       const action = RUDI_ACTIONS[item.id];
       const worn = wornItems.includes(item.id);
-      return `<button type="button" class="stable-item${worn ? " is-worn" : ""}" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}${worn ? " (getragen)" : ""}" aria-label="${escapeHtml(item.name)}">${item.emoji}</button>`;
+      return `<button type="button" class="stable-item${worn ? " is-worn" : ""}" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}${worn ? " (getragen)" : ""}" aria-label="${escapeHtml(item.name)}">${RudiArt.gear(item.id)}</button>`;
     })
     .join("");
   bar.style.display = owned.length ? "flex" : "none";
@@ -595,7 +586,7 @@ function renderShop() {
       <button type="button" onclick="${owned ? `useItem('${item.id}')` : `buyItem('${item.id}')`}"
         class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform hover:scale-[1.02] active:scale-95 ${owned ? "border-emerald-400 hover:bg-emerald-50" : "border-amber-300 hover:bg-amber-50"}">
         <span class="flex items-center gap-3 min-w-0">
-          <span class="text-3xl leading-none">${item.emoji}</span>
+          <span class="text-3xl leading-none shop-gear">${RudiArt.gear(item.id)}</span>
           <span class="min-w-0">
             <span class="block font-bold">${item.name}</span>
             <span class="block text-xs text-amber-700/80 truncate">${owned && action ? action.label : item.desc}</span>
@@ -617,9 +608,6 @@ function loadWorn() {
   wornItems = wornItems.filter((id) => WEARABLES.includes(id) && userInventory.includes(id));
 }
 
-function wornEmoji() {
-  return WEARABLES.filter((id) => wornItems.includes(id)).map((id) => SHOP_ITEMS.find((i) => i.id === id)?.emoji || "").join("");
-}
 
 function toggleWear(item) {
   if (wornItems.includes(item.id)) {
@@ -640,11 +628,11 @@ function toggleWear(item) {
 }
 
 const RUDI_ACTIONS = {
-  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel({ mode: "sleigh", vehicle: "🛷" }) },
-  skis: { label: "Auf Schlittschuhen über den Bildschirm gleiten", run: () => rudiTravel({ mode: "glide", feet: "⛸️" }) },
-  wings: { label: "Mit Flügeln über den Kalender fliegen", run: () => rudiTravel({ mode: "fly", back: "🪽" }) },
-  santahat: { label: "Mit dem Weihnachtsmann auf dem Rücken fliegen", run: () => rudiTravel({ mode: "fly", rider: "🎅" }) },
-  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel({ mode: "fly", vehicle: "🌟" }) },
+  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel({ mode: "sleigh", extras: ["sleigh"] }) },
+  skis: { label: "Auf Schlittschuhen über den Bildschirm gleiten", run: () => rudiTravel({ mode: "glide", extras: ["skis"] }) },
+  wings: { label: "Mit Flügeln über den Kalender fliegen", run: () => rudiTravel({ mode: "fly", extras: ["wings"] }) },
+  santahat: { label: "Mit dem Weihnachtsmann auf dem Rücken fliegen", run: () => rudiTravel({ mode: "fly", extras: ["santahat"] }) },
+  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel({ mode: "fly", extras: ["star", "lights"] }) },
   lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
   bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },
   hat: { label: "Zylinder anziehen / ablegen", run: (item) => toggleWear(item) },
@@ -667,17 +655,17 @@ let rudiBusy = false;
 
 // Rudi leaves his stall and crosses the screen. Whatever he wears comes
 // along; a rider sits on his back, wings on his shoulders, skates on his feet.
-function rudiTravel({ mode, vehicle = "", rider = "", back = "", feet = "" }) {
+function rudiTravel({ mode, extras = [] }) {
   if (rudiBusy) return;
   rudiBusy = true;
   const petEmoji = document.getElementById("pet-emoji");
   const traveller = document.createElement("div");
   traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
-  const overlay = (glyph, style) => (glyph ? `<span style="position:absolute;font-size:0.55em;line-height:1;${style}">${glyph}</span>` : "");
-  traveller.innerHTML = `<span style="display:inline-block;white-space:nowrap;">${wornEmoji()}<span style="position:relative;display:inline-block;">🦌${overlay(rider, "left:38%;top:-42%;")}${overlay(back, "left:52%;top:-30%;")}${overlay(feet, "left:22%;bottom:-32%;")}</span>${vehicle}</span>`;
+  // Rudi faces left in the artwork but travels to the right: mirror him.
+  traveller.innerHTML = `<span style="display:inline-block;transform:scaleX(-1);">${RudiArt.rudi({ worn: wornItems, extras, cls: "rudi-travel" })}</span>`;
   document.body.appendChild(traveller);
-  const originalEmoji = petEmoji.textContent;
-  petEmoji.textContent = "💨";
+  const originalEmoji = petEmoji.innerHTML;
+  petEmoji.innerHTML = RudiArt.rudi({ state: "dust" });
 
   const W = window.innerWidth;
   const H = window.innerHeight;
@@ -721,7 +709,7 @@ function rudiTravel({ mode, vehicle = "", rider = "", back = "", feet = "" }) {
   anim.onfinish = () => {
     clearInterval(spray);
     traveller.remove();
-    petEmoji.textContent = originalEmoji;
+    petEmoji.innerHTML = originalEmoji;
     petEmoji.style.transform = "translateY(-14px)";
     setTimeout(() => (petEmoji.style.transform = "translateY(0)"), 220);
     rudiBusy = false;
@@ -761,7 +749,7 @@ function rudiPose(item, message) {
   const emoji = document.getElementById("pet-emoji");
   if (rudiBusy) return;
   rudiBusy = true;
-  emoji.textContent = `${item.emoji}🦌`;
+  emoji.innerHTML = RudiArt.rudi({ worn: wornItems, extras: [item.id] });
   emoji.style.filter = "";
   setTimeout(() => { rudiBusy = false; initPet(); }, 2600);
   emoji.animate(
@@ -951,7 +939,7 @@ function initGlobalAudioPlayer() {
       playBtn.innerHTML = icon("pause");
     } else {
       audioEl.pause();
-      playBtn.textContent = "▶️";
+      playBtn.innerHTML = icon("play");
     }
   };
 
@@ -969,7 +957,7 @@ function initGlobalAudioPlayer() {
       loadTrack(currentIndex);
       audioEl.play();
     } else {
-      playBtn.textContent = "▶️";
+      playBtn.innerHTML = icon("play");
     }
   };
 
@@ -1762,7 +1750,7 @@ function setupFeedback(dayNum) {
         await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/reaction`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emoji: newBtn.textContent })
+          body: JSON.stringify({ emoji: newBtn.dataset.reaction || "heart" })
         });
         showLockToast("Reaktion gesendet!");
       } catch (e) {

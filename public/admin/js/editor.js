@@ -648,7 +648,8 @@ function openModal(day) {
   const section = document.getElementById("feedback-section");
   if (door.feedback && (door.feedback.reactions?.length || door.feedback.replies?.length)) {
     section.classList.remove("hidden");
-    document.getElementById("feedback-reactions").innerHTML = door.feedback.reactions?.map(e => `<span>${escapeHtml(e)}</span>`).join("") || "–";
+    const REACTION_ICONS = { heart: ["heart", "text-rose-400"], laugh: ["laugh", "text-amber-300"], touched: ["frown", "text-sky-300"], party: ["party-popper", "text-emerald-300"], "❤️": ["heart", "text-rose-400"], "😂": ["laugh", "text-amber-300"], "🥺": ["frown", "text-sky-300"], "🎉": ["party-popper", "text-emerald-300"] };
+    document.getElementById("feedback-reactions").innerHTML = door.feedback.reactions?.map(e => { const r = REACTION_ICONS[e]; return `<span class="${r ? r[1] : ""}">${r ? icon(r[0]) : escapeHtml(e)}</span>`; }).join("") || "–";
     document.getElementById("feedback-replies").innerHTML = door.feedback.replies?.map(r => {
       if (r.type === "audio") return `<audio controls src="${escapeHtml(r.url)}" class="w-full h-8 mt-1"></audio>`;
       return `<p class="text-sm text-slate-300">Unbekanntes Feedback</p>`;

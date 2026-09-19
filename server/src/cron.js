@@ -53,7 +53,7 @@ function startCron() {
           await transporter.sendMail({
             from: config.smtp.from,
             to: cal.recipientEmail,
-            subject: `Türchen ${day} wartet auf dich! 🎄`,
+            subject: `Türchen ${day} wartet auf dich!`,
             text: `Hallo ${cal.recipientName}!\n\nDein Adventskalender-Türchen Nummer ${day} ist jetzt verfügbar.\n\nKlicke hier, um es zu öffnen:\n${link}\n\nViel Spaß!`,
             html: `<p>Hallo ${cal.recipientName}!</p><p>Dein Adventskalender-Türchen Nummer <strong>${day}</strong> ist jetzt verfügbar.</p><p><a href="${link}">Klicke hier, um es zu öffnen</a></p><p>Viel Spaß!</p>`,
           });
@@ -102,7 +102,7 @@ function startCron() {
 
       pushedToday.add(key);
 
-      const title = `🎄 Türchen ${day} warte auf dich!`;
+      const title = `Türchen ${day} wartet auf dich!`;
       const body = `Hallo ${cal.recipientName || ""}! Öffne heute dein Adventskalender-Türchen.`;
 
       console.log(`[CRON] Sende Push für Kalender ${cal.id} (Tag ${day}) an ${subs.length} Geräte...`);
@@ -150,7 +150,7 @@ async function runWichtelJobs(now = new Date()) {
       const line = eventLine(g);
       for (const p of (g.participants || []).filter((x) => !x.pending && x.email && x.notify?.email !== false)) {
         const target = g.status !== "draft" ? (g.participants || []).find((x) => x.id === p.assignedTo) : null;
-        await notifyParticipant(g, p, "Morgen ist Bescherung! 🎄",
+        await notifyParticipant(g, p, "Morgen ist Bescherung!",
           `Hallo ${p.name}!\n\nMorgen ist es so weit: ${line}${target ? `\nDu beschenkst: ${target.name}` : ""}`,
           `<p>Hallo ${p.name}!</p><p>Morgen ist es so weit: <strong>${line}</strong></p>${target ? `<p>Du beschenkst: <strong>${target.name}</strong></p>` : ""}`);
         reminders++;
