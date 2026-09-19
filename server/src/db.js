@@ -67,6 +67,19 @@ async function initDB() {
       INDEX idx_wichtel_owner (ownerId)
     )
   `);
+
+  // Wichteltür (Christmas elf planner). Parents share the plan via shareToken,
+  // children get a read-mostly page via kidToken.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS elf_plans (
+      id VARCHAR(255) PRIMARY KEY,
+      ownerId VARCHAR(255),
+      shareToken VARCHAR(255) UNIQUE,
+      kidToken VARCHAR(255) UNIQUE,
+      data JSON,
+      INDEX idx_elf_owner (ownerId)
+    )
+  `);
 }
 
 initDB().catch(console.error);
@@ -191,6 +204,54 @@ async function updateCalendar(id, updaterFn) {
 
 async function deleteCalendar(id) {
   const [result] = await pool.query("DELETE FROM calendars WHERE id = ?", [id]);
+  return result.affectedRows > 0;
+}
+
+// ── Wichteltür ──────────────────────────────────────────────────────────────
+async function getAllElfPlans() {
+  const [rows] = await pool.query("SELECT * FROM elf_plans");
+  return rows.map((r) => r.data);
+}
+
+async function getElfPlansByOwner(ownerId) {
+  const [rows] = await pool.query("SELECT * FROM elf_plans WHERE ownerId = ?", [ownerId]);
+  return rows.map((r) => r.data);
+}
+
+async function getElfPlanById(id) {
+  const [rows] = await pool.query("SELECT * FROM elf_plans WHERE id = ?", [id]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function getElfPlanByShareToken(token) {
+  const [rows] = await pool.query("SELECT * FROM elf_plans WHERE shareToken = ?", [token]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function getElfPlanByKidToken(token) {
+  const [rows] = await pool.query("SELECT * FROM elf_plans WHERE kidToken = ?", [token]);
+  return rows.length ? rows[0].data : null;
+}
+
+async function createElfPlan(plan) {
+  await pool.query("INSERT INTO elf_plans (id, ownerId, shareToken, kidToken, data) VALUES (?, ?, ?, ?, ?)", [
+    plan.id, plan.ownerId, plan.shareToken, plan.kidToken, JSON.stringify(plan),
+  ]);
+  return plan;
+}
+
+async function updateElfPlan(id, updaterFn) {
+  const plan = await getElfPlanById(id);
+  if (!plan) return null;
+  const updated = await updaterFn(plan);
+  await pool.query("UPDATE elf_plans SET ownerId = ?, shareToken = ?, kidToken = ?, data = ? WHERE id = ?", [
+    updated.ownerId, updated.shareToken, updated.kidToken, JSON.stringify(updated), id,
+  ]);
+  return updated;
+}
+
+async function deleteElfPlan(id) {
+  const [result] = await pool.query("DELETE FROM elf_plans WHERE id = ?", [id]);
   return result.affectedRows > 0;
 }
 
@@ -322,4 +383,12 @@ module.exports = {
   createWichtelGroup,
   updateWichtelGroup,
   deleteWichtelGroup,
+  getAllElfPlans,
+  getElfPlansByOwner,
+  getElfPlanById,
+  getElfPlanByShareToken,
+  getElfPlanByKidToken,
+  createElfPlan,
+  updateElfPlan,
+  deleteElfPlan,
 };

@@ -67,6 +67,15 @@ function startCron() {
     }
   }, { timezone: config.timezone });
 
+  // ── Wichteltür: abendliche Erinnerung an die Eltern (minütlich geprüft) ───
+  cron.schedule("* * * * *", async () => {
+    try {
+      await runElfReminders();
+    } catch (err) {
+      console.error("[CRON] Wichteltür-Erinnerung fehlgeschlagen:", err);
+    }
+  }, { timezone: config.timezone });
+
   // ── Minütlicher Check: Per-Kalender Push-Erinnerungen ─────────────────────
   // Prüft jede Minute ob ein Kalender jetzt seine konfigurierte Push-Zeit hat.
   cron.schedule("* * * * *", async () => {
@@ -173,4 +182,40 @@ async function runWichtelJobs(now = new Date()) {
   return { reminders, giftReminders, deleted };
 }
 
-module.exports = { startCron, runWichtelJobs };
+/* Evening reminder: what to prepare tonight (for tomorrow morning) and what
+ * to buy or prepare tomorrow for the night after. */
+async function runElfReminders(now = new Date()) {
+  const { notifyParents } = require("./routes/wichteltuer");
+  const S = require("./routes/wichteltuer/shared");
+  const nowStr = new Date(now).toLocaleTimeString("de-DE", { timeZone: config.timezone, hour: "2-digit", minute: "2-digit", hour12: false });
+  const today = S.todayIso(now);
+  let sent = 0;
+  for (const plan of await db.getAllElfPlans()) {
+    if (plan.notify?.enabled === false) continue;
+    if ((plan.notify?.time || S.cfg.reminderTimeDefault) !== nowStr) continue;
+    if ((plan.reminderSentFor || []).includes(today)) continue;
+    const dates = S.seasonDates(plan.year);
+    const tonight = S.addDays(today, 1);
+    const dayAfter = S.addDays(today, 2);
+    if (tonight < dates[0] || tonight > dates[dates.length - 1]) continue;
+    const e = plan.days[tonight];
+    const prep = plan.days[dayAfter];
+    const elf = plan.elf?.name || "Der Wichtel";
+    const lines = [];
+    if (e && !e.done) {
+      const who = plan.parents.find((p) => p.id === e.assignee)?.name;
+      lines.push(`Heute Nacht (für den ${S.dayNumber(tonight)}. Dezember): ${e.title}${who ? ` – ${who} ist dran` : ""}${e.minutes ? `, ca. ${e.minutes} Min.` : ""}`);
+      if (e.materials?.length) lines.push(`Du brauchst: ${e.materials.join(", ")}`);
+    } else if (!e) {
+      lines.push(`Für den ${S.dayNumber(tonight)}. Dezember ist noch nichts geplant – ${elf} braucht eine Idee!`);
+    }
+    if (prep?.prepDayBefore && !prep.done) lines.push(`Morgen vorbereiten (für den ${S.dayNumber(dayAfter)}.): ${prep.title}${prep.materials?.length ? ` – ${prep.materials.join(", ")}` : ""}`);
+    if (!lines.length) continue;
+    await notifyParents(plan, "Heute Nacht ist Wichtelzeit", lines.join("\n"), `#tag-${tonight}`);
+    await db.updateElfPlan(plan.id, (p) => { p.reminderSentFor = [...(p.reminderSentFor || []), today].slice(-40); return p; });
+    sent++;
+  }
+  return { sent };
+}
+
+module.exports = { startCron, runWichtelJobs, runElfReminders };

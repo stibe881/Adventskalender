@@ -158,6 +158,15 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/spotify", require("./routes/spotify"));
 app.use("/api/wichteln", require("./routes/wichteln"));
+app.use("/api/wichteltuer", require("./routes/wichteltuer"));
+
+// Wichteltür: parents' planner (shared link) and the children's page.
+app.get("/e/:token", (req, res) => {
+  res.sendFile(path.join(config.paths.publicDir, "wichteltuer", "index.html"));
+});
+app.get("/k/:token", (req, res) => {
+  res.sendFile(path.join(config.paths.publicDir, "wichteltuer", "kids.html"));
+});
 
 // Wichteln: participant area and invite page share one SPA.
 app.get(["/w/join/:inviteToken", "/w/:token"], (req, res) => {

@@ -143,8 +143,12 @@ router.get("/me", requireAuth, async (req, res) => {
   if (req.user.app && Date.now() / 1000 - (req.user.iat || 0) > 24 * 60 * 60) {
     setAuthCookie(res, signUserToken(user, { remember: true, app: true }));
   }
-  res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company, defaultApp: user.defaultApp === "wichteln" ? "wichteln" : "calendar" });
+  res.json({ ok: true, email: user.email, isPro: user.isPro, username: user.username, company: user.company, defaultApp: normalizeDefaultApp(user.defaultApp) });
 });
+
+// Which app opens after login: calendar, Wichteln (Secret Santa) or Wichteltür (elf planner).
+const DEFAULT_APPS = ["calendar", "wichteln", "wichteltuer"];
+const normalizeDefaultApp = (v) => (DEFAULT_APPS.includes(v) ? v : "calendar");
 
 router.put("/profile", requireAuth, async (req, res) => {
   const { username, company, defaultApp } = req.body || {};
@@ -171,7 +175,7 @@ router.put("/profile", requireAuth, async (req, res) => {
     username: username ? String(username).trim() : null,
     company: company ? String(company).trim() : null,
     // Which app opens after login: the advent calendar or the Wichtel tool.
-    defaultApp: defaultApp !== undefined ? (defaultApp === "wichteln" ? "wichteln" : "calendar") : u.defaultApp,
+    defaultApp: defaultApp !== undefined ? normalizeDefaultApp(defaultApp) : u.defaultApp,
   }));
 
   // Update JWT cookie with new username if we use it

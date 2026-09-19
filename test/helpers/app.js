@@ -12,8 +12,9 @@ function createStubDb() {
   const user = { id: "u1", email: "orga@example.ch", isPro: true, isVerified: true, username: "Stefan", company: "X", passwordHash: "x", defaultApp: "wichteln" };
   const groups = {};
   const calendars = {};
+  const plans = {};
   const db = {
-    user, groups, calendars,
+    user, groups, calendars, plans,
     getUserByEmail: async () => clone(user),
     getUserById: async () => clone(user),
     updateUser: async (id, fn) => { Object.assign(user, await fn(clone(user))); return user; },
@@ -29,6 +30,14 @@ function createStubDb() {
     createWichtelGroup: async (g) => { groups[g.id] = clone(g); return g; },
     updateWichtelGroup: async (id, fn) => { if (!groups[id]) return null; const u = await fn(clone(groups[id])); groups[id] = clone(u); return u; },
     deleteWichtelGroup: async (id) => { const had = Boolean(groups[id]); delete groups[id]; return had; },
+    getAllElfPlans: async () => Object.values(plans).map(clone),
+    getElfPlansByOwner: async (o) => Object.values(plans).filter((p) => p.ownerId === o).map(clone),
+    getElfPlanById: async (id) => (plans[id] ? clone(plans[id]) : null),
+    getElfPlanByShareToken: async (t) => clone(Object.values(plans).find((p) => p.shareToken === t) || null),
+    getElfPlanByKidToken: async (t) => clone(Object.values(plans).find((p) => p.kidToken === t) || null),
+    createElfPlan: async (p) => { plans[p.id] = clone(p); return p; },
+    updateElfPlan: async (id, fn) => { if (!plans[id]) return null; const u = await fn(clone(plans[id])); plans[id] = clone(u); return u; },
+    deleteElfPlan: async (id) => { const had = Boolean(plans[id]); delete plans[id]; return had; },
   };
   return db;
 }
