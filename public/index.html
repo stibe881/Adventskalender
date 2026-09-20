@@ -323,9 +323,13 @@
       <span><i data-icon="tree-pine"></i></span>
       <span>Advently</span>
     </div>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-guest">
       <a href="/admin/" class="nav-link">Login</a>
       <a href="/admin/?mode=register" class="btn-primary" style="padding: 8px 16px;">Registrieren</a>
+    </div>
+    <div class="nav-links" id="nav-user" style="display:none;">
+      <a href="#" id="nav-logout" class="nav-link">Abmelden</a>
+      <a href="/admin/dashboard.html" id="nav-area" class="btn-primary" style="padding: 8px 16px;">Mein Bereich</a>
     </div>
   </nav>
 
@@ -352,9 +356,13 @@
         Kreiere in wenigen Minuten einen persönlichen Adventskalender. Befülle 24 Türchen mit eigenen Fotos, Videos, Nachrichten oder Rätseln.
       </p>
       
-      <div class="hero-buttons">
+      <div class="hero-buttons" id="hero-guest">
         <a href="/admin/" class="btn-secondary" style="padding: 16px 32px; font-size: 1.125rem; background: rgba(30,41,59,0.7); backdrop-filter: blur(8px);">Login</a>
         <a href="/admin/?mode=register" class="btn-primary" style="padding: 16px 32px; font-size: 1.125rem; box-shadow: 0 10px 25px -10px rgba(5,150,105,0.7);">Registrieren</a>
+      </div>
+      <div class="hero-buttons" id="hero-user" style="display:none; flex-wrap:wrap;">
+        <a href="/admin/dashboard.html" id="hero-area" class="btn-primary" style="padding: 16px 32px; font-size: 1.125rem; box-shadow: 0 10px 25px -10px rgba(5,150,105,0.7);">Zu meinem Bereich</a>
+        <p id="hero-signed-in" style="width:100%; text-align:center; color:#94a3b8; font-size:0.9rem; margin:4px 0 0;"></p>
       </div>
     </div>
   </div>
@@ -488,8 +496,27 @@
 
   <script src="/admin/js/api.js"></script>
   <script>
-    // The start page always offers Login and Registrieren. Whoever is already
-    // signed in lands on their dashboard as soon as the login page opens.
+    // Signed-in visitors see "Mein Bereich" instead of Login/Registrieren.
+    (async () => {
+      try {
+        const me = await api.me();
+        const target = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
+        const label = { wichteln: "Zum Wichteln", wichteltuer: "Zur Wichteltür" }[me.defaultApp] || "Zum Adventskalender";
+        document.getElementById("nav-area").href = target;
+        document.getElementById("hero-area").href = target;
+        document.getElementById("hero-area").textContent = label;
+        document.getElementById("hero-signed-in").textContent = `Angemeldet als ${me.email}`;
+        document.getElementById("nav-guest").style.display = "none";
+        document.getElementById("hero-guest").style.display = "none";
+        document.getElementById("nav-user").style.display = "";
+        document.getElementById("hero-user").style.display = "";
+        document.getElementById("nav-logout").addEventListener("click", async (e) => {
+          e.preventDefault();
+          try { await api.logout(); } catch (_) {}
+          window.location.reload();
+        });
+      } catch (_) { /* not signed in: Login and Registrieren stay */ }
+    })();
     // Wichtel rounds this browser joined are listed for quick access.
     (async () => {
       let tokens = [];
