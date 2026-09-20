@@ -74,5 +74,6 @@ html.is-native-app .ui-offline { padding-top: calc(env(safe-area-inset-top) + 8p
 .w-pro-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.88rem; color: #e2e8f0; }
 .w-pro-list li { display: flex; gap: 8px; align-items: flex-start; }
 .w-pro-list li svg, .w-pro-list li i { color: #fbbf24; flex-shrink: 0; margin-top: 2px; }
-.w-btn--pro { background: linear-gradient(90deg, #f59e0b, #f97316); color: #fff; }
-.w-btn--pro:hover { filter: brightness(1.08); }
+.w-btn--pro, .btn-pro, .ui-btn--pro { background: linear-gradient(90deg, #f59e0b, #f97316) !important; color: #fff !important; border: 0 !important; font-weight: 700; white-space: nowrap; }
+.w-btn--pro:hover, .btn-pro:hover, .ui-btn--pro:hover { filter: brightness(1.08); }
+.btn-pro { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; }

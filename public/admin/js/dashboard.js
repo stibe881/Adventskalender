@@ -11,6 +11,32 @@ const emptyState = document.getElementById("empty-state");
 const createForm = document.getElementById("create-form");
 
 let isProUser = false;
+let proPrice = "";
+
+// What a PRO calendar gets – shown before the checkout.
+const CALENDAR_PRO_POINTS = [
+  ["image", "Eigenes Logo auf dem Kalender (White-Labeling)"],
+  ["palette", "Corporate Design: Firmenfarbe, Hintergrundbild und Türchen-Stil"],
+  ["bar-chart-3", "Statistiken: wer wann welches Türchen geöffnet hat"],
+];
+async function startCalendarUpgrade(id, name) {
+  const ok = await UI.proDialog({ title: "Kalender auf PRO upgraden", scope: `den Kalender „${name || ""}“`, price: proPrice, points: CALENDAR_PRO_POINTS });
+  if (!ok) return;
+  try {
+    const res = await api.checkoutFor("calendar", id);
+    if (res.url) window.location.href = res.url;
+  } catch (err) {
+    UI.toast(err.message, { error: true });
+  }
+}
+// The whole card or row opens the editor; buttons, links and menus keep their own job.
+function openOnClick(el, id) {
+  el.style.cursor = "pointer";
+  el.addEventListener("click", (e) => {
+    if (e.target.closest("a, button, input, select, textarea, [id^='menu-']")) return;
+    window.location.href = `/admin/editor.html?id=${id}`;
+  });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const yearInput = document.querySelector('input[name="year"]');
@@ -24,6 +50,7 @@ async function init() {
     const user = await api.me();
     document.getElementById("admin-name").textContent = user.email;
     isProUser = !!user.isPro;
+    proPrice = user.proPrice || "";
     
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await api.logout();
@@ -138,14 +165,7 @@ window.duplicateCalendar = async (id) => {
   }
 };
 
-window.upgradeCalendar = async (id) => {
-  try {
-    const res = await api.checkout(id);
-    if (res.url) window.location.href = res.url;
-  } catch (err) {
-    alert("Fehler beim Checkout: " + err.message);
-  }
-};
+window.upgradeCalendar = (id, name) => startCalendarUpgrade(id, name);
 
 window.copyLink = async (url) => {
   try {
@@ -274,6 +294,7 @@ window.addEventListener("click", (e) => {
 function renderTableRow(cal) {
   const row = document.createElement("tr");
   row.className = "hover:bg-white/5 transition-colors group";
+  openOnClick(row, cal.id);
   const progressPct = Math.round((cal.filledDoors / 24) * 100);
   
   row.innerHTML = `
@@ -300,12 +321,11 @@ function renderTableRow(cal) {
           •••
         </button>
         <div id="menu-table-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden text-left">
-          <a href="/admin/editor.html?id=${cal.id}" class="block px-4 py-2 hover:bg-slate-700 text-white">Bearbeiten</a>
           <button onclick="copyLink('${cal.shareUrl}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white">Link kopieren</button>
           <a href="${cal.shareUrl}" target="_blank" class="block px-4 py-2 hover:bg-slate-700 text-white">Ansehen</a>
-          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-500 font-bold border-t border-white/10"><i data-icon="star"></i> PRO Upgrade</button>` : ``}
+          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}', '${escapeHtml(cal.recipientName).replace(/'/g, "&#39;")}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-400 font-bold border-t border-white/10"><i data-icon="star"></i> PRO freischalten${proPrice ? ` · ${proPrice}` : ""}</button>` : ``}
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
-          <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>
+          ${(cal.isPro || isProUser) ? `<button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>` : ""}
           <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
         </div>
       </div>
@@ -316,7 +336,8 @@ function renderTableRow(cal) {
 
 function renderCard(cal) {
   const card = document.createElement("div");
-  card.className = "bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-3";
+  card.className = "bg-white/5 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col gap-3 transition-colors";
+  openOnClick(card, cal.id);
   const progressPct = Math.round((cal.filledDoors / 24) * 100);
 
   card.innerHTML = `
@@ -331,7 +352,7 @@ function renderCard(cal) {
         </button>
         <div id="menu-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden">
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white flex items-center gap-2">Kopieren</button>
-          <button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>
+          ${(cal.isPro || isProUser) ? `<button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-purple-400 flex items-center gap-2">Statistiken</button>` : ""}
           <a href="/api/admin/calendars/${cal.id}/export-giveaway" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 flex items-center gap-2" download>Leads Exportieren</a>
           <button onclick="promptImport('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-blue-400 flex items-center gap-2">CSV Import</button>
           <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-900/50 text-rose-500 flex items-center gap-2">Löschen</button>
@@ -350,12 +371,11 @@ function renderCard(cal) {
     </div>
 
     <div class="flex flex-wrap gap-2 mt-1">
-      <a href="/admin/editor.html?id=${cal.id}" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-3 py-1.5 transition-colors">Bearbeiten</a>
       <a href="/c/preview/${cal.id}" target="_blank" rel="noopener" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">Vorschau</a>
       <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="link"></i> Link</button>
       <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren"><i data-icon="copy"></i> Kopieren</button>
       <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
-      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="star"></i> PRO</button>` : `<span class="px-3 py-1.5 text-xs text-amber-500 font-bold bg-amber-500/10 rounded-lg">PRO</span>`}
+      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="btn-pro">${UI.proButtonLabel(proPrice)}</button>` : `<span class="ui-pro-badge self-center">PRO</span>`}
     </div>
   `;
 
@@ -368,16 +388,7 @@ function renderCard(cal) {
   });
 
   const upgradeBtn = card.querySelector('[data-action="upgrade"]');
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener("click", async () => {
-      try {
-        const res = await api.checkout(cal.id);
-        if (res.url) {
-          window.location.href = res.url;
-        }
-      } catch(e) { alert(e.message); }
-    });
-  }
+  if (upgradeBtn) upgradeBtn.addEventListener("click", () => startCalendarUpgrade(cal.id, cal.recipientName));
 
   card.querySelector('[data-action="duplicate"]').addEventListener("click", async (e) => {
     e.currentTarget.disabled = true;

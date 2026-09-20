@@ -48,10 +48,15 @@ async function load() {
 
 // PRO for this round: Wunschzettel, Hinweise, Chat.
 document.getElementById("upgrade-btn").addEventListener("click", async () => {
-  const ok = await UI.confirm({
+  const ok = await UI.proDialog({
     title: "Runde auf PRO upgraden",
-    body: `<p class="ui-dialog__text">Einmalig ${UI.esc(group.proPrice || "CHF 4.50")} für diese Runde – alle drei Funktionen zusammen, nicht je Funktion. Damit bekommen alle Teilnehmenden:</p><ul class="w-pro-list"><li><i data-icon="clipboard-list"></i> Wunschzettel mit Link, Preis und Bild aus dem Online-Shop</li><li><i data-icon="lightbulb"></i> Hinweise für den Wichtel: Allergien, Hobbys, Lieblingsgeschmack</li><li><i data-icon="message-circle"></i> Anonymer Chat mit dem Wichtelkind und dem eigenen Wichtel</li></ul>`,
-    ok: `Weiter zur Bezahlung – ${group.proPrice || "CHF 4.50"}`,
+    scope: `die Runde „${group.title}“ und alle Teilnehmenden`,
+    price: group.proPrice || "",
+    points: [
+      ["clipboard-list", "Wunschzettel mit Link, Preis und Bild aus dem Online-Shop"],
+      ["lightbulb", "Hinweise für den Wichtel: Allergien, Hobbys, Lieblingsgeschmack"],
+      ["message-circle", "Anonymer Chat mit dem Wichtelkind und dem eigenen Wichtel"],
+    ],
   });
   if (!ok) return;
   try {
@@ -78,7 +83,8 @@ function render() {
 
   document.getElementById("pro-badge").classList.toggle("hidden", !g.isPro);
   document.getElementById("upgrade-btn").classList.toggle("hidden", Boolean(g.isPro));
-  document.getElementById("upgrade-price").textContent = g.proPrice ? `· ${g.proPrice}` : "";
+  document.getElementById("upgrade-btn").innerHTML = UI.proButtonLabel(g.proPrice || "");
+  document.getElementById("pro-settings").classList.toggle("hidden", !g.isPro);
 
   const mine = g.participants.find((p) => p.isOrganizer);
   const myLink = document.getElementById("my-area-link");

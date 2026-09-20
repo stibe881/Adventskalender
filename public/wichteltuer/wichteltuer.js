@@ -16,6 +16,8 @@ const store = {
 const ME_KEY = `wichteltuer_me_${token}`;
 const TAB_KEY = `wichteltuer_tab_${token}`;
 const TABS = ["heute", "plan", "ideen", "einkauf", "post", "wichtel"];
+// Tabs that exist for this plan: the library and the shopping list only with PRO.
+const tabs = () => TABS.filter((t) => (t === "ideen" ? feat().ideas : t === "einkauf" ? feat().shopping : true));
 let activeTab = TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : "heute";
 const PUSH_KEY = `wichteltuer_push_${token}`;
 
@@ -28,25 +30,9 @@ const PRO_POINTS = [
   ["mail", "Briefe schreiben: fertige Vorlagen in der Stimme des Wichtels, für den Plan und die Wichtelpost"],
   ["clipboard-list", "Einkaufsliste: alles Material aus dem Plan, nach Wochen sortiert, zum Abhaken und Teilen"],
 ];
-function proTeaser(iconName, title, text) {
-  return `<div class="w-card w-card--pro">
-    <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
-    <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
-    <p class="text-xs text-slate-400 mt-2">Einmalig ${esc(proPrice())} für diese Wichteltür – Ideen-Bibliothek, Briefe und Einkaufsliste zusammen, nicht je Funktion.</p>
-    ${data.owner
-      ? `<button type="button" class="w-btn w-btn--pro mt-3" data-act="upgrade"><i data-icon="star"></i> Wichteltür auf PRO upgraden – ${esc(proPrice())}</button>`
-      : `<p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Wer diese Wichteltür angelegt hat, kann sie in seinem Konto auf PRO upgraden – dann ist das hier für euch beide frei.</p>`}
-  </div>`;
-}
-function upgradeCard() {
-  return `<div class="w-card w-card--pro">
-    <h2 class="w-title text-xl"><i data-icon="star"></i> Mehr aus der Wichteltür holen <span class="ui-pro-badge">PRO</span></h2>
-    <p class="text-sm text-slate-300 mt-1">Einmalig ${esc(proPrice())} für diese Wichteltür – alle drei Funktionen zusammen, für alle, die den Link haben.</p>
-    <ul class="w-pro-list">${PRO_POINTS.map(([ic, t]) => `<li><i data-icon="${ic}"></i><span>${esc(t)}</span></li>`).join("")}</ul>
-    <button type="button" class="w-btn w-btn--pro mt-4" data-act="upgrade"><i data-icon="star"></i> Jetzt upgraden – ${esc(proPrice())}</button>
-  </div>`;
-}
 async function startUpgrade() {
+  const ok = await UI.proDialog({ title: "Wichteltür auf PRO upgraden", scope: "diese Wichteltür und alle, die den Link haben", price: proPrice(), points: PRO_POINTS });
+  if (!ok) return;
   let r;
   try {
     r = await fetch("/api/payment/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "wichteltuer", id: data.id }) });
@@ -147,16 +133,17 @@ async function enablePush() {
 // ── Rendering ───────────────────────────────────────────────────────────────
 function render() {
   UI.watchOffline();
-  const sec = (id, html) => `<section id="${id}" class="w-section ${activeTab === id ? "" : "hidden"}">${html}</section>`;
+  if (!tabs().includes(activeTab)) activeTab = "heute";
+  const sec = (id, html) => (tabs().includes(id) ? `<section id="${id}" class="w-section ${activeTab === id ? "" : "hidden"}">${html}</section>` : "");
   app.innerHTML = [
     topBar(),
     sectionNav(),
     sec("heute", todayCard() + overviewCard()),
     sec("plan", planCard()),
-    sec("ideen", feat().ideas ? ideasCard() : proTeaser("lightbulb", "Ideen-Bibliothek", "60 Streiche, Aufgaben, Bastelideen und Geschenke – mit Aufwand, Material und Alter. Einplanen per Tipp oder alle 24 Nächte automatisch füllen lassen.")),
-    sec("einkauf", feat().shopping ? shoppingCard() : proTeaser("clipboard-list", "Einkaufsliste", "Alles Material aus dem Plan, nach Wochen sortiert. Abhaken, ergänzen, teilen oder drucken – erledigte Nächte verschwinden von selbst.")),
+    sec("ideen", feat().ideas ? ideasCard() : ""),
+    sec("einkauf", feat().shopping ? shoppingCard() : ""),
     sec("post", postCard()),
-    sec("wichtel", elfCard() + (data.owner && !data.isPro ? upgradeCard() : "") + settingsCard() + linksCard()),
+    sec("wichtel", elfCard() + settingsCard() + linksCard()),
     `<p class="text-center text-xs text-slate-500 pb-6">Wichteltür · Advently</p>`,
   ].join("");
   bindEvents();
@@ -169,7 +156,7 @@ function render() {
 
 // One section at a time keeps the page short; the tab bar stays at the top.
 function setTab(name, { scroll = true } = {}) {
-  if (!TABS.includes(name)) return;
+  if (!tabs().includes(name)) return;
   activeTab = name;
   store.set(TAB_KEY, name);
   TABS.forEach((t) => document.getElementById(t)?.classList.toggle("hidden", t !== name));
@@ -187,13 +174,14 @@ function topBar() {
     <div class="min-w-0"><p class="text-xs text-amber-300 uppercase tracking-widest font-semibold">Wichteltür ${d.year}</p><h1 class="w-title text-2xl truncate">${esc(d.title)}${d.isPro ? ` <span class="ui-pro-badge">PRO</span>` : ""}</h1></div>
     <div class="flex gap-2">
       ${d.owner ? `<a href="/admin/wichteltuer.html" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : (window.history.length > 1 ? `<a href="#" data-act="back" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : "")}
+      ${d.owner && !d.isPro ? `<button type="button" class="w-btn w-btn--sm w-btn--pro" data-act="upgrade">${UI.proButtonLabel(proPrice())}</button>` : ""}
       <button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="share-plan"><i data-icon="share-2"></i> Teilen</button>
     </div>
   </div>`;
 }
 
 function sectionNav() {
-  const items = [["heute", "sparkles", "Heute", 0], ["plan", "calendar", "Plan", data.stats.open], ["ideen", "lightbulb", "Ideen", 0], ["einkauf", "clipboard-list", "Einkauf", data.shopping.filter((i) => !i.checked).length], ["post", "mail", "Post", data.unreadPost], ["wichtel", "door-open", "Wichtel", 0]];
+  const items = [["heute", "sparkles", "Heute", 0], ["plan", "calendar", "Plan", data.stats.open], ["ideen", "lightbulb", "Ideen", 0], ["einkauf", "clipboard-list", "Einkauf", data.shopping.filter((i) => !i.checked).length], ["post", "mail", "Post", data.unreadPost], ["wichtel", "door-open", "Wichtel", 0]].filter(([id]) => tabs().includes(id));
   return `<nav class="w-secnav" aria-label="Bereiche">${items.map(([id, ic, label, badge]) => `<a href="#${id}" data-tab="${id}" class="w-secnav__item ${activeTab === id ? "is-active" : ""}"><i data-icon="${ic}"></i><span>${label}</span>${badge ? `<span class="ui-badge ${id === "post" ? "" : "ui-badge--soft"}">${badge}</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -231,7 +219,7 @@ function todayCard() {
       <div class="w-progress mt-3"><div style="width:${Math.round((d.stats.planned / 24) * 100)}%"></div></div>
       <p class="text-xs text-slate-400 mt-1">${d.stats.planned} von 24 Nächten geplant${d.stats.done ? `, ${d.stats.done} erledigt` : ""}</p>
       <div class="flex flex-wrap gap-2 mt-3">
-        ${d.stats.open && feat().ideas ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> ${d.stats.planned ? "Lücken automatisch füllen" : "Alle 24 Nächte automatisch planen"}</button>` : ""}${d.stats.open && !feat().ideas ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-tab="ideen"><i data-icon="lightbulb"></i> Ideen-Bibliothek <span class="ui-pro-badge">PRO</span></button>` : ""}
+        ${d.stats.open && feat().ideas ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> ${d.stats.planned ? "Lücken automatisch füllen" : "Alle 24 Nächte automatisch planen"}</button>` : ""}
         <a href="#einkauf" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="clipboard-list"></i> Einkaufsliste</a>
         ${after ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-recap"><i data-icon="printer"></i> Rückblick drucken</button>` : ""}
       </div>
@@ -337,9 +325,9 @@ function postCard() {
   return `<div class="w-card">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="w-title text-xl"><i data-icon="mail"></i> Wichtelpost ${d.unreadPost ? `<span class="ui-badge">${d.unreadPost}</span>` : ""}</h2>
-      ${feat().letters ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="write-post"><i data-icon="pen-line"></i> Brief an die Kinder</button>` : `<span class="ui-pro-badge">Antworten: PRO</span>`}
+      ${feat().letters ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="write-post"><i data-icon="pen-line"></i> Brief an die Kinder</button>` : ""}
     </div>
-    <p class="text-sm text-slate-400 mt-1">Briefe der Kinder von der Kinderseite${feat().letters ? ` und die Antworten von ${esc(d.elf.name)}. Antworten erscheinen sofort auf der Kinderseite.` : `. Mit PRO antwortet ${esc(d.elf.name)} mit fertigen Briefvorlagen – ${d.owner ? `<a href="#wichtel" data-tab="wichtel" class="text-amber-300 underline">jetzt upgraden</a>` : "wer die Wichteltür angelegt hat, kann upgraden"}.`}</p>
+    <p class="text-sm text-slate-400 mt-1">Briefe der Kinder von der Kinderseite${feat().letters ? ` und die Antworten von ${esc(d.elf.name)}. Antworten erscheinen sofort auf der Kinderseite.` : "."}</p>
     <div class="space-y-3 mt-3">${post.length ? post.map((l) => l.from === "kid"
       ? `<div class="t-letter t-letter--kid ${l.read ? "" : "t-letter--unread"}">${esc(l.text)}<small>${esc(l.childName || "Kind")} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions">${feat().letters ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-reply="${esc(l.id)}" data-child="${esc(l.childId || "")}"><i data-icon="pen-line"></i> Antworten</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`
       : `<div class="t-letter t-letter--elf">${esc(l.text)}<small>${esc(d.elf.name)}${l.childName ? ` an ${esc(l.childName)}` : ""} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-print-post="${esc(l.id)}"><i data-icon="printer"></i> Drucken</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`).join("")
@@ -412,7 +400,7 @@ async function openDay(date) {
   const e = day.entry || { ideaId: null, title: "", category: "streich", text: "", materials: [], minutes: 10, prepDayBefore: false, assignee: null, note: "", letter: "", letterVisibleToKids: false, photo: null, photoVisibleToKids: false, reaction: "", done: false };
   const ideaOptions = [`<option value="">– eigene Idee –</option>`].concat(Object.entries(data.categories).map(([k, v]) => `<optgroup label="${esc(v)}">${(ideas || []).filter((i) => i.category === k).map((i) => `<option value="${esc(i.id)}" ${e.ideaId === i.id ? "selected" : ""}>${esc(i.title)} (${i.minutes} Min.)</option>`).join("")}</optgroup>`)).join("");
   const body = `
-    ${feat().ideas ? `<label class="ui-field"><span class="ui-field__label">Idee aus der Bibliothek</span><select name="ideaId" class="ui-input" data-idea-select>${ideaOptions}</select></label>` : `<p class="ui-field__hint" style="margin-bottom:10px"><span class="ui-pro-badge">PRO</span> Mit PRO wählst du hier eine von 60 fertigen Ideen aus der Bibliothek.</p>`}
+    ${feat().ideas ? `<label class="ui-field"><span class="ui-field__label">Idee aus der Bibliothek</span><select name="ideaId" class="ui-input" data-idea-select>${ideaOptions}</select></label>` : ""}
     <label class="ui-field"><span class="ui-field__label">Titel</span><input name="title" class="ui-input" value="${esc(e.title)}" maxlength="100" required></label>
     <div class="grid grid-cols-2 gap-2">
       <label class="ui-field"><span class="ui-field__label">Art</span><select name="category" class="ui-input">${Object.entries(data.categories).map(([k, v]) => `<option value="${k}" ${e.category === k ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>
@@ -426,7 +414,7 @@ async function openDay(date) {
     </div>
     <label class="ui-field"><span class="ui-field__label">Notiz für uns</span><input name="note" class="ui-input" value="${esc(e.note)}" maxlength="500" placeholder="z. B. Kamera bereitlegen"></label>
     ${feat().letters ? `<div class="ui-field"><span class="ui-field__label">Brief vom Wichtel <button type="button" class="text-amber-300 underline" data-letter-template>Vorlage einsetzen</button>${e.letter ? ` · <button type="button" class="text-amber-300 underline" data-print-day-letter>Drucken</button>` : ""}</span><textarea name="letter" class="ui-input" rows="4" maxlength="2000" placeholder="Leer lassen, wenn es keinen Brief gibt">${esc(e.letter)}</textarea></div>
-    <label class="ui-check"><input type="checkbox" name="letterVisibleToKids" ${e.letterVisibleToKids ? "checked" : ""}> <span>Brief ab diesem Morgen auch auf der Kinderseite zeigen</span></label>` : `<p class="ui-field__hint" style="margin-bottom:10px"><span class="ui-pro-badge">PRO</span> Briefe vom Wichtel (mit Vorlagen, auch für die Kinderseite) gibt es in der PRO-Version.</p>`}
+    <label class="ui-check"><input type="checkbox" name="letterVisibleToKids" ${e.letterVisibleToKids ? "checked" : ""}> <span>Brief ab diesem Morgen auch auf der Kinderseite zeigen</span></label>` : ""}
     ${e.photo ? `<div class="flex items-center gap-3 mt-2"><img src="${esc(e.photo)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><label class="ui-check"><input type="checkbox" name="photoVisibleToKids" ${e.photoVisibleToKids ? "checked" : ""}> <span>Foto auf der Kinderseite zeigen</span></label><button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" data-remove-photo>Foto löschen</button></div>` : ""}
     <label class="ui-field"><span class="ui-field__label">${e.photo ? "Anderes Foto" : "Foto (Beweis oder Reaktion der Kinder)"}</span><input type="file" name="photo" accept="image/*" class="ui-input"></label>
     <div class="border-t border-white/10 pt-3 mt-2">

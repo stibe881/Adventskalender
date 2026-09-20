@@ -23,7 +23,7 @@ const KINDS = {
     cancelUrl: () => "/admin/index.html?payment=cancelled",
     markPro: (id) => db.updateCalendar(id, (c) => { c.isPro = true; return c; }),
     label: "Kalender",
-    lineItem: () => (config.stripe.priceId ? { price: config.stripe.priceId, quantity: 1 } : null),
+    lineItem: (item) => (config.stripe.priceId ? { price: config.stripe.priceId, quantity: 1 } : modulePrice(`Adventskalender PRO – ${item.recipientName || "Kalender"}`, "Eigenes Logo, Corporate Design und Statistiken für diesen Kalender.")),
   },
   wichteln: {
     load: (id) => db.getWichtelGroupById(id),

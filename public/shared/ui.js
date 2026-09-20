@@ -126,6 +126,16 @@
 
   const canShare = () => typeof window.nativeShare === "function" || Boolean(navigator.share);
 
+  // ── PRO ───────────────────────────────────────────────────────────────────
+  // The same "what do I get" dialog for calendars, Wichteln and Wichteltür.
+  // points: [[icon, text], …]; resolves true when the person wants to pay.
+  function proDialog({ title = "PRO freischalten", scope = "", price = "", points = [], ok = "Weiter zur Bezahlung" } = {}) {
+    const body = `<p class="ui-dialog__text">Einmalig${price ? ` ${esc(price)}` : ""}${scope ? ` für ${esc(scope)}` : ""} – alle Funktionen zusammen, nicht je Funktion.</p>
+      <ul class="w-pro-list">${points.map(([ic, t]) => `<li><i data-icon="${esc(ic)}"></i><span>${esc(t)}</span></li>`).join("")}</ul>`;
+    return openDialog({ title, body, ok: price ? `${ok} – ${price}` : ok }).then((r) => r !== null);
+  }
+  const proButtonLabel = (price) => `<i data-icon="star"></i> PRO freischalten${price ? ` · ${esc(price)}` : ""}`;
+
   // ── Offline hint ──────────────────────────────────────────────────────────
   // Shown after a real offline signal (event or failed request), never merely
   // because navigator.onLine starts out false in some embedded browsers.
@@ -160,5 +170,5 @@
     window.addEventListener("offline", () => setOffline(true));
   }
 
-  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc };
+  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc, proDialog, proButtonLabel };
 })();

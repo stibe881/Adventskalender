@@ -104,37 +104,32 @@ async function loadCalendar() {
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
   document.getElementById("cal-subtitle").textContent = `Dezember ${calendar.year} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
 
-    if (!calendar.isPro && !currentUser.isPro) {
-      document.querySelectorAll(".pro-feature-input").forEach(el => {
-        el.disabled = true;
-        el.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
-        el.title = "Nur in der PRO Version verfügbar";
-      });
-    // Add click listeners to wrappers or the inputs themselves
-    document.querySelectorAll(".pro-feature-input").forEach(el => {
-      // Wrapper click to intercept since disabled inputs don't always fire click reliably
-      const wrapper = el.parentElement;
-      if (wrapper) {
-        wrapper.classList.add("cursor-pointer");
-        wrapper.addEventListener("click", async (e) => {
-          if (el.disabled) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (confirm("Diese Funktion (z. B. White-Labeling & Corporate Design) ist nur in der PRO Version verfügbar.\n\nMöchtest du diesen Kalender jetzt auf PRO upgraden?")) {
-              try {
-                const res = await api.checkout(calendar.id);
-                if (res.url) {
-                  window.location.href = res.url;
-                }
-              } catch(err) {
-                alert("Fehler beim Checkout: " + err.message);
-              }
-            }
-          }
-        }, true);
-      }
+  // Without PRO the branding block is not shown at all; the header button
+  // explains what PRO adds and leads to the checkout.
+  const isPro = Boolean(calendar.isPro || currentUser.isPro);
+  document.getElementById("branding-section").classList.toggle("hidden", !isPro);
+  const upgradeBtn = document.getElementById("upgrade-btn");
+  upgradeBtn.classList.toggle("hidden", isPro);
+  upgradeBtn.innerHTML = UI.proButtonLabel(currentUser.proPrice || "");
+  upgradeBtn.onclick = async () => {
+    const ok = await UI.proDialog({
+      title: "Kalender auf PRO upgraden",
+      scope: `den Kalender für ${calendar.recipientName}`,
+      price: currentUser.proPrice || "",
+      points: [
+        ["image", "Eigenes Logo auf dem Kalender (White-Labeling)"],
+        ["palette", "Corporate Design: Firmenfarbe, Hintergrundbild und Türchen-Stil"],
+        ["bar-chart-3", "Statistiken: wer wann welches Türchen geöffnet hat"],
+      ],
     });
-  }
+    if (!ok) return;
+    try {
+      const res = await api.checkoutFor("calendar", calendar.id);
+      if (res.url) window.location.href = res.url;
+    } catch (err) {
+      UI.toast(err.message, { error: true });
+    }
+  };
 
   const settingsForm = document.getElementById("settings-form");
   document.querySelector('input[name="recipientName"]').value = calendar.recipientName;

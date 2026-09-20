@@ -316,14 +316,6 @@ function emptyState(iconName, text) {
 function feat() {
   return data.features || { wishlist: true, hints: true, chat: Boolean(data.group.chatEnabled) };
 }
-function proTeaser(iconName, title, text) {
-  return `<div class="w-card w-card--pro">
-    <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
-    <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
-    <p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Der Organisator kann die Runde im Wichtel-Editor auf PRO upgraden (einmalig ${esc(data.group.proPrice || "CHF 4.50")} für die ganze Runde, alle Funktionen zusammen) – dann ist das hier für alle freigeschaltet.</p>
-  </div>`;
-}
-
 // ── Rendering ───────────────────────────────────────────────────────────────
 function render() {
   const { group: g, me } = data;
@@ -348,8 +340,8 @@ function render() {
     sectionNav(),
     `<div id="push-ask" class="hidden"></div>`,
     `<section id="wichtelkind" class="w-section">${data.reveal ? revealCard() : ""}${drawn && data.recipient ? recipientCard() + todoCard() : notDrawnCard()}</section>`,
-    `<section id="wunschzettel" class="w-section">${feat().wishlist ? myWishlistCard() : proTeaser("clipboard-list", "Dein Wunschzettel", "Mit PRO trägst du hier deine Wünsche ein – mit Link, Preis und Bild aus dem Online-Shop. Dein Wichtel sieht sie sofort.")}${myHintsCard()}${feat().wishlist ? sharedWishlistsCard() : ""}</section>`,
-    `<section id="chat" class="w-section">${chatSection()}</section>`,
+    `<section id="wunschzettel" class="w-section">${feat().wishlist ? myWishlistCard() : ""}${myHintsCard()}${feat().wishlist ? sharedWishlistsCard() : ""}</section>`,
+    feat().chat || !data.group.chatEnabled ? `<section id="chat" class="w-section">${chatSection()}</section>` : "",
     `<section id="rueckblick" class="w-section">${drawn && data.santa ? santaCard() : ""}${recapCard()}</section>`,
     participantsCard(),
     footerCard(),
@@ -481,10 +473,10 @@ function stepper() {
 function sectionNav() {
   const items = [
     ["#wichtelkind", "gift", "Wichtelkind", 0],
-    ["#wunschzettel", "clipboard-list", "Wünsche", 0],
-    ["#chat", "message-circle", "Chat", unreadTotal()],
+    feat().wishlist || feat().hints ? ["#wunschzettel", "clipboard-list", "Wünsche", 0] : ["#wunschzettel", "bell", "Benachrichtigung", 0],
+    feat().chat || !data.group.chatEnabled ? ["#chat", "message-circle", "Chat", unreadTotal()] : null,
     ["#rueckblick", "camera", "Rückblick", 0],
-  ];
+  ].filter(Boolean);
   return `<nav class="w-secnav" aria-label="Bereiche">${items.map(([href, ic, label, badge]) => `<a href="${href}" class="w-secnav__item"><i data-icon="${ic}"></i><span>${label}</span>${badge ? `<span class="ui-badge">${badge}</span>` : ""}</a>`).join("")}</nav>`;
 }
 
@@ -553,11 +545,11 @@ function recipientCard() {
 
     ${b ? `<div class="w-budget mt-4"><i data-icon="wallet"></i> <span>Budget <b>${esc(data.group.budget)}</b>${r.wishlist.length ? ` · ${inBudget} von ${r.wishlist.length} Wünschen ${inBudget === 1 ? "passt" : "passen"} ins Budget` : ""}</span></div>` : ""}
 
-    <h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)} ${feat().wishlist ? "" : `<span class="ui-pro-badge">PRO</span>`}</h3>
-    ${!feat().wishlist ? `<p class="text-sm text-slate-400">Wunschzettel gibt es in der PRO-Version dieser Runde.</p>` : r.wishlist.length ? `<div class="space-y-2">${r.wishlist.map((w) => wishItem(w, false)).join("")}</div>` : emptyState("clipboard-list", `Noch leer. Die Hinweise helfen dir, nicht ins Blaue zu kaufen${feat().chat ? ` – oder <a href="#chat" class="text-emerald-300 underline">frag anonym nach</a>` : ""}.`)}
+    ${feat().wishlist ? `<h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)}</h3>
+    ${r.wishlist.length ? `<div class="space-y-2">${r.wishlist.map((w) => wishItem(w, false)).join("")}</div>` : emptyState("clipboard-list", `Noch leer. Die Hinweise helfen dir, nicht ins Blaue zu kaufen${feat().chat ? ` – oder <a href="#chat" class="text-emerald-300 underline">frag anonym nach</a>` : ""}.`)}` : ""}
 
-    <h3 class="font-semibold text-white mt-5 mb-2">Hinweise ${feat().hints ? "" : `<span class="ui-pro-badge">PRO</span>`}</h3>
-    ${feat().hints ? hintsBlock(r.hints) : `<p class="text-sm text-slate-400">Hinweise für den Wichtel (Allergien, Hobbys, Lieblingsgeschmack) gibt es in der PRO-Version dieser Runde.</p>`}
+    ${feat().hints ? `<h3 class="font-semibold text-white mt-5 mb-2">Hinweise</h3>
+    ${hintsBlock(r.hints)}` : ""}
 
     <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="lightbulb"></i> Ideen${r.hints?.hobbies || r.hints?.favorites ? " aus den Hinweisen" : ""}</h3>
     <div class="flex flex-wrap gap-2">${ideas.map((i) => `<span class="w-chip w-chip--idea">${esc(i)}</span>`).join("")}</div>
@@ -625,9 +617,9 @@ function myHintsCard() {
   const me = data.me;
   const h = me.hints || {};
   const pro = feat().hints;
-  return `<div class="w-card ${pro ? "" : "w-card--pro"}">
-    <h2 class="w-title text-xl"><i data-icon="lightbulb"></i> Hinweise für deinen Wichtel ${pro ? "" : `<span class="ui-pro-badge">PRO</span>`}</h2>
-    <p class="text-sm text-slate-400 mt-1">${pro ? "Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte." : "In der PRO-Version dieser Runde hinterlegst du hier Allergien, Lieblingsgeschmack und Hobbys – dein Wichtel kauft dann nicht ins Blaue."}</p>
+  return `<div class="w-card">
+    <h2 class="w-title text-xl"><i data-icon="${pro ? "lightbulb" : "bell"}"></i> ${pro ? "Hinweise für deinen Wichtel" : "Benachrichtigungen"}</h2>
+    <p class="text-sm text-slate-400 mt-1">${pro ? "Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte." : "Wir sagen dir Bescheid, wenn es in der Runde etwas Neues gibt."}</p>
     <form id="hints-form" class="grid sm:grid-cols-2 gap-2 mt-3">
       ${pro ? `<input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
       <input name="favorites" maxlength="300" class="w-input" placeholder="Lieblingsgeschmack" value="${esc(h.favorites || "")}">
@@ -656,7 +648,7 @@ function sharedWishlistsCard() {
 function chatSection() {
   const g = data.group;
   if (!g.chatEnabled) return `<div class="w-card">${emptyState("message-circle", "Der anonyme Chat ist in dieser Runde ausgeschaltet.")}</div>`;
-  if (!feat().chat) return proTeaser("message-circle", "Anonymer Chat", "Mit PRO fragst du dein Wichtelkind anonym nach Größe, Farbe oder Geschmack – und antwortest deinem geheimen Wichtel, ohne dass jemand erfährt, wer dahintersteckt.");
+  if (!feat().chat) return "";
   if (!isDrawn()) return `<div class="w-card"><h2 class="w-title text-xl"><i data-icon="message-circle"></i> Chat</h2>${emptyState("message-circle", "Der Chat öffnet nach der Auslosung: ein Kanal zu deinem Wichtelkind, einer zu deinem geheimen Wichtel.")}</div>`;
   const r = data.recipient;
   const s = data.santa;
