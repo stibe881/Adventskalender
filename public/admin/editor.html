@@ -22,20 +22,20 @@
 <body class="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
   <header class="border-b border-white/10 bg-slate-900/60 backdrop-blur sticky top-0 z-10">
     <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto sm:flex-1">
         <a href="/admin/dashboard.html" class="text-slate-400 hover:text-white text-sm shrink-0">← Zurück</a>
         <div class="min-w-0">
           <h1 id="cal-title" class="font-display font-bold text-lg leading-none truncate">Kalender laden…</h1>
-          <p id="cal-subtitle" class="text-xs text-slate-400"></p>
+          <p id="cal-subtitle" class="text-xs text-slate-400 truncate"></p>
         </div>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <button id="upgrade-btn" class="hidden btn-pro"></button>
-        <a id="preview-link" href="#" target="_blank" rel="noopener" class="flex items-center gap-1 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition-colors">
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <button id="upgrade-btn" class="hidden btn-pro flex-1 sm:flex-none min-w-0"></button>
+        <a id="preview-link" href="#" target="_blank" rel="noopener" class="flex shrink-0 items-center gap-1 text-sm rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           <span class="hidden sm:inline">Vorschau</span>
         </a>
-        <button id="copy-link-btn" class="flex items-center gap-1 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 transition-colors">
+        <button id="copy-link-btn" class="flex shrink-0 items-center gap-1 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           <span class="hidden sm:inline">Link kopieren</span><span class="sm:hidden">Link</span>
         </button>
