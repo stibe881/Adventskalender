@@ -130,7 +130,7 @@ function topBar() {
   return `<div class="flex flex-wrap items-center justify-between gap-2" id="w-nav">
     <div class="min-w-0"><p class="text-xs text-amber-300 uppercase tracking-widest font-semibold">Wichteltür ${d.year}</p><h1 class="w-title text-2xl truncate">${esc(d.title)}</h1></div>
     <div class="flex gap-2">
-      ${d.owner ? `<a href="/admin/wichteltuer.html" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="settings"></i> Alle Türen</a>` : ""}
+      ${d.owner ? `<a href="/admin/wichteltuer.html" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : (window.history.length > 1 ? `<a href="#" data-act="back" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : "")}
       <button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="share-plan"><i data-icon="share-2"></i> Teilen</button>
     </div>
   </div>`;
@@ -595,6 +595,7 @@ async function onClick(e) {
         toast("Der Plan steht. Schau ihn dir an!");
         break;
       }
+      case "back": e.preventDefault(); window.history.back(); break;
       case "share-plan": {
         const r = await UI.share({ title: `Wichteltür: ${data.title}`, text: `Unser Wichtel-Plan für ${data.elf.name} – hier kannst du mitplanen:`, url: data.shareLink });
         if (r === "copied") toast("Link kopiert.");
