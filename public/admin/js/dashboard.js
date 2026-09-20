@@ -323,7 +323,6 @@ function renderTableRow(cal) {
         <div id="menu-table-${cal.id}" class="hidden absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg border border-white/10 z-10 text-sm overflow-hidden text-left">
           <button onclick="copyLink('${cal.shareUrl}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white">Link kopieren</button>
           <a href="${cal.shareUrl}" target="_blank" class="block px-4 py-2 hover:bg-slate-700 text-white">Ansehen</a>
-          ${(!cal.isPro && !isProUser) ? `<button onclick="upgradeCalendar('${cal.id}', '${escapeHtml(cal.recipientName).replace(/'/g, "&#39;")}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-amber-400 font-bold border-t border-white/10"><i data-icon="star"></i> PRO freischalten${proPrice ? ` · ${proPrice}` : ""}</button>` : ``}
           <button onclick="duplicateCalendar('${cal.id}')" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-white border-t border-white/10">Duplizieren</button>
           ${(cal.isPro || isProUser) ? `<button onclick="showAnalytics('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-slate-700 text-emerald-400 border-b border-white/10">Statistiken</button>` : ""}
           <button onclick="deleteCalendar('${cal.id}', ${cal.isPro})" class="w-full text-left px-4 py-2 hover:bg-rose-500/20 text-rose-400">Löschen</button>
@@ -375,7 +374,7 @@ function renderCard(cal) {
       <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="link"></i> Link</button>
       <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren"><i data-icon="copy"></i> Kopieren</button>
       <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
-      ${(!cal.isPro && !isProUser) ? `<button data-action="upgrade" data-id="${cal.id}" class="btn-pro">${UI.proButtonLabel(proPrice)}</button>` : `<span class="ui-pro-badge self-center">PRO</span>`}
+      ${(cal.isPro || isProUser) ? `<span class="ui-pro-badge self-center">PRO</span>` : ""}
     </div>
   `;
 
@@ -387,8 +386,6 @@ function renderCard(cal) {
     setTimeout(() => { btn.textContent = original; }, 2000);
   });
 
-  const upgradeBtn = card.querySelector('[data-action="upgrade"]');
-  if (upgradeBtn) upgradeBtn.addEventListener("click", () => startCalendarUpgrade(cal.id, cal.recipientName));
 
   card.querySelector('[data-action="duplicate"]').addEventListener("click", async (e) => {
     e.currentTarget.disabled = true;
