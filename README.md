@@ -130,10 +130,22 @@ Weihnachtswichtels, der den Kindern Streiche spielt.
   Einkauf, Mini-Briefe, Rückblick). Der Link gibt volle Bearbeitungsrechte ohne
   Konto, damit das andere Elternteil mitplanen kann; in der App bleibt die Tür
   gespeichert und erscheint auf der Startseite unter „Meine Wichteltüren“.
-- **Kinder-Seite** `/k/<kidToken>`: Tür, Countdown, Briefe vom Wichtel, Briefe an den
-  Wichtel. Zeigt nie den Plan.
+- **Planen**: 24 Punkte als Adventsleiste, Tage per langem Drücken oder Ziehen
+  tauschen, Erledigt-Häkchen in der Zeile, Filter „Meine Tage“/„Nur offene“,
+  Tagesdialog in zwei Stufen mit Vor/Zurück, Vorbereitungs-Checkliste, Kosten pro
+  Tag mit Monatsbudget, Morgen-Hinweis für die Kinderseite, eigene Ideen (bleiben
+  fürs nächste Jahr), fertige Monatspläne (Klassisch, Kleinkinder, Schulkinder,
+  Wenig Aufwand, Bastel-Dezember), automatische Verteilung „wer ist dran“
+  (abwechselnd oder feste Wochentage), Vorrat in der Einkaufsliste, Rückgängig
+  nach „Tag leeren“ und gelöschten Briefen, Kalender-Export (ICS mit Erinnerung am
+  Vorabend), Nur-Lesen-Link `/v/<viewToken>` für Grosseltern (wird nach dem 24.
+  zum Album), „Ins nächste Jahr übernehmen“.
+- **Kinder-Seite** `/k/<kidToken>`: Tür mit Charakter, Kerzen-Countdown, Briefe vom
+  Wichtel mit Reaktionen (Herz, Lachen, Staunen), Sprachnachrichten an den Wichtel,
+  Morgen-Hinweis, Briefe an den Wichtel. Zeigt nie den Plan.
 - **Erinnerung**: Jeden Abend zur eingestellten Zeit per Push (App/Browser) und
-  E-Mail: was heute Nacht zu tun ist, was morgen vorbereitet werden muss.
+  E-Mail: was heute Nacht zu tun ist, was morgen vorbereitet werden muss. Die Mail
+  hat einen „Erledigt“-Link, der den Tag direkt abhakt.
 - **Verwaltung** `/admin/wichteltuer.html`: Türen anlegen, Links erneuern, löschen.
 - Code: `server/src/routes/wichteltuer/`, `server/src/wichteltuer/` (Ideen, Briefe,
   Limits), `public/wichteltuer/`, Tests in `test/wichteltuer.test.js`.

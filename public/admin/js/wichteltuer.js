@@ -34,7 +34,23 @@ function planCard(p, shared) {
       ${p.stats.done ? `<span class="text-emerald-300"><i data-icon="circle-check"></i> ${p.stats.done} erledigt</span>` : ""}
       ${p.unreadPost ? `<span class="text-rose-300"><i data-icon="mail"></i> ${p.unreadPost} neue Post</span>` : ""}
     </div>
-    ${shared ? `<p class="text-[11px] text-slate-500 mt-3">Mit dir geteilt</p>` : ""}`;
+    ${shared ? `<p class="text-[11px] text-slate-500 mt-3">Mit dir geteilt</p>` : `<div class="mt-3 flex justify-end"><button type="button" class="text-xs text-amber-300 hover:text-white" data-rollover="${esc(p.id)}" data-year="${p.year}" data-title="${esc(p.title)}"><i data-icon="refresh-cw"></i> Ins nächste Jahr übernehmen</button></div>`}`;
+  const roll = card.querySelector("[data-rollover]");
+  if (roll) roll.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const r = await UI.form({
+      title: "Ins nächste Jahr übernehmen",
+      text: `Wichtel, Kinder (ein Jahr älter), Eltern, Einstellungen und eigene Ideen von „${p.title}“ werden übernommen. Der Plan bleibt leer oder wird gleich gefüllt.`,
+      ok: "Neue Wichteltür anlegen",
+      fields: [{ name: "year", type: "number", label: "Jahr", value: String(p.year + 1), required: true }, { name: "autoplan", type: "checkbox", label: "Alle 24 Nächte gleich automatisch planen", value: true }],
+    });
+    if (!r) return;
+    try {
+      const d = await api.rolloverElfPlan(p.id, { year: Number(r.year), autoplan: Boolean(r.autoplan) });
+      window.location.href = `/e/${encodeURIComponent(d.shareLink.split("/").pop())}`;
+    } catch (err) { UI.toast(err.message, { error: true }); }
+  });
   return card;
 }
 

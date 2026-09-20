@@ -211,7 +211,7 @@ async function runElfReminders(now = new Date()) {
     }
     if (prep?.prepDayBefore && !prep.done) lines.push(`Morgen vorbereiten (für den ${S.dayNumber(dayAfter)}.): ${prep.title}${prep.materials?.length ? ` – ${prep.materials.join(", ")}` : ""}`);
     if (!lines.length) continue;
-    await notifyParents(plan, "Heute Nacht ist Wichtelzeit", lines.join("\n"), `#tag-${tonight}`);
+    await notifyParents(plan, "Heute Nacht ist Wichtelzeit", lines.join("\n"), `#tag-${tonight}`, { doneDate: e && !e.done ? tonight : null });
     await db.updateElfPlan(plan.id, (p) => { p.reminderSentFor = [...(p.reminderSentFor || []), today].slice(-40); return p; });
     sent++;
   }

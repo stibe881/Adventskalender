@@ -19,6 +19,7 @@ const { convertText } = require("../../utils/swiss");
 const { isProItem, proOrDeny } = require("../../utils/pro");
 const { IDEAS } = require("../../wichteltuer/ideas");
 const { TEMPLATES, render: renderLetter } = require("../../wichteltuer/letters");
+const SETS = require("../../wichteltuer/sets");
 const S = require("./shared");
 const { cfg } = S;
 
@@ -70,6 +71,18 @@ router.delete("/plans/:id", requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Next year's Wichteltür from this one (owner only).
+router.post("/plans/:id/rollover", requireAuth, async (req, res) => {
+  const plan = await loadOwned(req, res);
+  if (!plan) return;
+  const owner = await db.getUserById(req.user.id);
+  const pro = Boolean(owner?.isPro) || Boolean(plan.isPro);
+  const b = req.body || {};
+  const next = S.rolloverPlan(plan, { ...req.user, username: owner?.username || req.user.username }, { year: b.year, autoplan: Boolean(b.autoplan) && pro, set: b.set });
+  await db.createElfPlan(next);
+  res.status(201).json(S.planView(next, { owner: true, pro }));
+});
+
 // A new share link locks out everybody who had the old one.
 router.post("/plans/:id/rotate-share", requireAuth, async (req, res) => {
   const plan = await loadOwned(req, res);
@@ -114,8 +127,24 @@ share.get("/ideas", async (req, res) => {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return;
   if (!proOrDeny(await isProItem(plan), res, "Die Ideen-Bibliothek")) return;
-  res.json({ ideas: S.libraryFor(plan, IDEAS), categories: cfg.categories });
+  res.json({ ideas: S.libraryFor(plan, S.allIdeas(plan)), categories: cfg.categories, sets: SETS.publicSets() });
 });
+// The family's own ideas: saved from a day or written from scratch.
+share.post("/ideas", (req, res) => {
+  const b = req.body || {};
+  return respond(req, res, (p) => (x) => {
+    if (!x.customIdeas) x.customIdeas = [];
+    if (x.customIdeas.length >= cfg.maxCustomIdeas) return;
+    const src = b.fromDate && x.days[b.fromDate] ? { ...x.days[b.fromDate], ...b } : b;
+    const idea = S.cleanIdea(src);
+    x.customIdeas.unshift(idea);
+    if (b.fromDate && x.days[b.fromDate]) x.days[b.fromDate].ideaId = idea.id;
+  }, 201, "Die Ideen-Bibliothek");
+});
+share.delete("/ideas/:id", (req, res) => respond(req, res, (p) => (x) => {
+  x.customIdeas = (x.customIdeas || []).filter((i) => i.id !== req.params.id);
+  for (const e of Object.values(x.days)) if (e.ideaId === req.params.id) e.ideaId = null;
+}, 200, "Die Ideen-Bibliothek"));
 share.get("/letters/templates", async (req, res) => {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return;
@@ -128,6 +157,7 @@ share.put("/settings", (req, res) => {
   return respond(req, res, (p) => {
     if (b.title !== undefined) p.title = cleanText(b.title, cfg.titleMax) || p.title;
     if (b.swissMode !== undefined) S.setSwissMode(p, b.swissMode);
+    if (b.budget !== undefined) { const n = Number(String(b.budget).replace(",", ".")); p.budget = Number.isFinite(n) && n > 0 ? Math.round(n) : null; }
     if (b.year !== undefined && Number(b.year) >= 2024 && Number(b.year) <= 2100 && !Object.keys(p.days).length) p.year = Number(b.year);
     if (b.elf && typeof b.elf === "object") {
       p.elf = p.elf || {};
@@ -140,6 +170,10 @@ share.put("/settings", (req, res) => {
       p.parents = b.parents.slice(0, cfg.maxParents).map(S.cleanParent).filter((x) => x.name);
       const ids = new Set(p.parents.map((x) => x.id));
       for (const e of Object.values(p.days)) if (e.assignee && !ids.has(e.assignee)) e.assignee = null;
+    }
+    if (b.assignRule !== undefined) {
+      p.assignRule = S.cleanAssignRule(b.assignRule, p.parents);
+      if (p.assignRule.mode !== "manual") S.applyAssignments(p, { onlyOpen: true });
     }
     if (b.notify && typeof b.notify === "object") {
       p.notify = p.notify || {};
@@ -183,7 +217,27 @@ share.post("/days/swap", (req, res) => {
   });
 });
 
-share.post("/autoplan", (req, res) => respond(req, res, (p) => (x) => S.autoplan(x, { overwrite: Boolean(req.body?.overwrite) }), 200, "Die automatische Planung aus der Ideen-Bibliothek"));
+share.post("/autoplan", (req, res) => respond(req, res, (p) => (x) => S.autoplan(x, { overwrite: Boolean(req.body?.overwrite), set: req.body?.set }), 200, "Die automatische Planung aus der Ideen-Bibliothek"));
+// Distribute the nights between the parents by the plan's rule (all or only the open ones).
+share.post("/assign", (req, res) => respond(req, res, (p) => (x) => {
+  if (req.body?.rule) x.assignRule = S.cleanAssignRule(req.body.rule, x.parents);
+  S.applyAssignments(x, { onlyOpen: !req.body?.all });
+}));
+// Preparation steps of a day.
+share.put("/days/:date/steps/:id", (req, res) => respond(req, res, (p) => (x) => {
+  const st = (x.days[req.params.date]?.steps || []).find((s) => s.id === req.params.id);
+  if (st) st.done = Boolean(req.body?.done);
+}));
+// Restore a day that was cleared by mistake (undo).
+share.put("/days/:date/restore", (req, res) => {
+  const date = String(req.params.date);
+  if (!isoDate(date)) return res.status(400).json({ error: "Ungültiges Datum." });
+  const b = req.body?.entry || {};
+  return respond(req, res, (p) => {
+    if (!S.seasonDates(p.year).includes(date)) { res.status(400).json({ error: "Außerhalb der Adventszeit." }); return false; }
+    return (x) => { x.days[date] = S.applyDay(x, date, { ...b, ideaId: undefined, letter: b.letter && x.isPro !== false ? b.letter : undefined }, null); if (b.ideaId) x.days[date].ideaId = b.ideaId; };
+  });
+});
 
 // Photos (evidence of the prank, the kids' reaction)
 const photoStorage = multer.diskStorage({
@@ -229,6 +283,14 @@ share.put("/shopping/check", (req, res) => {
       if (c) c.checked = checked;
     } else if (checked) x.shopping.checked[key] = true;
     else delete x.shopping.checked[key];
+  }, 200, "Die Einkaufsliste");
+});
+share.put("/shopping/have", (req, res) => {
+  const key = String(req.body?.key || "");
+  return respond(req, res, (p) => (x) => {
+    if (!x.shopping) x.shopping = { checked: {}, custom: [], have: {} };
+    if (!x.shopping.have) x.shopping.have = {};
+    if (req.body?.have) x.shopping.have[key] = true; else delete x.shopping.have[key];
   }, 200, "Die Einkaufsliste");
 });
 share.post("/shopping/custom", (req, res) => {
@@ -279,7 +341,30 @@ share.put("/post/:id/read", (req, res) => respond(req, res, (p) => (x) => {
   if (l) l.read = true;
 }));
 share.post("/post/read-all", (req, res) => respond(req, res, (p) => (x) => { (x.post || []).forEach((l) => { l.read = true; }); }));
-share.delete("/post/:id", (req, res) => respond(req, res, (p) => (x) => { x.post = (x.post || []).filter((i) => i.id !== req.params.id); }));
+share.delete("/post/:id", (req, res) => respond(req, res, (p) => (x) => {
+  const l = (x.post || []).find((i) => i.id === req.params.id);
+  x.post = (x.post || []).filter((i) => i.id !== req.params.id);
+  if (l) { if (!x.trash) x.trash = []; x.trash = [...x.trash, l].slice(-20); }
+}));
+share.post("/post/:id/restore", (req, res) => respond(req, res, (p) => (x) => {
+  const l = (x.trash || []).find((i) => i.id === req.params.id);
+  if (!l) return;
+  x.trash = x.trash.filter((i) => i.id !== l.id);
+  x.post = [...(x.post || []), l].sort((a, b) => a.at.localeCompare(b.at));
+}));
+
+// Read-only link for grandparents and helpers.
+share.post("/rotate-view-link", (req, res) => respond(req, res, (p) => (x) => { x.viewToken = generateToken(cfg.viewTokenBytes); }));
+share.delete("/view-link", (req, res) => respond(req, res, (p) => (x) => { x.viewToken = null; }));
+
+// The plan as a calendar file.
+share.get("/plan.ics", async (req, res) => {
+  const plan = await S.loadByShareToken(req, res);
+  if (!plan) return;
+  res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="wichteltuer-${plan.year}.ics"`);
+  res.send(S.buildPlanIcs(plan));
+});
 
 // Kids link
 share.post("/rotate-kid-link", (req, res) => respond(req, res, (p) => (x) => { x.kidToken = generateToken(cfg.kidTokenBytes); }));
@@ -329,6 +414,54 @@ kids.get("/", async (req, res) => {
   res.json(S.kidView(plan));
 });
 
+// A tap instead of a letter: heart, laugh or wow on one of the elf's letters.
+kids.post("/reactions", async (req, res) => {
+  const plan = await S.loadByKidToken(req, res);
+  if (!plan) return;
+  const kind = String(req.body?.kind || "");
+  if (!S.REACTIONS[kind]) return res.status(400).json({ error: "Unbekannte Reaktion." });
+  // Validate against every letter of the season, not only the ones visible today.
+  const view = S.kidView(plan, new Date(Date.UTC(plan.year, 11, 31, 12)));
+  const letter = view.letters.find((l) => l.id === req.body?.letterId && l.from === "elf");
+  if (!letter) return res.status(404).json({ error: "Diesen Brief gibt es nicht." });
+  const child = plan.children.find((c) => c.id === req.body?.childId);
+  const updated = await db.updateElfPlan(plan.id, (p) => {
+    if (!p.post) p.post = [];
+    // One reaction per child and letter – a new tap replaces the old one.
+    p.post = p.post.filter((l) => !(l.kind === "reaction" && l.ref === letter.id && (l.childId || null) === (child?.id || null)));
+    const refLabel = letter.id.startsWith("day-") ? `Brief vom ${Number(letter.date.slice(8))}. Dezember` : `Brief vom ${Number(letter.date.slice(8))}.${Number(letter.date.slice(5, 7))}.`;
+    p.post.push({ id: newId(), from: "kid", kind: "reaction", reaction: kind, ref: letter.id, refLabel, childId: child?.id || null, childName: child?.name || "", text: "", at: new Date().toISOString(), read: false });
+    if (p.post.length > cfg.maxLetters) p.post = p.post.slice(-cfg.maxLetters);
+    return p;
+  });
+  res.status(201).json(S.kidView(updated));
+});
+
+// A voice message for the elf (recorded on the tablet).
+const voiceStorage = multer.diskStorage({
+  destination: config.paths.uploadsDir,
+  filename: (req, file, cb) => {
+    const ext = ({ "audio/webm": ".webm", "audio/ogg": ".ogg", "audio/mp4": ".m4a", "audio/x-m4a": ".m4a", "audio/aac": ".aac", "audio/mpeg": ".mp3", "audio/wav": ".wav", "audio/x-wav": ".wav" })[String(file.mimetype).split(";")[0]] || ".webm";
+    cb(null, `elf-voice-${Date.now()}-${newId()}${ext}`);
+  },
+});
+const voiceUpload = multer({ storage: voiceStorage, limits: { fileSize: cfg.voiceMaxBytes }, fileFilter: (req, file, cb) => cb(null, /^audio\//.test(file.mimetype)) });
+kids.post("/voice", voiceUpload.single("audio"), async (req, res) => {
+  const plan = await S.loadByKidToken(req, res);
+  if (!plan) return;
+  if (!req.file) return res.status(400).json({ error: "Keine Aufnahme angekommen." });
+  const url = `/uploads/${req.file.filename}`;
+  const child = plan.children.find((c) => c.id === req.body?.childId);
+  const updated = await db.updateElfPlan(plan.id, (p) => {
+    if (!p.post) p.post = [];
+    p.post.push({ id: newId(), from: "kid", kind: "voice", audio: url, childId: child?.id || null, childName: child?.name || "", text: "", at: new Date().toISOString(), read: false });
+    if (p.post.length > cfg.maxLetters) p.post = p.post.slice(-cfg.maxLetters);
+    return p;
+  });
+  notifyParents(updated, "Sprachnachricht für den Wichtel", `${child?.name || "Ein Kind"} hat dem Wichtel etwas aufgenommen.`, "#post").catch(() => {});
+  res.status(201).json(S.kidView(updated));
+});
+
 kids.post("/letters", async (req, res) => {
   const plan = await S.loadByKidToken(req, res);
   if (!plan) return;
@@ -347,11 +480,19 @@ kids.post("/letters", async (req, res) => {
 
 router.use("/k/:token", kids);
 
+// ── Read-only page (grandparents) ───────────────────────────────────────────
+router.get("/v/:token", rateLimit({ windowMs: 60 * 1000, limit: cfg.kidRequestsPerMinute, standardHeaders: true, legacyHeaders: false }), async (req, res) => {
+  const plan = await S.loadByViewToken(req, res);
+  if (!plan) return;
+  res.json(S.viewView(plan));
+});
+
 // ── Notifications to the parents ────────────────────────────────────────────
-async function notifyParents(plan, title, body, anchor = "") {
+async function notifyParents(plan, title, body, anchor = "", { doneDate = null } = {}) {
   const { sendPushNotification } = require("../../push");
   const { sendMail, layout, escapeHtml } = require("../../services/mail");
   const url = `${S.shareLink(plan)}${anchor}`;
+  const doneUrl = doneDate ? `${S.shareLink(plan)}?done=${doneDate}#tag-${doneDate}` : null;
   const subs = plan.notify?.subscriptions || [];
   const dead = [];
   for (const sub of subs) {
@@ -370,8 +511,8 @@ async function notifyParents(plan, title, body, anchor = "") {
   }
   let mails = 0;
   for (const to of plan.notify?.emails || []) {
-    const html = layout(plan.title, `<p>${escapeHtml(body).replace(/\n/g, "<br>")}</p><p style="margin-top:20px"><a href="${url}" style="background:#059669;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Zur Wichteltür</a></p>`);
-    if (await sendMail({ to, subject: `[${plan.title}] ${title}`, text: `${body}\n\n${url}`, html })) mails++;
+    const html = layout(plan.title, `<p>${escapeHtml(body).replace(/\n/g, "<br>")}</p><p style="margin-top:20px"><a href="${url}" style="background:#059669;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Zur Wichteltür</a>${doneUrl ? ` &nbsp; <a href="${doneUrl}" style="background:#334155;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">✓ Erledigt</a>` : ""}</p>`);
+    if (await sendMail({ to, subject: `[${plan.title}] ${title}`, text: `${body}\n\n${url}${doneUrl ? `\nErledigt melden: ${doneUrl}` : ""}`, html })) mails++;
   }
   return { push: subs.length - dead.length, mails };
 }

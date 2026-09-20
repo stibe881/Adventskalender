@@ -21,10 +21,17 @@ module.exports = {
   letterMax: 2000,
   kidLetterMax: 800,
   shoppingMax: 80,
+  stepMax: 120,
+  maxSteps: 12,
+  kidHintMax: 200,
+  maxCustomIdeas: 60,
+  voiceMaxBytes: 4 * 1024 * 1024,
+  voiceMaxSeconds: 60,
 
   // Tokens
   shareTokenBytes: 18,
   kidTokenBytes: 12,
+  viewTokenBytes: 12,
 
   // Season
   firstDay: 1,

@@ -237,3 +237,159 @@ test("Wichteltür: Schweizer Modus – Christkind and Samichlaus in ideas, templ
   r = await anon("GET", `/api/wichteltuer/s/${share}/ideas`);
   assert.match(r.d.ideas.find((i) => i.id === "nikolaus").text, /Nikolaus/);
 });
+
+test("Wichteltür: planning helpers – sets, duty rule, steps, own ideas, stock, budget, hints, reactions, voice, read-only link, ICS, rollover, undo", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/wichteltuer", require(path.join(SRC, "routes/wichteltuer")));
+  const { call, anon, db, mails, pushed } = h;
+  t.after(h.stop);
+
+  let r = await call("POST", "/api/wichteltuer/plans", { title: "Wichtel", elfName: "Pixi", year: 2026, children: [{ name: "Mia", age: 4 }] });
+  const planId = r.d.id;
+  const share = r.d.shareLink.split("/").pop();
+  const kid = r.d.kidLink.split("/").pop();
+  const S = `/api/wichteltuer/s/${share}`;
+
+  // Ready-made month plan: "wenig Aufwand" keeps weekdays short.
+  r = await anon("GET", `${S}/ideas`);
+  assert.ok(r.d.sets.some((s) => s.id === "wenig-aufwand"));
+  r = await anon("POST", `${S}/autoplan`, { set: "wenig-aufwand" });
+  assert.equal(r.d.stats.planned, 24);
+  const heavy = r.d.days.filter((x) => !x.weekend && !["ankunft", "nikolaus", "abschied"].includes(x.entry.ideaId) && x.entry.minutes > 10);
+  assert.equal(heavy.length, 0, "no long ideas on weekdays in the low-effort set");
+
+  // Duty rule: alternate between two parents, only open days.
+  r = await anon("PUT", `${S}/settings`, { parents: [{ id: r.d.parents[0].id, name: "Stefan" }, { name: "Nina" }] });
+  const [stefan, nina] = r.d.parents.map((p) => p.id);
+  r = await anon("PUT", `${S}/days/2026-12-03`, { assignee: nina });
+  r = await anon("POST", `${S}/assign`, { rule: { mode: "alternate" } });
+  assert.equal(r.d.assignRule.mode, "alternate");
+  assert.equal(r.d.days[0].entry.assignee, stefan);
+  assert.equal(r.d.days[1].entry.assignee, nina);
+  assert.equal(r.d.days[2].entry.assignee, nina, "hand-picked day stays");
+  r = await anon("POST", `${S}/assign`, { rule: { mode: "weekdays", weekdays: { [stefan]: [1, 2, 3], [nina]: [4, 5, 6, 0] } }, all: true });
+  const tue = r.d.days.find((x) => x.weekday === "Di");
+  const sat = r.d.days.find((x) => x.weekday === "Sa");
+  assert.equal(tue.entry.assignee, stefan);
+  assert.equal(sat.entry.assignee, nina);
+
+  // Steps, price, kid hint on a day; budget in the settings.
+  r = await anon("PUT", `${S}/days/2026-12-05`, { steps: ["Teig vorbereiten", "Zettel schreiben"], price: "12.50", kidHint: "Schaut mal in die Küche!" });
+  const d5 = r.d.days.find((x) => x.date === "2026-12-05").entry;
+  assert.equal(d5.steps.length, 2);
+  assert.equal(d5.price, 12.5);
+  assert.equal(d5.kidHint, "Schaut mal in die Küche!");
+  r = await anon("PUT", `${S}/days/2026-12-05/steps/${d5.steps[0].id}`, { done: true });
+  assert.equal(r.d.days.find((x) => x.date === "2026-12-05").entry.steps[0].done, true);
+  r = await anon("PUT", `${S}/settings`, { budget: "80" });
+  assert.equal(r.d.stats.budget, 80);
+  assert.equal(r.d.stats.spent, 12.5);
+
+  // Own idea saved from a day, then planned on another day and kept in the library.
+  r = await anon("POST", `${S}/ideas`, { fromDate: "2026-12-05", title: "Mehlspuren deluxe", letter: "Hallo {kinder}!" });
+  const own = r.d.customIdeas[0];
+  assert.match(own.id, /^own-/);
+  assert.equal(own.title, "Mehlspuren deluxe");
+  assert.deepEqual(own.steps, ["Teig vorbereiten", "Zettel schreiben"]);
+  r = await anon("PUT", `${S}/days/2026-12-20`, { ideaId: own.id });
+  const d20 = r.d.days.find((x) => x.date === "2026-12-20").entry;
+  assert.equal(d20.title, "Mehlspuren deluxe");
+  assert.equal(d20.letter, "Hallo Mia!");
+  r = await anon("GET", `${S}/ideas`);
+  assert.equal(r.d.ideas[0].id, own.id, "own ideas come first");
+
+  // Stock: what we already have leaves the open list.
+  r = await anon("GET", S);
+  const item = r.d.shopping.find((i) => !i.custom);
+  r = await anon("PUT", `${S}/shopping/have`, { key: item.key, have: true });
+  assert.equal(r.d.shopping.find((i) => i.key === item.key).have, true);
+
+  // Kids: reaction on the arrival letter, voice message, morning hint.
+  const { kidView } = require(path.join(SRC, "routes/wichteltuer/shared"));
+  await db.updateElfPlan(planId, (p) => { p.days["2026-12-01"].letterVisibleToKids = true; return p; });
+  r = await anon("GET", `/api/wichteltuer/k/${kid}`);
+  const kv = kidView(await db.getElfPlanById(planId), new Date("2026-12-05T09:00:00+01:00"));
+  assert.equal(kv.hint.text, "Schaut mal in die Küche!");
+  assert.equal(kidView(await db.getElfPlanById(planId), new Date("2026-12-05T05:00:00+01:00")).hint, null, "not before six");
+  assert.equal(kidView(await db.getElfPlanById(planId), new Date("2026-12-06T09:00:00+01:00")).hint, null, "only on the day itself");
+  const letter = kv.letters.find((l) => l.id === "day-2026-12-01");
+  assert.ok(letter, "arrival letter visible");
+  const childId = kv.children[0].id;
+  r = await anon("POST", `/api/wichteltuer/k/${kid}/reactions`, { letterId: "day-2026-12-01", kind: "heart", childId });
+  assert.equal(r.status, 201);
+  r = await anon("POST", `/api/wichteltuer/k/${kid}/reactions`, { letterId: "day-2026-12-01", kind: "laugh", childId });
+  const plan = await db.getElfPlanById(planId);
+  assert.equal(plan.post.filter((l) => l.kind === "reaction").length, 1, "a new tap replaces the old reaction");
+  assert.equal(kidView(plan, new Date("2026-12-05T09:00:00+01:00")).letters.find((l) => l.id === "day-2026-12-01").reactions[0].emoji, "😂");
+  r = await anon("GET", S);
+  assert.equal(r.d.unreadPost, 1);
+  assert.equal(r.d.post[0].kind, "reaction");
+  assert.match(r.d.post[0].refLabel, /1\. Dezember/);
+  const fd = new FormData();
+  fd.append("audio", new Blob([new Uint8Array(3000)], { type: "audio/webm" }), "aufnahme.webm");
+  fd.append("childId", childId);
+  const vr = await fetch(`${h.base}/api/wichteltuer/k/${kid}/voice`, { method: "POST", body: fd });
+  assert.equal(vr.status, 201);
+  const vd = await vr.json();
+  assert.ok(vd.letters.some((l) => l.kind === "voice" && l.audio.startsWith("/uploads/elf-voice-")));
+  assert.ok(pushed.length === 0 && mails.length === 0, "no devices yet, nothing sent");
+
+  // Read-only link.
+  r = await anon("GET", S);
+  assert.equal(r.d.viewLink, null);
+  r = await anon("POST", `${S}/rotate-view-link`);
+  const view = r.d.viewLink.split("/").pop();
+  r = await anon("GET", `/api/wichteltuer/v/${view}`);
+  assert.equal(r.status, 200);
+  assert.equal(r.d.elf.name, "Pixi");
+  assert.ok(r.d.days.length === 24 && r.d.post.length >= 2);
+  assert.equal(r.d.shareLink, undefined, "no links leak");
+  r = await anon("DELETE", `${S}/view-link`);
+  r = await anon("GET", `/api/wichteltuer/v/${view}`);
+  assert.equal(r.status, 404);
+
+  // ICS with an alarm the evening before.
+  const ics = await fetch(`${h.base}${S}/plan.ics`);
+  assert.equal(ics.status, 200);
+  const text = await ics.text();
+  assert.match(text, /DTSTART;VALUE=DATE:20261205/);
+  assert.match(text, /TRIGGER:-PT240M/);
+  assert.equal((text.match(/BEGIN:VEVENT/g) || []).length, 24);
+
+  // Undo: clear a day, restore it; delete a letter, restore it.
+  const backup = (await anon("GET", S)).d.days.find((x) => x.date === "2026-12-05").entry;
+  r = await anon("DELETE", `${S}/days/2026-12-05`);
+  assert.equal(r.d.days.find((x) => x.date === "2026-12-05").entry, null);
+  r = await anon("PUT", `${S}/days/2026-12-05/restore`, { entry: backup });
+  const restored = r.d.days.find((x) => x.date === "2026-12-05").entry;
+  assert.equal(restored.title, backup.title);
+  assert.equal(restored.kidHint, backup.kidHint);
+  assert.equal(restored.steps.length, 2);
+  const postId = r.d.post.find((l) => l.kind === "voice").id;
+  r = await anon("DELETE", `${S}/post/${postId}`);
+  assert.ok(!r.d.post.some((l) => l.id === postId));
+  r = await anon("POST", `${S}/post/${postId}/restore`);
+  assert.ok(r.d.post.some((l) => l.id === postId));
+
+  // Reminder mail carries the "Erledigt" link.
+  await anon("PUT", `${S}/settings`, { notify: { time: "20:00", emails: ["nina@example.ch"] } });
+  const { runElfReminders } = require(path.join(SRC, "cron"));
+  await runElfReminders(new Date("2026-12-02T20:00:00+01:00"));
+  assert.equal(mails.length, 1);
+  assert.match(mails[0].html, /\?done=2026-12-03#tag-2026-12-03/);
+
+  // Rollover to next year: family a year older, own ideas kept, plan empty.
+  r = await call("POST", `/api/wichteltuer/plans/${planId}/rollover`, { year: 2027 });
+  assert.equal(r.status, 201);
+  assert.equal(r.d.year, 2027);
+  assert.equal(r.d.children[0].age, 5);
+  assert.equal(r.d.parents.length, 2);
+  assert.equal(r.d.customIdeas[0].id, own.id);
+  assert.equal(r.d.stats.planned, 0);
+  assert.equal(r.d.assignRule.mode, "weekdays");
+  assert.equal(r.d.budget, 80);
+  assert.notEqual(r.d.id, planId);
+  r = await call("GET", "/api/wichteltuer/plans");
+  assert.equal(r.d.length, 2);
+  assert.equal(r.d[0].year, 2027);
+});

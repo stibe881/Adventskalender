@@ -233,6 +233,12 @@ async function getElfPlanByKidToken(token) {
   return rows.length ? rows[0].data : null;
 }
 
+// The read-only link lives inside the JSON document (added later, no column).
+async function getElfPlanByViewToken(token) {
+  const [rows] = await pool.query("SELECT * FROM elf_plans WHERE JSON_UNQUOTE(JSON_EXTRACT(data, '$.viewToken')) = ?", [token]);
+  return rows.length ? rows[0].data : null;
+}
+
 async function createElfPlan(plan) {
   await pool.query("INSERT INTO elf_plans (id, ownerId, shareToken, kidToken, data) VALUES (?, ?, ?, ?, ?)", [
     plan.id, plan.ownerId, plan.shareToken, plan.kidToken, JSON.stringify(plan),
@@ -388,6 +394,7 @@ module.exports = {
   getElfPlanById,
   getElfPlanByShareToken,
   getElfPlanByKidToken,
+  getElfPlanByViewToken,
   createElfPlan,
   updateElfPlan,
   deleteElfPlan,

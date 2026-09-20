@@ -40,6 +40,7 @@ function createStubDb() {
     getElfPlanById: async (id) => (plans[id] ? clone(plans[id]) : null),
     getElfPlanByShareToken: async (t) => clone(Object.values(plans).find((p) => p.shareToken === t) || null),
     getElfPlanByKidToken: async (t) => clone(Object.values(plans).find((p) => p.kidToken === t) || null),
+    getElfPlanByViewToken: async (t) => clone(Object.values(plans).find((p) => p.viewToken === t) || null),
     createElfPlan: async (p) => { plans[p.id] = clone(p); return p; },
     updateElfPlan: async (id, fn) => { if (!plans[id]) return null; const u = await fn(clone(plans[id])); plans[id] = clone(u); return u; },
     deleteElfPlan: async (id) => { const had = Boolean(plans[id]); delete plans[id]; return had; },

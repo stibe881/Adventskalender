@@ -167,6 +167,9 @@ app.get("/e/:token", (req, res) => {
 app.get("/k/:token", (req, res) => {
   res.sendFile(path.join(config.paths.publicDir, "wichteltuer", "kids.html"));
 });
+app.get("/v/:token", (req, res) => {
+  res.sendFile(path.join(config.paths.publicDir, "wichteltuer", "view.html"));
+});
 
 // Wichteln: participant area and invite page share one SPA.
 app.get(["/w/join/:inviteToken", "/w/:token"], (req, res) => {

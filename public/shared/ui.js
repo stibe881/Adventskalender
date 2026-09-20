@@ -6,6 +6,7 @@
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   let toastTimer = null;
+  // opts.action = { label, onClick } adds a button (e.g. "Rückgängig") and keeps the toast longer.
   function toast(msg, opts = {}) {
     const isError = opts === true || opts.error === true;
     let el = document.getElementById("ui-toast");
@@ -17,10 +18,18 @@
       document.body.appendChild(el);
     }
     el.textContent = msg;
+    if (opts.action) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ui-toast__action";
+      b.textContent = opts.action.label;
+      b.addEventListener("click", () => { el.classList.remove("is-open"); clearTimeout(toastTimer); opts.action.onClick(); });
+      el.appendChild(b);
+    }
     el.classList.toggle("is-error", isError);
     el.classList.add("is-open");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove("is-open"), opts.ms || (isError ? 4000 : 2600));
+    toastTimer = setTimeout(() => el.classList.remove("is-open"), opts.ms || (opts.action ? 6000 : isError ? 4000 : 2600));
   }
 
   // ── Dialogs ───────────────────────────────────────────────────────────────

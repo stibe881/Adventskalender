@@ -88,6 +88,7 @@ const api = {
   listElfPlans: () => request("GET", "/wichteltuer/plans"),
   createElfPlan: (data) => request("POST", "/wichteltuer/plans", data),
   deleteElfPlan: (id) => request("DELETE", `/wichteltuer/plans/${id}`),
+  rolloverElfPlan: (id, data) => request("POST", `/wichteltuer/plans/${id}/rollover`, data),
   wichtelChecklist: (id) => request("GET", `/wichteln/groups/${id}/checklist`),
   duplicateWichtelGroup: (id, data) => request("POST", `/wichteln/groups/${id}/duplicate`, data || {}),
 

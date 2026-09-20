@@ -116,3 +116,132 @@
   .t-parents .w-secnav__item span:not(.ui-badge) { display: inline; }
   .t-parents .w-secnav__item .ui-badge { min-width: 16px; height: 16px; font-size: 0.62rem; padding: 0 4px; }
 }
+
+/* ── Tonight as the stage ─────────────────────────────────────────────── */
+.t-tonight__title { font-family: "Playfair Display", serif; font-size: 1.7rem; line-height: 1.15; font-weight: 700; color: #fff; }
+.t-checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.95rem; }
+.t-checklist li { display: flex; align-items: center; gap: 8px; color: #fde68a; }
+.t-checklist li .ui-icon { color: #fbbf24; }
+.t-checklist li.is-ok { color: #e2e8f0; }
+.t-checklist li.is-ok .ui-icon { color: #34d399; }
+.t-checklist small { color: #fca5a5; font-size: 0.7rem; }
+.t-done-btn { font-size: 1rem; padding: 12px 20px; }
+
+/* ── 24 dots ──────────────────────────────────────────────────────────── */
+.t-dots { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; margin-top: 12px; }
+.t-dot { aspect-ratio: 1; border-radius: 999px; border: 1px dashed rgba(255,255,255,0.25); background: transparent; color: #94a3b8; font-size: 0.62rem; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: transform .1s; }
+.t-dot:hover { transform: scale(1.12); }
+.t-dot.is-planned { border: 1px solid rgba(245,158,11,0.7); background: rgba(245,158,11,0.22); color: #fde68a; }
+.t-dot.is-done { border-color: #10b981; background: #059669; color: #fff; }
+.t-dot.is-today { box-shadow: 0 0 0 2px #fff; }
+@media (max-width: 480px) { .t-dots { grid-template-columns: repeat(8, 1fr); } }
+
+/* ── Category colour on the day rows ──────────────────────────────────── */
+.t-day { border-left: 4px solid transparent; }
+.t-day--streich { border-left-color: #ef4444; }
+.t-day--brief { border-left-color: #3b82f6; }
+.t-day--geschenk { border-left-color: #10b981; }
+.t-day--aufgabe { border-left-color: #f59e0b; }
+.t-day--basteln { border-left-color: #a855f7; }
+.t-day--ruhe { border-left-color: #94a3b8; }
+.t-day__done { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; }
+.t-day__done input { width: 16px; height: 16px; accent-color: #10b981; margin: 0; }
+.t-day.is-picked { outline: 2px solid #f59e0b; background: rgba(245,158,11,0.15); }
+.t-day.is-swap-target { border-style: dashed; border-color: rgba(245,158,11,0.5); }
+.t-day.is-over { background: rgba(245,158,11,0.2); }
+.t-day[draggable="true"] { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.t-swapbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: 12px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fde68a; font-size: 0.85rem; }
+.t-swapbar button { margin-left: auto; text-decoration: underline; color: #fff; }
+
+/* ── Day dialog: neighbours, two stages ───────────────────────────────── */
+.t-daynav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+
+/* ── Weekday chips (assignment) ───────────────────────────────────────── */
+.t-wd { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); font-size: 0.72rem; font-weight: 600; color: #cbd5e1; cursor: pointer; }
+.t-wd.is-on { background: #b45309; border-color: #f59e0b; color: #fff; }
+
+/* ── Ready-made month plans ───────────────────────────────────────────── */
+.t-set { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; cursor: pointer; transition: background .15s; }
+.t-set:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); }
+.t-set b { color: #fff; }
+.t-set span { font-size: 0.78rem; color: #cbd5e1; }
+.t-idea--own { border-color: rgba(245,158,11,0.4); }
+
+/* ── Budget, stock ────────────────────────────────────────────────────── */
+.t-budget { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px 12px; }
+.w-details summary { cursor: pointer; font-size: 0.9rem; color: #e2e8f0; }
+
+/* ── Post: reactions, voice ───────────────────────────────────────────── */
+.t-reaction-big { font-size: 1.6rem; vertical-align: middle; margin-right: 4px; }
+.t-letter--reaction { font-family: "Inter", sans-serif; font-size: 0.95rem; }
+.t-audio { width: 100%; height: 36px; border-radius: 999px; }
+
+/* ── Avatar in the top bar ────────────────────────────────────────────── */
+.t-avatar--nav { width: 34px; height: 34px; font-size: 0.8rem; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; }
+.t-avatar--nav:not(.is-me) { background: rgba(255,255,255,0.1); color: #fde68a; }
+
+/* ── Empty states with a small drawing ────────────────────────────────── */
+.ui-empty__art--svg { border-style: solid; border-color: rgba(255,255,255,0.1); color: #94a3b8; }
+.ui-empty__art--svg svg { width: 44px; height: 44px; }
+
+/* ── The door shows the elf's character ───────────────────────────────── */
+.t-door--small { width: 72px; height: 102px; }
+.t-door--small .t-door__window { width: 24px; height: 24px; top: 14px; }
+.t-door--small .t-door__knob { top: 60px; right: 10px; width: 8px; height: 8px; }
+.t-door--small .t-door__frame::before { top: 42px; } .t-door--small .t-door__frame::after { top: 72px; }
+.t-door__sign, .t-door__wreath, .t-door__sock, .t-door__eyes { display: none; }
+/* frech: a crooked sign */
+.t-door--frech .t-door__sign { display: block; position: absolute; top: 56%; left: 50%; transform: translateX(-50%) rotate(-8deg); background: #fef3c7; color: #7c2d12; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 3px; border: 1px solid #b45309; box-shadow: 1px 2px 0 rgba(0,0,0,0.3); }
+.t-door--small.t-door--frech .t-door__sign { font-size: 0.45rem; padding: 1px 4px; }
+/* lieb: a wreath */
+.t-door--lieb .t-door__wreath { display: block; position: absolute; top: 12%; left: 50%; width: 46px; height: 46px; transform: translateX(-50%); border-radius: 999px; border: 8px solid #166534; box-shadow: inset 0 0 0 2px #14532d, 0 2px 4px rgba(0,0,0,0.4); background: transparent; }
+.t-door--lieb .t-door__wreath::after { content: ""; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 12px; height: 8px; background: #dc2626; border-radius: 3px; }
+.t-door--lieb .t-door__window { top: 17px; width: 24px; height: 24px; }
+.t-door--small.t-door--lieb .t-door__wreath { width: 30px; height: 30px; border-width: 5px; }
+.t-door--small.t-door--lieb .t-door__window { top: 12px; width: 14px; height: 14px; }
+/* verpeilt: a sock left in front of the door */
+.t-door--verpeilt .t-door__sock { display: block; position: absolute; bottom: -8px; right: -14px; width: 22px; height: 34px; background: #dc2626; border-radius: 4px 4px 12px 12px; transform: rotate(18deg); box-shadow: inset 0 6px 0 #fff, 0 2px 3px rgba(0,0,0,0.4); }
+.t-door--verpeilt .t-door__sock::after { content: ""; position: absolute; bottom: -2px; left: -8px; width: 20px; height: 14px; background: #dc2626; border-radius: 10px 0 8px 10px; }
+.t-door--small.t-door--verpeilt .t-door__sock { width: 14px; height: 22px; right: -9px; bottom: -6px; }
+.t-door--small.t-door--verpeilt .t-door__sock::after { width: 12px; height: 9px; left: -5px; }
+/* neugierig: two eyes in the window */
+.t-door--neugierig .t-door__window { display: flex; align-items: center; justify-content: center; }
+.t-door--neugierig .t-door__eyes { display: flex; gap: 6px; }
+.t-door--neugierig .t-door__eyes::before, .t-door--neugierig .t-door__eyes::after { content: ""; width: 9px; height: 9px; border-radius: 999px; background: #1c1917; box-shadow: inset -2px -2px 0 #fff; animation: t-blink 4s infinite; }
+.t-door--small.t-door--neugierig .t-door__eyes { gap: 3px; }
+.t-door--small.t-door--neugierig .t-door__eyes::before, .t-door--small.t-door--neugierig .t-door__eyes::after { width: 5px; height: 5px; }
+@keyframes t-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+.t-door.is-closed .t-door__eyes { display: none; }
+
+/* ── Kids page: big, calm, few words ──────────────────────────────────── */
+.t-kids .w-card { padding: 22px 18px; }
+.t-kids .w-btn--primary { font-size: 1.15rem; padding: 14px 20px; border-radius: 16px; }
+.t-kids .w-input { font-size: 1.15rem; padding: 14px; border-radius: 16px; }
+.t-kid-btn { font-size: 1.05rem; padding: 12px 20px; }
+.t-candles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
+.t-candle { width: 14px; height: 30px; border-radius: 4px 4px 2px 2px; background: #fef3c7; position: relative; opacity: 0.35; }
+.t-candle.is-lit { opacity: 1; }
+.t-candle.is-lit::before { content: ""; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 8px; height: 12px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(circle at 50% 70%, #fbbf24, #f97316); box-shadow: 0 0 10px rgba(251,191,36,0.9); animation: t-flicker 1.6s infinite alternate; }
+.t-candle.is-today::before { animation-duration: 0.9s; }
+@keyframes t-flicker { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.15, 0.9); } }
+.t-count--big b { font-size: 3.2rem; }
+.t-react { display: flex; gap: 8px; margin-top: 10px; font-family: "Inter", sans-serif; }
+.t-react button { flex: 1; font-size: 1.6rem; padding: 8px 0; border-radius: 14px; background: rgba(255,255,255,0.75); border: 2px solid transparent; cursor: pointer; transition: transform .1s; }
+.t-react button:active { transform: scale(0.92); }
+.t-react button.is-on { border-color: #f59e0b; background: #fff; }
+.t-react button small { display: block; font-size: 0.65rem; color: #57534e; }
+.t-react-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; font-family: "Inter", sans-serif; font-size: 0.8rem; }
+.t-react-list span { background: rgba(255,255,255,0.7); border-radius: 999px; padding: 2px 8px; color: #44403c; }
+.t-hint { background: linear-gradient(160deg, rgba(245,158,11,0.35), rgba(30,30,70,0.6)); border-color: rgba(245,158,11,0.6); text-align: center; }
+.t-hint p { font-family: "Caveat", cursive; font-size: 1.7rem; line-height: 1.2; color: #fff; }
+.t-voice { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.t-voice__btn { width: 96px; height: 96px; border-radius: 999px; background: #b91c1c; color: #fff; display: flex; align-items: center; justify-content: center; border: 4px solid rgba(255,255,255,0.25); box-shadow: 0 10px 30px rgba(0,0,0,0.4); cursor: pointer; font-size: 2rem; }
+.t-voice__btn.is-rec { background: #e11d48; animation: t-pulse 1s infinite; }
+@keyframes t-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0.6); } 50% { box-shadow: 0 0 0 16px rgba(225,29,72,0); } }
+.t-kids .t-audio { background: rgba(255,255,255,0.8); }
+
+/* Read-only album page */
+.t-view .w-bg { background: radial-gradient(800px 500px at 50% -10%, rgba(251,191,36,0.25), transparent 60%), radial-gradient(700px 500px at 20% 100%, rgba(248,113,113,0.2), transparent 60%); }
+.t-view .w-card { background: rgba(40, 30, 55, 0.6); }
+.t-view .t-big { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+@media print { .t-view .w-card { background: #fff !important; color: #111 !important; border-color: #ddd !important; break-inside: avoid; } .t-view .t-day__title, .t-view .w-title, .t-view .t-idea__title, .t-view .t-big { color: #111 !important; } .t-view .w-bg, .t-view .w-snow, .t-view .no-print { display: none !important; } }
