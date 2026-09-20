@@ -145,7 +145,15 @@
     if (watching) return;
     watching = true;
     window.addEventListener("online", () => setOffline(false));
-    window.addEventListener("offline", () => setOffline(true));
+    // Some embedded browsers report "offline" while the server is reachable: verify first.
+    window.addEventListener("offline", async () => {
+      try {
+        await fetch("/manifest.json", { method: "HEAD", cache: "no-store" });
+        setOffline(false);
+      } catch (_) {
+        setOffline(true);
+      }
+    });
   }
 
   window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc };

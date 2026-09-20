@@ -101,3 +101,18 @@
   body { background: #fff !important; }
   .no-print { display: none !important; }
 }
+
+/* Tabs */
+.t-parents .w-secnav__item.is-active { background: #b91c1c; color: #fff; }
+.t-parents .w-secnav__item.is-active .ui-badge--soft { background: rgba(255,255,255,0.25); }
+.ui-badge--soft { background: rgba(255,255,255,0.14); color: #e2e8f0; }
+.t-parents .w-secnav { top: 8px; }
+/* Elements scrolled into view stay clear of the sticky tab bar. */
+.t-parents .t-day, .t-parents .t-idea, .t-parents .t-shop, .t-parents .t-letter, .t-parents .w-card { scroll-margin-top: 72px; }
+/* Six tabs on a phone: labels stay, icons go. */
+@media (max-width: 480px) {
+  .t-parents .w-secnav__item { font-size: 0.72rem; padding: 8px 4px; gap: 3px; }
+  .t-parents .w-secnav__item > .ui-icon { display: none; }
+  .t-parents .w-secnav__item span:not(.ui-badge) { display: inline; }
+  .t-parents .w-secnav__item .ui-badge { min-width: 16px; height: 16px; font-size: 0.62rem; padding: 0 4px; }
+}

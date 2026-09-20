@@ -14,6 +14,9 @@ const store = {
   set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* private mode */ } },
 };
 const ME_KEY = `wichteltuer_me_${token}`;
+const TAB_KEY = `wichteltuer_tab_${token}`;
+const TABS = ["heute", "plan", "ideen", "einkauf", "post", "wichtel"];
+let activeTab = TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : "heute";
 const PUSH_KEY = `wichteltuer_push_${token}`;
 
 const esc = (s) => UI.esc(s);
@@ -106,15 +109,16 @@ async function enablePush() {
 // ── Rendering ───────────────────────────────────────────────────────────────
 function render() {
   UI.watchOffline();
+  const sec = (id, html) => `<section id="${id}" class="w-section ${activeTab === id ? "" : "hidden"}">${html}</section>`;
   app.innerHTML = [
     topBar(),
-    `<div id="heute" class="w-section">${todayCard()}</div>`,
     sectionNav(),
-    `<section id="plan" class="w-section">${planCard()}</section>`,
-    `<section id="ideen" class="w-section">${ideasCard()}</section>`,
-    `<section id="einkauf" class="w-section">${shoppingCard()}</section>`,
-    `<section id="post" class="w-section">${postCard()}</section>`,
-    `<section id="wichtel" class="w-section">${elfCard()}${settingsCard()}${linksCard()}</section>`,
+    sec("heute", todayCard() + overviewCard()),
+    sec("plan", planCard()),
+    sec("ideen", ideasCard()),
+    sec("einkauf", shoppingCard()),
+    sec("post", postCard()),
+    sec("wichtel", elfCard() + settingsCard() + linksCard()),
     `<p class="text-center text-xs text-slate-500 pb-6">Wichteltür · Advently</p>`,
   ].join("");
   bindEvents();
@@ -122,6 +126,20 @@ function render() {
     firstRender = false;
     jumpToHash();
     askWhoAmI();
+  }
+}
+
+// One section at a time keeps the page short; the tab bar stays at the top.
+function setTab(name, { scroll = true } = {}) {
+  if (!TABS.includes(name)) return;
+  activeTab = name;
+  store.set(TAB_KEY, name);
+  TABS.forEach((t) => document.getElementById(t)?.classList.toggle("hidden", t !== name));
+  document.querySelectorAll(".w-secnav__item").forEach((a) => a.classList.toggle("is-active", a.dataset.tab === name));
+  if (window.location.hash && window.location.hash !== `#${name}`) window.history.replaceState({}, "", window.location.pathname + `#${name}`);
+  if (scroll) document.querySelector(".w-secnav")?.scrollIntoView({ block: "start" });
+  if (name === "post" && data.unreadPost) {
+    req("POST", "/post/read-all").then((d) => { data = d; render(); }).catch(() => {});
   }
 }
 
@@ -137,8 +155,26 @@ function topBar() {
 }
 
 function sectionNav() {
-  const items = [["#plan", "calendar", "Plan", 0], ["#ideen", "lightbulb", "Ideen", 0], ["#einkauf", "clipboard-list", "Einkauf", data.shopping.filter((i) => !i.checked).length], ["#post", "mail", "Post", data.unreadPost], ["#wichtel", "door-open", "Wichtel", 0]];
-  return `<nav class="w-secnav" aria-label="Bereiche">${items.map(([href, ic, label, badge]) => `<a href="${href}" class="w-secnav__item"><i data-icon="${ic}"></i><span>${label}</span>${badge ? `<span class="ui-badge">${badge}</span>` : ""}</a>`).join("")}</nav>`;
+  const items = [["heute", "sparkles", "Heute", 0], ["plan", "calendar", "Plan", data.stats.open], ["ideen", "lightbulb", "Ideen", 0], ["einkauf", "clipboard-list", "Einkauf", data.shopping.filter((i) => !i.checked).length], ["post", "mail", "Post", data.unreadPost], ["wichtel", "door-open", "Wichtel", 0]];
+  return `<nav class="w-secnav" aria-label="Bereiche">${items.map(([id, ic, label, badge]) => `<a href="#${id}" data-tab="${id}" class="w-secnav__item ${activeTab === id ? "is-active" : ""}"><i data-icon="${ic}"></i><span>${label}</span>${badge ? `<span class="ui-badge ${id === "post" ? "" : "ui-badge--soft"}">${badge}</span>` : ""}</a>`).join("")}</nav>`;
+}
+
+// Short summary under the tonight card: what is next, where to click.
+function overviewCard() {
+  const d = data;
+  const next = d.days.filter((x) => x.entry && !x.entry.done && x.date >= d.today).slice(0, 3);
+  const openShop = d.shopping.filter((i) => !i.checked).length;
+  return `<div class="w-card">
+    <h2 class="w-title text-xl"><i data-icon="clipboard-list"></i> Auf einen Blick</h2>
+    <ul class="w-todo mt-3">
+      <li class="${d.stats.open ? "" : "is-done"}">${d.stats.open ? icon("circle") : icon("circle-check")} <a href="#plan" data-tab="plan">${d.stats.open ? `${d.stats.open} Nächte noch ohne Idee` : "Alle 24 Nächte geplant"}</a></li>
+      <li class="${openShop ? "" : "is-done"}">${openShop ? icon("circle") : icon("circle-check")} <a href="#einkauf" data-tab="einkauf">${openShop ? `${openShop} Dinge einkaufen` : "Einkaufsliste erledigt"}</a></li>
+      <li class="${d.unreadPost ? "" : "is-done"}">${d.unreadPost ? icon("circle") : icon("circle-check")} <a href="#post" data-tab="post">${d.unreadPost ? `${d.unreadPost} ungelesene Briefe der Kinder` : "Keine neue Post"}</a></li>
+      <li class="${d.notify.pushDevices || d.notify.emails.length ? "is-done" : ""}">${d.notify.pushDevices || d.notify.emails.length ? icon("circle-check") : icon("circle")} <a href="#wichtel" data-tab="wichtel">${d.notify.pushDevices || d.notify.emails.length ? "Abendliche Erinnerung ist eingerichtet" : "Abendliche Erinnerung einrichten"}</a></li>
+      <li class="${d.children.length ? "is-done" : ""}">${d.children.length ? icon("circle-check") : icon("circle")} <a href="#wichtel" data-tab="wichtel">${d.children.length ? `Kinder: ${d.children.map((c) => esc(c.name)).join(", ")}` : "Kinder eintragen, damit die Ideen zum Alter passen"}</a></li>
+    </ul>
+    ${next.length ? `<h3 class="text-xs uppercase tracking-wider text-slate-400 mt-4 mb-2">Die nächsten Nächte</h3><div class="space-y-2">${next.map((x) => dayRow(x, false)).join("")}</div>` : ""}
+  </div>`;
 }
 
 function catChip(cat) {
@@ -199,12 +235,12 @@ function planCard() {
   </div>`;
 }
 
-function dayRow(day) {
+function dayRow(day, withId = true) {
   const e = day.entry;
   const tonight = data.tonight?.date === day.date;
   const cls = ["t-day", e ? "" : "is-empty", e?.done ? "is-done" : "", day.weekend ? "is-weekend" : "", tonight ? "is-today" : "", day.date < data.today ? "is-past" : ""].filter(Boolean).join(" ");
   const mine = e?.assignee && e.assignee === meId();
-  return `<div class="${cls}" data-open-day="${day.date}" id="tag-${day.date}" role="button" tabindex="0">
+  return `<div class="${cls}" data-open-day="${day.date}" ${withId ? `id="tag-${day.date}"` : ""} role="button" tabindex="0">
     <div class="t-day__num">${day.day}<small>${day.weekday}</small></div>
     <div class="min-w-0">
       <div class="t-day__title">${e ? esc(e.title) : `<span class="text-slate-500">Noch frei${tonight ? " – heute Nacht!" : ""}</span>`}</div>
@@ -535,8 +571,9 @@ function printLetter(date) {
 // ── Events ──────────────────────────────────────────────────────────────────
 function jumpToHash() {
   const h = (window.location.hash || "").slice(1);
-  if (!h) return;
-  if (h.startsWith("tag-")) { const date = h.slice(4); document.getElementById(h)?.scrollIntoView({ block: "center" }); openDay(date); return; }
+  if (!h) { setTab(activeTab, { scroll: false }); return; }
+  if (h.startsWith("tag-")) { setTab("plan", { scroll: false }); const date = h.slice(4); document.getElementById(h)?.scrollIntoView({ block: "center" }); openDay(date); return; }
+  if (TABS.includes(h)) { setTab(h, { scroll: false }); return; }
   const el = document.getElementById(h);
   if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
 }
@@ -555,15 +592,6 @@ function bindEvents() {
     try { await update("POST", "/shopping/custom", { text }); } catch (err) { toast(err.message, true); }
   });
   document.getElementById("settings-form").addEventListener("submit", onSettingsSubmit);
-  // Reading the post section marks the kids' letters as read.
-  if ("IntersectionObserver" in window && data.unreadPost) {
-    const obs = new IntersectionObserver((entries) => {
-      if (!entries.some((en) => en.isIntersecting)) return;
-      obs.disconnect();
-      req("POST", "/post/read-all").then((d) => { data = d; document.querySelectorAll(".t-letter--unread").forEach((el) => el.classList.remove("t-letter--unread")); document.querySelectorAll(".w-secnav .ui-badge, #post .ui-badge").forEach((b) => { if (b.closest("a")?.getAttribute("href") === "#post" || b.closest("#post")) b.remove(); }); }).catch(() => {});
-    }, { threshold: 0.5 });
-    obs.observe(document.getElementById("post"));
-  }
 }
 function renderIdeasOnly() {
   const el = document.getElementById("ideen");
@@ -572,6 +600,8 @@ function renderIdeasOnly() {
 
 async function onClick(e) {
   const t = e.target;
+  const tab = t.closest("[data-tab]");
+  if (tab) { e.preventDefault(); setTab(tab.dataset.tab); return; }
   const btn = t.closest("[data-act], [data-open-day], [data-plan-idea], [data-idea-letter], [data-reply], [data-del-post], [data-shop-del], [data-print-letter], [data-cat]");
   if (!btn) return;
   if (btn.matches("[data-cat]")) { ideaFilter.cat = btn.dataset.cat; renderIdeasOnly(); return; }
