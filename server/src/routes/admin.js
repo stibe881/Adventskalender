@@ -23,7 +23,10 @@ function makeEmptyDays() {
   }));
 }
 
-function applyTemplate(days, templateId) {
+const { applyMixedTemplate } = require("../templates/mixed");
+
+function applyTemplate(days, templateId, year) {
+  if (applyMixedTemplate(days, templateId, year || new Date().getFullYear())) return days;
   const mindfulTasks = [
     "Nimm dir 3 bewusste, tiefe Atemzüge.",
     "Trinke eine Tasse Tee oder Kaffee ganz ohne Ablenkung.",
@@ -483,7 +486,7 @@ router.post("/calendars", async (req, res) => {
 
   let days = makeEmptyDays();
   if (template) {
-    days = applyTemplate(days, template);
+    days = applyTemplate(days, template, Number(year) || new Date().getFullYear());
   }
 
   const calendar = {
