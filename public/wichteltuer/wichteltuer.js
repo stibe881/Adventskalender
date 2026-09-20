@@ -22,6 +22,7 @@ const PUSH_KEY = `wichteltuer_push_${token}`;
 const esc = (s) => UI.esc(s);
 // Which parts of the planner are unlocked (PRO). Older servers send no flags.
 const feat = () => data.features || { ideas: true, letters: true, shopping: true };
+const proPrice = () => data.proPrice || "CHF 4.50";
 const PRO_POINTS = [
   ["lightbulb", "Ideen-Bibliothek: 60 Streiche, Aufgaben und Geschenke, passend zum Alter – und die automatische Planung aller 24 Nächte"],
   ["mail", "Briefe schreiben: fertige Vorlagen in der Stimme des Wichtels, für den Plan und die Wichtelpost"],
@@ -31,17 +32,18 @@ function proTeaser(iconName, title, text) {
   return `<div class="w-card w-card--pro">
     <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
     <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
+    <p class="text-xs text-slate-400 mt-2">Einmalig ${esc(proPrice())} für diese Wichteltür – Ideen-Bibliothek, Briefe und Einkaufsliste zusammen, nicht je Funktion.</p>
     ${data.owner
-      ? `<button type="button" class="w-btn w-btn--pro mt-3" data-act="upgrade"><i data-icon="star"></i> Wichteltür auf PRO upgraden</button>`
+      ? `<button type="button" class="w-btn w-btn--pro mt-3" data-act="upgrade"><i data-icon="star"></i> Wichteltür auf PRO upgraden – ${esc(proPrice())}</button>`
       : `<p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Wer diese Wichteltür angelegt hat, kann sie in seinem Konto auf PRO upgraden – dann ist das hier für euch beide frei.</p>`}
   </div>`;
 }
 function upgradeCard() {
   return `<div class="w-card w-card--pro">
     <h2 class="w-title text-xl"><i data-icon="star"></i> Mehr aus der Wichteltür holen <span class="ui-pro-badge">PRO</span></h2>
-    <p class="text-sm text-slate-300 mt-1">Einmalig für diese Wichteltür, gilt für alle, die den Link haben.</p>
+    <p class="text-sm text-slate-300 mt-1">Einmalig ${esc(proPrice())} für diese Wichteltür – alle drei Funktionen zusammen, für alle, die den Link haben.</p>
     <ul class="w-pro-list">${PRO_POINTS.map(([ic, t]) => `<li><i data-icon="${ic}"></i><span>${esc(t)}</span></li>`).join("")}</ul>
-    <button type="button" class="w-btn w-btn--pro mt-4" data-act="upgrade"><i data-icon="star"></i> Jetzt upgraden</button>
+    <button type="button" class="w-btn w-btn--pro mt-4" data-act="upgrade"><i data-icon="star"></i> Jetzt upgraden – ${esc(proPrice())}</button>
   </div>`;
 }
 async function startUpgrade() {
@@ -282,7 +284,7 @@ function dayRow(day, withId = true) {
       <div class="t-day__title">${e ? esc(e.title) : `<span class="text-slate-500">Noch frei${tonight ? " – heute Nacht!" : ""}</span>`}</div>
       ${e ? `<div class="t-day__meta">${catChip(e.category)}${e.minutes ? `<span><i data-icon="clock"></i> ${e.minutes} Min.</span>` : ""}${e.prepDayBefore ? `<span class="text-amber-300"><i data-icon="triangle-alert"></i> vorbereiten</span>` : ""}${e.letter ? `<span><i data-icon="mail"></i></span>` : ""}${e.photo ? `<span><i data-icon="image"></i></span>` : ""}</div>` : ""}
     </div>
-    <div class="t-day__right">${e?.assigneeName ? `<span class="t-avatar ${mine ? "is-me" : ""}" title="${esc(e.assigneeName)}">${esc(initials(e.assigneeName))}</span>` : ""}${e?.done ? icon("circle-check", "text-emerald-300") : ""}</div>
+    <div class="t-day__right">${e?.letter ? `<button type="button" class="t-day__print" data-print-letter="${day.date}" title="Brief drucken" aria-label="Brief vom ${day.day}. Dezember drucken"><i data-icon="printer"></i></button>` : ""}${e?.assigneeName ? `<span class="t-avatar ${mine ? "is-me" : ""}" title="${esc(e.assigneeName)}">${esc(initials(e.assigneeName))}</span>` : ""}${e?.done ? icon("circle-check", "text-emerald-300") : ""}</div>
   </div>`;
 }
 
@@ -340,7 +342,7 @@ function postCard() {
     <p class="text-sm text-slate-400 mt-1">Briefe der Kinder von der Kinderseite${feat().letters ? ` und die Antworten von ${esc(d.elf.name)}. Antworten erscheinen sofort auf der Kinderseite.` : `. Mit PRO antwortet ${esc(d.elf.name)} mit fertigen Briefvorlagen – ${d.owner ? `<a href="#wichtel" data-tab="wichtel" class="text-amber-300 underline">jetzt upgraden</a>` : "wer die Wichteltür angelegt hat, kann upgraden"}.`}</p>
     <div class="space-y-3 mt-3">${post.length ? post.map((l) => l.from === "kid"
       ? `<div class="t-letter t-letter--kid ${l.read ? "" : "t-letter--unread"}">${esc(l.text)}<small>${esc(l.childName || "Kind")} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions">${feat().letters ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-reply="${esc(l.id)}" data-child="${esc(l.childId || "")}"><i data-icon="pen-line"></i> Antworten</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`
-      : `<div class="t-letter t-letter--elf">${esc(l.text)}<small>${esc(d.elf.name)}${l.childName ? ` an ${esc(l.childName)}` : ""} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`).join("")
+      : `<div class="t-letter t-letter--elf">${esc(l.text)}<small>${esc(d.elf.name)}${l.childName ? ` an ${esc(l.childName)}` : ""} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-print-post="${esc(l.id)}"><i data-icon="printer"></i> Drucken</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`).join("")
       : `<div class="ui-empty"><div class="ui-empty__art"><i data-icon="mail"></i></div>Noch keine Post. Teile die Kinderseite, dann können die Kinder schreiben.</div>`}</div>
   </div>`;
 }
@@ -368,6 +370,7 @@ function settingsCard() {
         <label class="ui-field"><span class="ui-field__label">Charakter</span><select name="character" class="w-input">${[["frech", "Frech"], ["lieb", "Lieb"], ["verpeilt", "Verpeilt"], ["neugierig", "Neugierig"]].map(([v, l]) => `<option value="${v}" ${d.elf.character === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
         <label class="ui-field"><span class="ui-field__label">Wo steht die Tür?</span><input name="doorPlace" value="${esc(d.elf.doorPlace)}" maxlength="80" class="w-input" placeholder="z. B. im Flur neben der Küche"></label>
       </div>
+      <label class="w-check"><input type="checkbox" name="swissMode" ${d.swissMode ? "checked" : ""}> <span>Schweizer Modus <span class="text-slate-500">– Christkind statt Weihnachtsmann, Samichlaus statt Nikolaus. Gilt für Ideen, Vorlagen und alle schon geschriebenen Briefe.</span></span></label>
       <div><span class="ui-field__label">Kinder <span class="text-slate-500">(Name, Alter – die Ideen passen sich an)</span></span><div class="space-y-2" id="children-rows">${rows(d.children, "child", true)}</div><button type="button" class="text-xs text-amber-300 mt-2" data-act="add-child">+ Kind hinzufügen</button></div>
       <div><span class="ui-field__label">Eltern / Helfer <span class="text-slate-500">(wer ist dran)</span></span><div class="space-y-2" id="parent-rows">${rows(d.parents, "parent", false)}</div><button type="button" class="text-xs text-amber-300 mt-2" data-act="add-parent">+ Person hinzufügen</button></div>
       <div class="border-t border-white/10 pt-3">
@@ -422,7 +425,7 @@ async function openDay(date) {
       <label class="ui-check" style="margin-top:18px"><input type="checkbox" name="prepDayBefore" ${e.prepDayBefore ? "checked" : ""}> <span>Am Vortag vorbereiten</span></label>
     </div>
     <label class="ui-field"><span class="ui-field__label">Notiz für uns</span><input name="note" class="ui-input" value="${esc(e.note)}" maxlength="500" placeholder="z. B. Kamera bereitlegen"></label>
-    ${feat().letters ? `<div class="ui-field"><span class="ui-field__label">Brief vom Wichtel <button type="button" class="text-amber-300 underline" data-letter-template>Vorlage einsetzen</button></span><textarea name="letter" class="ui-input" rows="4" maxlength="2000" placeholder="Leer lassen, wenn es keinen Brief gibt">${esc(e.letter)}</textarea></div>
+    ${feat().letters ? `<div class="ui-field"><span class="ui-field__label">Brief vom Wichtel <button type="button" class="text-amber-300 underline" data-letter-template>Vorlage einsetzen</button>${e.letter ? ` · <button type="button" class="text-amber-300 underline" data-print-day-letter>Drucken</button>` : ""}</span><textarea name="letter" class="ui-input" rows="4" maxlength="2000" placeholder="Leer lassen, wenn es keinen Brief gibt">${esc(e.letter)}</textarea></div>
     <label class="ui-check"><input type="checkbox" name="letterVisibleToKids" ${e.letterVisibleToKids ? "checked" : ""}> <span>Brief ab diesem Morgen auch auf der Kinderseite zeigen</span></label>` : `<p class="ui-field__hint" style="margin-bottom:10px"><span class="ui-pro-badge">PRO</span> Briefe vom Wichtel (mit Vorlagen, auch für die Kinderseite) gibt es in der PRO-Version.</p>`}
     ${e.photo ? `<div class="flex items-center gap-3 mt-2"><img src="${esc(e.photo)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><label class="ui-check"><input type="checkbox" name="photoVisibleToKids" ${e.photoVisibleToKids ? "checked" : ""}> <span>Foto auf der Kinderseite zeigen</span></label><button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" data-remove-photo>Foto löschen</button></div>` : ""}
     <label class="ui-field"><span class="ui-field__label">${e.photo ? "Anderes Foto" : "Foto (Beweis oder Reaktion der Kinder)"}</span><input type="file" name="photo" accept="image/*" class="ui-input"></label>
@@ -449,6 +452,7 @@ async function openDay(date) {
     form.elements.prepDayBefore.checked = i.prepDayBefore;
     if (i.letter && form.elements.letter && !form.elements.letter.value) form.elements.letter.value = fill(i.letter);
   });
+  dlg.querySelector("[data-print-day-letter]")?.addEventListener("click", () => printLetterText(form.elements.letter.value, `${day.day}. Dezember`, `Brief ${day.day}. Dezember`));
   dlg.querySelector("[data-letter-template]")?.addEventListener("click", async () => {
     const t = await pickTemplate(date, null);
     if (t) form.elements.letter.value = t;
@@ -597,13 +601,22 @@ function openPrint(kind) {
   w.document.write(printShell(title, body));
   w.document.close();
 }
+function printLetterText(text, footer, title) {
+  if (!String(text || "").trim()) return toast("Der Brief ist noch leer.", true);
+  const w = window.open("", "_blank");
+  if (!w) return toast("Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.", true);
+  w.document.write(printShell(title, `<div class="letter">${esc(text)}<small>${esc(footer)}</small></div>`));
+  w.document.close();
+}
 function printLetter(date) {
   const x = data.days.find((y) => y.date === date);
   if (!x?.entry?.letter) return;
-  const w = window.open("", "_blank");
-  if (!w) return toast("Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.", true);
-  w.document.write(printShell(`Brief ${x.day}. Dezember`, `<div class="letter">${esc(x.entry.letter)}<small>${x.day}. Dezember</small></div>`));
-  w.document.close();
+  printLetterText(x.entry.letter, `${x.day}. Dezember`, `Brief ${x.day}. Dezember`);
+}
+function printPost(id) {
+  const l = data.post.find((p) => p.id === id);
+  if (!l) return;
+  printLetterText(l.text, `${data.elf.name}${l.childName ? ` an ${l.childName}` : ""} · ${formatDate(l.at.slice(0, 10))}`, `Brief von ${data.elf.name}`);
 }
 
 // ── Events ──────────────────────────────────────────────────────────────────
@@ -640,7 +653,7 @@ async function onClick(e) {
   const t = e.target;
   const tab = t.closest("[data-tab]");
   if (tab) { e.preventDefault(); setTab(tab.dataset.tab); return; }
-  const btn = t.closest("[data-act], [data-open-day], [data-plan-idea], [data-idea-letter], [data-reply], [data-del-post], [data-shop-del], [data-print-letter], [data-cat]");
+  const btn = t.closest("[data-act], [data-open-day], [data-plan-idea], [data-idea-letter], [data-reply], [data-del-post], [data-shop-del], [data-print-letter], [data-print-post], [data-cat]");
   if (!btn) return;
   if (btn.matches("[data-cat]")) { ideaFilter.cat = btn.dataset.cat; renderIdeasOnly(); return; }
   if (btn.matches("[data-open-day]") && !t.closest("input, label")) return openDay(btn.dataset.openDay);
@@ -648,6 +661,7 @@ async function onClick(e) {
   if (btn.matches("[data-idea-letter]")) { const i = ideas.find((x) => x.id === btn.dataset.ideaLetter); return UI.alert({ title: i.title, text: fill(i.letter), ok: "Schließen" }); }
   if (btn.matches("[data-reply]")) return writePost(btn.dataset.child || null, btn.dataset.reply);
   if (btn.matches("[data-print-letter]")) return printLetter(btn.dataset.printLetter);
+  if (btn.matches("[data-print-post]")) return printPost(btn.dataset.printPost);
   if (btn.matches("[data-del-post]")) {
     if (!(await UI.confirm({ title: "Brief löschen?", ok: "Löschen", danger: true }))) return;
     try { await update("DELETE", `/post/${btn.dataset.delPost}`); } catch (err) { toast(err.message, true); }
@@ -731,10 +745,12 @@ async function onSettingsSubmit(e) {
     }
     return out;
   };
+  const swissBefore = data.swissMode;
   try {
     await update("PUT", "/settings", {
       title: fd.get("title"),
       elf: { name: fd.get("elfName"), character: fd.get("character"), doorPlace: fd.get("doorPlace") },
+      swissMode: fd.get("swissMode") === "on",
       children: collect("child", true),
       parents: collect("parent", false),
       notify: { enabled: fd.get("notifyEnabled") === "on", time: fd.get("notifyTime"), emails: String(fd.get("emails") || "").split(",").map((s) => s.trim()).filter(Boolean) },
@@ -743,6 +759,8 @@ async function onSettingsSubmit(e) {
     ok.classList.remove("hidden");
     setTimeout(() => ok.classList.add("hidden"), 1500);
     document.getElementById("wichtel").scrollIntoView({ block: "start" });
+    // The library is served in the plan's language, so fetch it again after a change.
+    if (swissBefore !== data.swissMode) { ideas = null; templates = null; if (feat().ideas) loadLibrary().then(renderIdeasOnly).catch(() => {}); }
   } catch (err) {
     toast(err.message, true);
   }

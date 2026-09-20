@@ -3,6 +3,7 @@ const stripe = require("stripe");
 const config = require("../config");
 const db = require("../db");
 const { requireAuth } = require("../middleware/auth");
+const { proPriceLabel } = require("../utils/pro");
 
 const router = express.Router();
 let stripeClient = null;
@@ -22,6 +23,7 @@ const KINDS = {
     cancelUrl: () => "/admin/index.html?payment=cancelled",
     markPro: (id) => db.updateCalendar(id, (c) => { c.isPro = true; return c; }),
     label: "Kalender",
+    lineItem: () => (config.stripe.priceId ? { price: config.stripe.priceId, quantity: 1 } : null),
   },
   wichteln: {
     load: (id) => db.getWichtelGroupById(id),
@@ -30,6 +32,7 @@ const KINDS = {
     cancelUrl: (item) => `/admin/wichteln-editor.html?id=${encodeURIComponent(item.id)}&payment=cancelled`,
     markPro: (id) => db.updateWichtelGroup(id, (g) => { g.isPro = true; return g; }),
     label: "Wichtel-Runde",
+    lineItem: (item) => modulePrice(`Wichteln PRO – ${item.title}`, "Wunschzettel, Hinweise für den Wichtel und anonymer Chat für alle Teilnehmenden dieser Runde."),
   },
   wichteltuer: {
     load: (id) => db.getElfPlanById(id),
@@ -38,8 +41,14 @@ const KINDS = {
     cancelUrl: (item) => `/e/${encodeURIComponent(item.shareToken)}?payment=cancelled`,
     markPro: (id) => db.updateElfPlan(id, (p) => { p.isPro = true; return p; }),
     label: "Wichteltür",
+    lineItem: (item) => modulePrice(`Wichteltür PRO – ${item.title}`, "Ideen-Bibliothek, Briefe und Einkaufsliste für alle mit dem Link dieser Wichteltür."),
   },
 };
+
+// One flat price per round or Wichteltür, no Stripe price object needed.
+function modulePrice(name, description) {
+  return { price_data: { currency: config.stripe.currency, unit_amount: config.stripe.moduleAmount, product_data: { name: name.slice(0, 120), description } }, quantity: 1 };
+}
 
 // Checkout Session erstellen
 router.post("/checkout", express.json(), requireAuth, async (req, res) => {
@@ -59,18 +68,14 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
       return res.status(400).json({ error: `${def.label} ist bereits PRO.` });
     }
 
-    if (!stripeClient || !config.stripe.priceId) {
+    const lineItem = stripeClient ? def.lineItem(item) : null;
+    if (!lineItem) {
       return res.status(500).json({ error: "Stripe ist noch nicht konfiguriert." });
     }
 
     const session = await stripeClient.checkout.sessions.create({
       mode: "payment",
-      line_items: [
-        {
-          price: config.stripe.priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [lineItem],
       client_reference_id: `${req.user.id}:${kind}:${item.id}`,
       success_url: `${config.baseUrl}${def.successUrl(item)}`,
       cancel_url: `${config.baseUrl}${def.cancelUrl(item)}`,

@@ -5,6 +5,8 @@ const config = require("../../config");
 const db = require("../../db");
 const cfg = require("../../wichteltuer/config");
 const { IDEAS, byId: ideaById, fillPlaceholders } = require("../../wichteltuer/ideas");
+const { convertContent, convertText } = require("../../utils/swiss");
+const { proPriceLabel } = require("../../utils/pro");
 const { generateId, generateToken } = require("../../utils/token");
 const { cleanText, isEmail } = require("../../utils/wichtel");
 
@@ -49,6 +51,7 @@ function newPlan(user, b = {}) {
     title: cleanText(b.title, cfg.titleMax) || `Wichteltür ${year}`,
     year,
     elf: { name: cleanText(b.elfName, cfg.nameMax) || "Wichtel", doorPlace: "", character: "frech" },
+    swissMode: Boolean(b.swissMode),
     children: [],
     parents: [],
     days: {},
@@ -101,6 +104,9 @@ function applyDay(plan, date, b, existing) {
       e.minutes = idea.minutes;
       e.prepDayBefore = idea.prepDayBefore;
       e.letter = idea.letter ? fillPlaceholders(idea.letter, letterCtx(plan, date)) : e.letter || "";
+      // Swiss households: the Christkind brings the presents, the Samichlaus comes on the 6th.
+      if (plan.swissMode) for (const k of ["title", "text", "letter"]) e[k] = convertText(e[k], true);
+      if (plan.swissMode) e.materials = e.materials.map((m) => convertText(m, true));
     }
   }
   if (b.title !== undefined) e.title = cleanText(b.title, cfg.dayTitleMax);
@@ -239,6 +245,21 @@ function proFeatures(pro) {
   return { ideas: pro, letters: pro, shopping: pro };
 }
 
+/** Switches the figures in everything already written: days and letters. */
+function setSwissMode(plan, on) {
+  on = Boolean(on);
+  if (Boolean(plan.swissMode) === on) return plan;
+  plan.swissMode = on;
+  plan.days = convertContent(plan.days, on);
+  plan.post = (plan.post || []).map((l) => ({ ...l, text: convertText(l.text, on) }));
+  return plan;
+}
+
+/** The library in the plan's language: Swiss plans read Christkind and Samichlaus. */
+function libraryFor(plan, list) {
+  return plan.swissMode ? convertContent(list, true) : list;
+}
+
 function planView(plan, { owner = false, now = new Date(), pro = Boolean(plan.isPro) } = {}) {
   const today = todayIso(now);
   const features = proFeatures(pro);
@@ -254,7 +275,9 @@ function planView(plan, { owner = false, now = new Date(), pro = Boolean(plan.is
     year: plan.year,
     owner,
     isPro: pro,
+    proPrice: proPriceLabel(),
     features,
+    swissMode: Boolean(plan.swissMode),
     elf: { name: plan.elf?.name || "Wichtel", doorPlace: plan.elf?.doorPlace || "", character: plan.elf?.character || "frech" },
     children: plan.children,
     parents: plan.parents,
@@ -356,5 +379,5 @@ const cleanEmails = (list) => (Array.isArray(list) ? [...new Set(list.map((e) =>
 module.exports = {
   cfg, shareLink, kidLink, todayIso, seasonDates, isoFor, addDays, weekdayOf, isWeekend, dayNumber, seasonYear, newPlan, cleanChild, cleanParent,
   cleanMaterials, materialKey, applyDay, letterCtx, autoplan, shoppingList, dayView, planView, proFeatures, kidView, loadByShareToken, loadByKidToken, isOwner,
-  removePhotoFiles, cleanEmails,
+  removePhotoFiles, cleanEmails, setSwissMode, libraryFor,
 };

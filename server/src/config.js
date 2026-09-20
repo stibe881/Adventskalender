@@ -52,6 +52,9 @@ module.exports = {
     secretKey: process.env.STRIPE_SECRET_KEY || "",
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
     priceId: process.env.STRIPE_PRICE_ID || "",
+    // One payment per Wichtel-Runde or Wichteltür unlocks all its PRO features.
+    currency: (process.env.STRIPE_CURRENCY || "chf").toLowerCase(),
+    moduleAmount: Number(process.env.STRIPE_MODULE_AMOUNT || 450),
   },
   spotify: {
     clientId: process.env.SPOTIFY_CLIENT_ID || "",

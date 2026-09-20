@@ -35,6 +35,8 @@
 .t-day__meta { font-size: 0.72rem; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .t-day__meta .ui-icon { font-size: 0.85rem; }
 .t-day__right { display: flex; align-items: center; gap: 6px; }
+.t-day__print { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #cbd5e1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+.t-day__print:hover { color: #fff; background: rgba(255,255,255,0.14); }
 .t-avatar { width: 26px; height: 26px; border-radius: 999px; background: #7c2d12; color: #fed7aa; font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
 .t-avatar.is-me { background: #b45309; color: #fff; }
 .t-cat { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 600; }

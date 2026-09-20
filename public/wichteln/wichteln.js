@@ -320,7 +320,7 @@ function proTeaser(iconName, title, text) {
   return `<div class="w-card w-card--pro">
     <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
     <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
-    <p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Der Organisator kann die Runde im Wichtel-Editor auf PRO upgraden – dann ist das hier für alle freigeschaltet.</p>
+    <p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Der Organisator kann die Runde im Wichtel-Editor auf PRO upgraden (einmalig ${esc(data.group.proPrice || "CHF 4.50")} für die ganze Runde, alle Funktionen zusammen) – dann ist das hier für alle freigeschaltet.</p>
   </div>`;
 }
 

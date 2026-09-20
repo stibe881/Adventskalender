@@ -82,7 +82,7 @@ document.getElementById("create-form").addEventListener("submit", async (e) => {
   const ages = [...f.querySelectorAll("[name=childAge]")].map((i) => i.value);
   const children = names.map((name, i) => ({ name, age: ages[i] })).filter((c) => c.name);
   try {
-    const plan = await api.createElfPlan({ elfName: f.elements.elfName.value, year: Number(f.elements.year.value), children, autoplan: f.elements.autoplan.checked, title: `Wichteltür ${f.elements.year.value}${children.length ? ` – ${children.map((c) => c.name).join(" & ")}` : ""}` });
+    const plan = await api.createElfPlan({ elfName: f.elements.elfName.value, year: Number(f.elements.year.value), children, autoplan: f.elements.autoplan.checked, swissMode: f.elements.swissMode.checked, title: `Wichteltür ${f.elements.year.value}${children.length ? ` – ${children.map((c) => c.name).join(" & ")}` : ""}` });
     window.location.href = `/e/${encodeURIComponent(plan.shareLink.split("/").pop())}`;
   } catch (ex) {
     err.textContent = ex.message;

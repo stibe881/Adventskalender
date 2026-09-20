@@ -15,6 +15,7 @@ const db = require("../../db");
 const { requireAuth, COOKIE_NAME } = require("../../middleware/auth");
 const { generateToken, generateId } = require("../../utils/token");
 const { cleanText } = require("../../utils/wichtel");
+const { convertText } = require("../../utils/swiss");
 const { isProItem, proOrDeny } = require("../../utils/pro");
 const { IDEAS } = require("../../wichteltuer/ideas");
 const { TEMPLATES, render: renderLetter } = require("../../wichteltuer/letters");
@@ -113,19 +114,20 @@ share.get("/ideas", async (req, res) => {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return;
   if (!proOrDeny(await isProItem(plan), res, "Die Ideen-Bibliothek")) return;
-  res.json({ ideas: IDEAS, categories: cfg.categories });
+  res.json({ ideas: S.libraryFor(plan, IDEAS), categories: cfg.categories });
 });
 share.get("/letters/templates", async (req, res) => {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return;
   if (!proOrDeny(await isProItem(plan), res, "Briefvorlagen")) return;
-  res.json({ templates: TEMPLATES });
+  res.json({ templates: S.libraryFor(plan, TEMPLATES) });
 });
 
 share.put("/settings", (req, res) => {
   const b = req.body || {};
   return respond(req, res, (p) => {
     if (b.title !== undefined) p.title = cleanText(b.title, cfg.titleMax) || p.title;
+    if (b.swissMode !== undefined) S.setSwissMode(p, b.swissMode);
     if (b.year !== undefined && Number(b.year) >= 2024 && Number(b.year) <= 2100 && !Object.keys(p.days).length) p.year = Number(b.year);
     if (b.elf && typeof b.elf === "object") {
       p.elf = p.elf || {};
@@ -256,7 +258,8 @@ share.post("/letters/render", async (req, res) => {
   const tpl = TEMPLATES.find((t) => t.id === b.templateId);
   const source = tpl ? tpl.text : cleanText(b.text, cfg.letterMax);
   const child = plan.children.find((c) => c.id === b.childId);
-  const text = renderLetter(source, S.letterCtx(plan, isoDate(b.date) ? b.date : null, { free: cleanText(b.free, cfg.letterMax), childName: child?.name }));
+  let text = renderLetter(source, S.letterCtx(plan, isoDate(b.date) ? b.date : null, { free: cleanText(b.free, cfg.letterMax), childName: child?.name }));
+  if (plan.swissMode) text = convertText(text, true);
   res.json({ text });
 });
 

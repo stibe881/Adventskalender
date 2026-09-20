@@ -110,11 +110,14 @@ function photoView(group, ph, me) {
 
 // What the organizer sees. Assignments stay hidden until the reveal so the
 // organizer can take part without knowing the draw.
+const { proPriceLabel } = require("../../utils/pro");
+
 function organizerView(group, pro = Boolean(group.isPro)) {
   const revealed = group.status === "revealed";
   return {
     id: group.id,
     isPro: pro,
+    proPrice: proPriceLabel(),
     features: proFeatures(group, pro),
     title: group.title,
     organizerName: group.organizerName,
@@ -183,6 +186,7 @@ function participantView(group, me, pro = Boolean(group.isPro)) {
       status: group.status || "draft",
       chatEnabled: group.chatEnabled !== false,
       isPro: pro,
+      proPrice: proPriceLabel(),
       wishlistsShared: Boolean(group.wishlistsShared) && pro,
       deleteAt: group.deleteAt || null,
       participantCount: activeParticipants(group).length,

@@ -201,3 +201,39 @@ test("Wichteltür: without PRO the idea library, letters and shopping list stay 
   r = await anon("POST", `/api/wichteltuer/s/${share}/post`, { text: "Hallo Mia" });
   assert.equal(r.status, 201);
 });
+
+test("Wichteltür: Schweizer Modus – Christkind and Samichlaus in ideas, templates and written letters, both ways", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/wichteltuer", require(path.join(SRC, "routes/wichteltuer")));
+  const { call, anon } = h;
+  t.after(h.stop);
+
+  let r = await call("POST", "/api/wichteltuer/plans", { title: "Wichtel", elfName: "Pixi", year: 2026, children: [{ name: "Mia", age: 5 }], autoplan: true, swissMode: true });
+  assert.equal(r.status, 201);
+  assert.equal(r.d.swissMode, true);
+  const share = r.d.shareLink.split("/").pop();
+  const day = (d, n) => d.days.find((x) => x.date === `2026-12-${n}`).entry;
+  assert.match(day(r.d, "06").title, /Samichlaus/);
+  assert.match(day(r.d, "06").letter, /Samichlaus/);
+  assert.match(day(r.d, "24").letter, /Christkind/);
+  assert.doesNotMatch(day(r.d, "24").letter, /Weihnachtsmann/);
+
+  r = await anon("GET", `/api/wichteltuer/s/${share}/ideas`);
+  assert.match(r.d.ideas.find((i) => i.id === "nikolaus").text, /Samichlaus/);
+  r = await anon("GET", `/api/wichteltuer/s/${share}/letters/templates`);
+  assert.match(r.d.templates.find((i) => i.id === "lob").text, /dem Christkind/);
+  r = await anon("POST", `/api/wichteltuer/s/${share}/letters/render`, { templateId: "abschied" });
+  assert.match(r.d.text, /dem Christkind erzählt/);
+  r = await anon("PUT", `/api/wichteltuer/s/${share}/days/2026-12-10`, { ideaId: "wunschzettel" });
+  assert.match(day(r.d, "10").text, /für das Christkind/);
+
+  // Switching back rewrites what is already there.
+  r = await anon("POST", `/api/wichteltuer/s/${share}/post`, { text: "Das Christkind lässt grüssen." });
+  r = await anon("PUT", `/api/wichteltuer/s/${share}/settings`, { swissMode: false });
+  assert.equal(r.d.swissMode, false);
+  assert.match(day(r.d, "24").letter, /dem Weihnachtsmann/);
+  assert.match(day(r.d, "06").title, /Nikolaus/);
+  assert.match(r.d.post[0].text, /Der Weihnachtsmann lässt/);
+  r = await anon("GET", `/api/wichteltuer/s/${share}/ideas`);
+  assert.match(r.d.ideas.find((i) => i.id === "nikolaus").text, /Nikolaus/);
+});

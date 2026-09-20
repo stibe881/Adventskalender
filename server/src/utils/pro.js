@@ -19,10 +19,16 @@ async function isProItem(item) {
 }
 
 /** Answers 402 with a hint the frontend understands; returns false when the feature is locked. */
+/** "CHF 4.50" – what one Wichtel-Runde or Wichteltür costs, for the UI. */
+function proPriceLabel() {
+  const { currency, moduleAmount } = require("../config").stripe;
+  return `${currency.toUpperCase()} ${(moduleAmount / 100).toFixed(2)}`;
+}
+
 function proOrDeny(pro, res, feature) {
   if (pro) return true;
   res.status(402).json({ error: `${feature} gibt es in der PRO-Version.`, pro: true });
   return false;
 }
 
-module.exports = { isProItem, ownerIsPro, proOrDeny };
+module.exports = { isProItem, ownerIsPro, proOrDeny, proPriceLabel };

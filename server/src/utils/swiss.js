@@ -46,7 +46,7 @@ function convertContent(value, toSwiss) {
     const out = {};
     for (const [k, v] of Object.entries(value)) {
       // Never touch uploaded files, links or codes.
-      out[k] = ["url", "fileUrl", "image", "images", "imageUrl", "qrImage", "modelUrl", "playlistUrl", "spotifyUrl", "data", "code", "ppImage"].includes(k) ? v : convertContent(v, toSwiss);
+      out[k] = ["url", "fileUrl", "image", "images", "imageUrl", "qrImage", "modelUrl", "playlistUrl", "spotifyUrl", "data", "code", "ppImage", "photo"].includes(k) ? v : convertContent(v, toSwiss);
     }
     return out;
   }
