@@ -502,6 +502,8 @@
       try {
         const me = await api.me();
         const target = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
+        // In the app a signed-in user goes straight to their area.
+        if (window.__NATIVE_APP && !new URLSearchParams(window.location.search).has("stay")) { window.location.replace(target); return; }
         const label = { wichteln: "Zum Wichteln", wichteltuer: "Zur Wichteltür" }[me.defaultApp] || "Zum Adventskalender";
         document.getElementById("nav-area").href = target;
         document.getElementById("hero-area").href = target;
