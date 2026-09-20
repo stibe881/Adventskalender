@@ -422,6 +422,7 @@ createForm.addEventListener("submit", async (e) => {
       template: fd.get("template"),
       strictMode: document.getElementById("strictMode").checked,
       randomLayout: document.getElementById("randomLayout").checked,
+      swissMode: document.getElementById("swissMode").checked,
     });
     createForm.reset();
     window.location.href = `/admin/editor.html?id=${cal.id}`;

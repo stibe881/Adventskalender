@@ -484,7 +484,7 @@ function applyEffects(enabled) {
 const SHOP_ITEMS = [
   { id: "bow", name: "Schleife", slot: "neck", price: 20, desc: "Hübsch verpackt." },
   { id: "scarf", name: "Kuschelschal", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
-  { id: "santahat", name: "Weihnachtsmann", slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
+  { id: "santahat", get name() { return calendarMeta?.swissMode ? "Samichlaus" : "Weihnachtsmann"; }, slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
   { id: "hat", name: "Zylinder", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
   { id: "bell", name: "Glöckchen", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
   { id: "skis", name: "Schlittschuhe", slot: "feet", price: 90, desc: "Elegant übers Eis gleiten." },
@@ -631,7 +631,7 @@ const RUDI_ACTIONS = {
   sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel({ mode: "sleigh", extras: ["sleigh"] }) },
   skis: { label: "Auf Schlittschuhen über den Bildschirm gleiten", run: () => rudiTravel({ mode: "glide", extras: ["skis"] }) },
   wings: { label: "Mit Flügeln über den Kalender fliegen", run: () => rudiTravel({ mode: "fly", extras: ["wings"] }) },
-  santahat: { label: "Mit dem Weihnachtsmann auf dem Rücken fliegen", run: () => rudiTravel({ mode: "fly", extras: ["santahat"] }) },
+  santahat: { get label() { return `Mit dem ${calendarMeta?.swissMode ? "Samichlaus" : "Weihnachtsmann"} auf dem Rücken fliegen`; }, run: () => rudiTravel({ mode: "fly", extras: ["santahat"] }) },
   star: { label: "Sternschnuppen-Flug", run: () => rudiTravel({ mode: "fly", extras: ["star", "lights"] }) },
   lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
   bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },

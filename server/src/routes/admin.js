@@ -24,6 +24,7 @@ function makeEmptyDays() {
 }
 
 const { applyMixedTemplate } = require("../templates/mixed");
+const { convertDays } = require("../utils/swiss");
 
 function applyTemplate(days, templateId, year) {
   if (applyMixedTemplate(days, templateId, year || new Date().getFullYear())) return days;
@@ -419,6 +420,7 @@ function toSummary(cal) {
     filledDoors: filled,
     openedDoors: opened,
     randomLayout: Boolean(cal.randomLayout),
+    swissMode: Boolean(cal.swissMode),
     collaborators: cal.collaborators || [],
     isPro: Boolean(cal.isPro),
   };
@@ -472,7 +474,7 @@ router.get("/calendars", async (req, res) => {
 });
 
 router.post("/calendars", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, template, randomLayout } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, template, randomLayout, swissMode } = req.body || {};
   if (!recipientName || !String(recipientName).trim()) {
     return res.status(400).json({ error: "Name des Beschenkten ist erforderlich." });
   }
@@ -487,6 +489,7 @@ router.post("/calendars", async (req, res) => {
   let days = makeEmptyDays();
   if (template) {
     days = applyTemplate(days, template, Number(year) || new Date().getFullYear());
+    if (swissMode) convertDays(days, true);
   }
 
   const calendar = {
@@ -501,6 +504,7 @@ router.post("/calendars", async (req, res) => {
     customConfig: customConfig || null,
     strictMode: Boolean(req.body.strictMode),
     randomLayout: Boolean(randomLayout),
+    swissMode: Boolean(swissMode),
     year: parsedYear,
     createdAt: new Date().toISOString(),
     days,
@@ -518,7 +522,7 @@ router.get("/calendars/:id", async (req, res) => {
 });
 
 router.put("/calendars/:id", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled, swissMode } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
 
@@ -527,6 +531,12 @@ router.put("/calendars/:id", async (req, res) => {
     if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
     if (communityCanvas !== undefined) cal.communityCanvas = Boolean(communityCanvas);
     if (rudiEnabled !== undefined) cal.rudiEnabled = Boolean(rudiEnabled);
+    // Swiss mode: Christkind instead of Weihnachtsmann, Samichlaus instead of Nikolaus.
+    // Switching converts the texts of all doors (and back again).
+    if (swissMode !== undefined && Boolean(swissMode) !== Boolean(cal.swissMode)) {
+      cal.swissMode = Boolean(swissMode);
+      convertDays(cal.days, cal.swissMode);
+    }
     // Company mode is a feature of the "firma" template only.
     if ((theme && THEMES.includes(theme) ? theme : cal.theme) !== "firma") cal.companyMode = false;
     if (metaPuzzle !== undefined) cal.metaPuzzle = Boolean(metaPuzzle);

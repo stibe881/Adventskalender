@@ -147,6 +147,7 @@ async function loadCalendar() {
   document.getElementById("companyMode").checked = calendar.companyMode || false;
   document.getElementById("communityCanvas").checked = calendar.communityCanvas !== false;
   document.getElementById("rudiEnabled").checked = calendar.rudiEnabled !== false;
+  document.getElementById("swissMode").checked = Boolean(calendar.swissMode);
   
   const metaCheckbox = document.getElementById("metaPuzzle");
   const metaConfig = document.getElementById("metaPuzzleConfig");
@@ -1591,6 +1592,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     companyMode: document.getElementById("companyMode").checked,
     communityCanvas: document.getElementById("communityCanvas").checked,
     rudiEnabled: document.getElementById("rudiEnabled").checked,
+    swissMode: document.getElementById("swissMode").checked,
     customConfig: calendar.customConfig,
   });
   await loadCalendar();

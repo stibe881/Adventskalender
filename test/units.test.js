@@ -55,3 +55,17 @@ test("buildIcs writes a timed event with alarm", () => {
   assert.match(ics, /LOCATION:Küche\\, Bern/);
   assert.match(ics, /TRIGGER:-P1D/);
 });
+
+test("Schweizer Modus converts door texts both ways and leaves links alone", () => {
+  const { convertText, convertDays } = require(path.join(SRC, "utils/swiss"));
+  assert.equal(convertText("Der Weihnachtsmann kommt. Ein Brief vom Weihnachtsmann für den Weihnachtsmann-Fan. Am Nikolaustag war der Nikolaus da.", true),
+    "Das Christkind kommt. Ein Brief vom Christkind für das Christkind-Fan. Am Samichlaustag war der Samichlaus da.");
+  assert.equal(convertText("Das Christkind und der Samichlaus.", false), "Der Weihnachtsmann und der Nikolaus.");
+  const days = [{ day: 1, content: { message: "Grüße vom Weihnachtsmann", sender: "Der Weihnachtsmann", url: "https://weihnachtsmann.example/Weihnachtsmann", images: ["Weihnachtsmann.png"] } }, { day: 2, content: null }];
+  convertDays(days, true);
+  assert.equal(days[0].content.sender, "Das Christkind");
+  assert.equal(days[0].content.url, "https://weihnachtsmann.example/Weihnachtsmann", "links stay untouched");
+  assert.deepEqual(days[0].content.images, ["Weihnachtsmann.png"]);
+  convertDays(days, false);
+  assert.equal(days[0].content.message, "Grüße vom Weihnachtsmann");
+});

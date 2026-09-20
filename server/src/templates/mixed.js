@@ -35,7 +35,7 @@ function kidsMix(year) {
     challenge("Singe dein liebstes Weihnachtslied so laut, dass es alle im Haus hören.", "Gesungen!", "Bravo! Zugabe!"),
     diary("Was war heute das Schönste? Male oder schreibe es auf."),
     voucher("Gutschein: Extra-Gute-Nacht-Geschichte", "GESCHICHTE", "Einlösbar an einem Abend deiner Wahl. Du darfst das Buch aussuchen!"),
-    quiz("Womit fährt der Weihnachtsmann durch die Luft?", ["Mit dem Auto", "Mit dem Schlitten", "Mit dem Fahrrad", "Mit dem Zug"], 1, { ok: "Mit dem Rentierschlitten, richtig!", coins: 10 }),
+    quiz("Wer bringt an Heiligabend die Geschenke?", ["Der Osterhase", "Der Weihnachtsmann", "Die Zahnfee", "Der Postbote"], 1, { ok: "Genau!", coins: 10 }),
     challenge("Baue eine Höhle aus Decken und Kissen und lies darin etwas – oder lass dir vorlesen.", "Höhle steht!", "Gemütlich!"),
     scratch("Was sagt der Tannenbaum zum Adventskranz? – Du bist ja ganz schön rund geworden!", "Witz freirubbeln"),
     catcher("Zweite Runde: Fang die Geschenke! Schaffst du 20?", 20),
