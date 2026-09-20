@@ -1,16 +1,14 @@
 /* Wichteln participant area – warm winter night on top of the shared Tailwind bundle. */
 html, body { min-height: 100%; }
 body {
-  background: #0b1120;
+  background: transparent;
   font-family: "Inter", system-ui, sans-serif;
 }
 .w-bg {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(900px 500px at 15% -10%, rgba(16, 185, 129, 0.22), transparent 60%),
-    radial-gradient(700px 400px at 90% 10%, rgba(244, 63, 94, 0.18), transparent 60%),
-    radial-gradient(800px 600px at 50% 110%, rgba(245, 158, 11, 0.12), transparent 60%),
-    linear-gradient(180deg, #0b1120 0%, #0f172a 100%);
+    radial-gradient(900px 500px at 15% -10%, rgba(52, 211, 153, 0.2), transparent 60%),
+    radial-gradient(700px 400px at 90% 10%, rgba(251, 113, 133, 0.16), transparent 60%);
 }
 .w-snow {
   position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.6;
@@ -28,29 +26,29 @@ body {
 @media (prefers-reduced-motion: reduce) { .w-snow { animation: none; } }
 
 .w-card {
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(20, 32, 62, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 20px;
   padding: 22px;
   backdrop-filter: blur(10px);
   box-shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.8);
 }
-.w-card--gift { border-color: rgba(16, 185, 129, 0.35); background: linear-gradient(160deg, rgba(6, 78, 59, 0.45), rgba(15, 23, 42, 0.8)); }
-.w-card--santa { border-color: rgba(244, 63, 94, 0.3); background: linear-gradient(160deg, rgba(76, 5, 25, 0.4), rgba(15, 23, 42, 0.8)); }
-.w-card--soft { background: rgba(15, 23, 42, 0.55); border-style: dashed; padding: 16px; }
-.w-card--reveal { border-color: rgba(245, 158, 11, 0.4); background: linear-gradient(160deg, rgba(120, 53, 15, 0.4), rgba(15, 23, 42, 0.8)); }
+.w-card--gift { border-color: rgba(52, 211, 153, 0.4); background: linear-gradient(160deg, rgba(6, 95, 70, 0.5), rgba(20, 32, 62, 0.75)); }
+.w-card--santa { border-color: rgba(251, 113, 133, 0.35); background: linear-gradient(160deg, rgba(120, 20, 50, 0.45), rgba(20, 32, 62, 0.75)); }
+.w-card--soft { background: rgba(20, 32, 62, 0.45); border-style: dashed; padding: 16px; }
+.w-card--reveal { border-color: rgba(251, 191, 36, 0.45); background: linear-gradient(160deg, rgba(146, 64, 14, 0.45), rgba(20, 32, 62, 0.75)); }
 
 .w-title { font-family: "Playfair Display", serif; font-weight: 700; }
 .w-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; }
 
 .w-input {
-  width: 100%; border-radius: 12px; background: rgba(2, 6, 23, 0.55); border: 1px solid rgba(255,255,255,0.12);
+  width: 100%; border-radius: 12px; background: rgba(15, 25, 50, 0.55); border: 1px solid rgba(255,255,255,0.16);
   padding: 10px 14px; color: #fff; font-size: 0.95rem; box-sizing: border-box;
 }
 .w-input:focus { outline: none; box-shadow: 0 0 0 2px #10b981; }
 .w-input::placeholder { color: #64748b; }
 textarea.w-input { resize: vertical; min-height: 70px; }
-select.w-input option { background: #0f172a; }
+select.w-input option { background: #2b3f68; }
 
 .w-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 12px; padding: 10px 16px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent; transition: background .15s, transform .1s; }
 .w-btn:active { transform: scale(0.98); }
@@ -70,8 +68,8 @@ select.w-input option { background: #0f172a; }
 
 /* Wish list */
 .w-wish { display: flex; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; }
-.w-wish img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #1e293b; flex-shrink: 0; }
-.w-wish .w-wish-ph { width: 64px; height: 64px; border-radius: 10px; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+.w-wish img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #35496f; flex-shrink: 0; }
+.w-wish .w-wish-ph { width: 64px; height: 64px; border-radius: 10px; background: #35496f; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
 .w-wish-title { font-weight: 600; color: #fff; }
 .w-wish a.w-wish-title:hover { text-decoration: underline; }
 
@@ -93,7 +91,7 @@ select.w-input option { background: #0f172a; }
 
 /* Photos */
 .w-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-.w-photo { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #0f172a; border: 1px solid rgba(255,255,255,0.08); }
+.w-photo { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #2b3f68; border: 1px solid rgba(255,255,255,0.08); }
 .w-photo img { width: 100%; height: 100%; object-fit: cover; }
 .w-photo figcaption { position: absolute; left: 0; right: 0; bottom: 0; font-size: 0.68rem; padding: 4px 6px; background: linear-gradient(transparent, rgba(0,0,0,0.75)); color: #e2e8f0; }
 .w-photo button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; border: 0; border-radius: 999px; width: 22px; height: 22px; cursor: pointer; font-size: 0.75rem; }
@@ -105,7 +103,7 @@ select.w-input option { background: #0f172a; }
 
 /* Sections and the sticky anchor menu */
 .w-section { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 64px; }
-.w-secnav { position: sticky; top: 8px; z-index: 20; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px -15px rgba(0,0,0,0.8); }
+.w-secnav { position: sticky; top: 8px; z-index: 20; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(31, 46, 80, 0.9); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px -15px rgba(0,0,0,0.8); }
 .w-secnav__item { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 6px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; color: #cbd5e1; text-decoration: none; white-space: nowrap; }
 .w-secnav__item:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .w-secnav__item .ui-icon { font-size: 1rem; }

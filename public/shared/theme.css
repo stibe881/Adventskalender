@@ -1,0 +1,72 @@
+/* Advently theme "Winterabend": one palette for the start page, the admin,
+ * Wichteln and the Wichteltür. Loaded after the Tailwind bundle, it lifts the
+ * near-black navy to a softer blue with a gentle gradient and warm glows.
+ * The recipient's calendar keeps its own themes and does not load this file. */
+:root {
+  --bg-1: #24375e;   /* top */
+  --bg-2: #2c4270;   /* middle */
+  --bg-3: #223a62;   /* bottom */
+  --glow-green: rgba(52, 211, 153, 0.22);
+  --glow-amber: rgba(251, 191, 36, 0.18);
+  --glow-rose: rgba(251, 113, 133, 0.12);
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-strong: rgba(255, 255, 255, 0.12);
+  --surface-solid: #2b3f68;
+  --surface-solid-2: #35496f;
+  --header: rgba(31, 46, 80, 0.78);
+  --input: rgba(15, 25, 50, 0.55);
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --ink: #eef2ff;
+  --muted: #b4bfd6;
+}
+
+html {
+  min-height: 100%;
+  background-color: var(--bg-2);
+  background-image:
+    radial-gradient(900px 520px at 8% -10%, var(--glow-green), transparent 60%),
+    radial-gradient(760px 480px at 100% 4%, var(--glow-amber), transparent 60%),
+    radial-gradient(700px 500px at 50% 110%, var(--glow-rose), transparent 60%),
+    linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+  background-attachment: fixed;
+}
+@supports (-webkit-touch-callout: none) {
+  /* iOS ignores fixed backgrounds: paint the gradient once on the canvas instead. */
+  html { background-attachment: scroll; }
+}
+body,
+body.bg-slate-950,
+body.bg-slate-900 { background: transparent !important; color: var(--ink); }
+
+/* Tailwind surfaces used across the admin pages. */
+.bg-slate-950 { background-color: var(--surface-solid) !important; }
+.bg-slate-900 { background-color: var(--surface-solid) !important; }
+.bg-slate-800 { background-color: var(--surface-solid-2) !important; }
+.bg-slate-700 { background-color: #445b85 !important; }
+.bg-slate-900\/60 { background-color: var(--input) !important; }
+.bg-slate-900\/50 { background-color: rgba(15, 25, 50, 0.45) !important; }
+.bg-slate-800\/50 { background-color: rgba(255, 255, 255, 0.06) !important; }
+.bg-slate-800\/80 { background-color: rgba(53, 73, 111, 0.85) !important; }
+.bg-white\/5 { background-color: var(--surface) !important; }
+.bg-white\/10 { background-color: var(--surface-strong) !important; }
+.bg-black\/20 { background-color: rgba(10, 18, 40, 0.28) !important; }
+.bg-black\/30 { background-color: rgba(10, 18, 40, 0.36) !important; }
+.bg-black\/40 { background-color: rgba(10, 18, 40, 0.45) !important; }
+.border-white\/10 { border-color: var(--line) !important; }
+header.bg-slate-900\/60, header .bg-slate-900\/60 { background-color: var(--header) !important; }
+header.sticky { background-color: var(--header) !important; }
+.text-slate-400 { color: var(--muted) !important; }
+.text-slate-500 { color: #9aa8c4 !important; }
+.hover\:bg-slate-700:hover { background-color: #4a628f !important; }
+.hover\:bg-slate-800:hover { background-color: #3d5380 !important; }
+.hover\:bg-white\/5:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
+.divide-white\/10 > :not([hidden]) ~ :not([hidden]) { border-color: var(--line) !important; }
+
+/* Shared UI pieces (ui.css) */
+.ui-dialog { background: var(--surface-solid); border-color: var(--line-strong); }
+.ui-toast { background: var(--surface-solid-2); border-color: var(--line-strong); }
+.ui-input { background: var(--input); border-color: var(--line); }
+.ui-btn--ghost { border-color: var(--line); background: rgba(255, 255, 255, 0.08); }
+.ui-empty__art { background: rgba(255, 255, 255, 0.08); border-color: var(--line-strong); }
+select option { background: var(--surface-solid); }

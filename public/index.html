@@ -16,10 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/styles.css" />
+  <link rel="stylesheet" href="/shared/theme.css" />
   <style>
     /* Custom styles to guarantee layout and a professional look */
     body {
-      background-color: #0f172a; /* slate-900 */
+      background-color: transparent;
       color: #f8fafc; /* slate-50 */
       font-family: 'Inter', sans-serif;
       margin: 0;
@@ -79,7 +80,7 @@
       background-color: #047857; /* emerald-700 */
     }
     .btn-secondary {
-      background-color: #1e293b; /* slate-800 */
+      background-color: var(--surface-solid-2);
       color: #fff;
       padding: 10px 20px;
       border-radius: 6px;
@@ -109,7 +110,7 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: 0;
-      background: #0f172a;
+      background: var(--bg-1);
     }
     .hero-bg video {
       width: 100%;
@@ -191,8 +192,8 @@
       .showcase-grid { grid-template-columns: 1fr; }
     }
     .showcase-card {
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: var(--surface);
+      border: 1px solid var(--line);
       padding: 32px;
       border-radius: 8px;
       display: flex;
@@ -222,7 +223,7 @@
 
     /* Features Section */
     .features {
-      background: #0b1120;
+      background: rgba(10, 18, 40, 0.25);
       padding: 80px 0;
       border-top: 1px solid rgba(255,255,255,0.05);
       border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -250,8 +251,8 @@
       .features-grid { grid-template-columns: 1fr; }
     }
     .feature-card {
-      background: #0f172a;
-      border: 1px solid #1e293b;
+      background: var(--surface);
+      border: 1px solid var(--line);
       padding: 32px;
       border-radius: 8px;
     }
@@ -282,8 +283,8 @@
       text-align: center;
     }
     .footer-box {
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: var(--surface);
+      border: 1px solid var(--line);
       display: inline-block;
       padding: 24px 32px;
       border-radius: 8px;

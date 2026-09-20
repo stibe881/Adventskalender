@@ -130,7 +130,7 @@
   // Shown after a real offline signal (event or failed request), never merely
   // because navigator.onLine starts out false in some embedded browsers.
   let offlineBar = null;
-  function setOffline(off) {
+  function showBar(off) {
     if (!offlineBar) {
       offlineBar = document.createElement("div");
       offlineBar.id = "ui-offline";
@@ -140,20 +140,24 @@
     }
     offlineBar.classList.toggle("is-open", Boolean(off));
   }
+  // Only a failed round trip to the server counts as offline; some embedded
+  // browsers report "offline" while everything works.
+  async function setOffline(off) {
+    if (!off) return showBar(false);
+    try {
+      await fetch("/manifest.json", { method: "HEAD", cache: "no-store" });
+      showBar(false);
+    } catch (_) {
+      // An aborted request during navigation is not an outage.
+      showBar(navigator.onLine === false);
+    }
+  }
   let watching = false;
   function watchOffline() {
     if (watching) return;
     watching = true;
-    window.addEventListener("online", () => setOffline(false));
-    // Some embedded browsers report "offline" while the server is reachable: verify first.
-    window.addEventListener("offline", async () => {
-      try {
-        await fetch("/manifest.json", { method: "HEAD", cache: "no-store" });
-        setOffline(false);
-      } catch (_) {
-        setOffline(true);
-      }
-    });
+    window.addEventListener("online", () => showBar(false));
+    window.addEventListener("offline", () => setOffline(true));
   }
 
   window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc };
