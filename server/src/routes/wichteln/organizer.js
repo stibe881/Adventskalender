@@ -6,6 +6,7 @@ const { generateToken, generateId } = require("../../utils/token");
 const { generateQrDataUrl } = require("../../utils/qr");
 const { isEmail, cleanText, drawAssignments } = require("../../utils/wichtel");
 const { notify } = require("./notify");
+const { isProItem } = require("../../utils/pro");
 const {
   cfg, inviteLink, eventLine, newParticipant, findParticipant, activeParticipants, organizerView,
   loadOwnedGroup, applySettings, syncOrganizerParticipant, removePhotoFiles,
@@ -13,6 +14,8 @@ const {
 
 const router = express.Router();
 router.use("/groups", requireAuth);
+
+const view = async (group) => organizerView(group, await isProItem(group));
 
 function blankGroup(user, owner, b = {}) {
   return {
@@ -46,8 +49,10 @@ function blankGroup(user, owner, b = {}) {
 
 router.get("/groups", async (req, res) => {
   const groups = await db.getWichtelGroupsByOwner(req.user.id);
+  const ownerPro = await isProItem({ ownerId: req.user.id });
   res.json(groups.map((g) => ({
     id: g.id,
+    isPro: ownerPro || Boolean(g.isPro),
     title: g.title,
     status: g.status || "draft",
     eventDate: g.eventDate || "",
@@ -65,13 +70,13 @@ router.post("/groups", async (req, res) => {
   applySettings(group, b);
   syncOrganizerParticipant(group, req.user.email);
   await db.createWichtelGroup(group);
-  res.status(201).json(organizerView(group));
+  res.status(201).json(await view(group));
 });
 
 router.get("/groups/:id", async (req, res) => {
   const group = await loadOwnedGroup(req, res);
   if (!group) return;
-  res.json(organizerView(group));
+  res.json(await view(group));
 });
 
 router.put("/groups/:id", async (req, res) => {
@@ -93,7 +98,7 @@ router.put("/groups/:id", async (req, res) => {
   if (updated.eventDate && dateAfter !== dateBefore && updated.status !== "draft") {
     for (const p of activeParticipants(updated)) notify("dateChanged", { group: updated, p }).catch(() => {});
   }
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 router.delete("/groups/:id", async (req, res) => {
@@ -135,7 +140,7 @@ router.post("/groups/:id/duplicate", async (req, res) => {
   copy.exclusions = (group.exclusions || []).filter(([a, b]) => idMap[a] && idMap[b]).map(([a, b]) => [idMap[a], idMap[b]]);
   syncOrganizerParticipant(copy, req.user.email);
   await db.createWichtelGroup(copy);
-  res.status(201).json(organizerView(copy));
+  res.status(201).json(await view(copy));
 });
 
 router.post("/groups/:id/participants", async (req, res) => {
@@ -154,7 +159,7 @@ router.post("/groups/:id/participants", async (req, res) => {
     g.participants.push(p);
     return g;
   });
-  res.status(201).json(organizerView(updated));
+  res.status(201).json(await view(updated));
 });
 
 router.put("/groups/:id/participants/:pid", async (req, res) => {
@@ -173,7 +178,7 @@ router.put("/groups/:id/participants/:pid", async (req, res) => {
     p.email = email;
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 router.delete("/groups/:id/participants/:pid", async (req, res) => {
@@ -188,7 +193,7 @@ router.delete("/groups/:id/participants/:pid", async (req, res) => {
     g.exclusions = (g.exclusions || []).filter(([a, b]) => a !== target.id && b !== target.id);
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 router.post("/groups/:id/participants/:pid/approve", async (req, res) => {
@@ -201,7 +206,7 @@ router.post("/groups/:id/participants/:pid/approve", async (req, res) => {
     return g;
   });
   notify("approved", { group: updated, p: findParticipant(updated, target.id) }).catch(() => {});
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 router.post("/groups/:id/participants/:pid/invite", async (req, res) => {
@@ -255,7 +260,7 @@ router.put("/groups/:id/exclusions", async (req, res) => {
     g.exclusions = exclusions;
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 // Everything the organizer should look at before drawing.
@@ -303,7 +308,7 @@ router.post("/groups/:id/draw", async (req, res) => {
   for (const p of activeParticipants(updated)) {
     if (await notify("draw", { group: updated, p })) mails++;
   }
-  res.json({ ...organizerView(updated), mailsSent: mails });
+  res.json({ ...(await view(updated)), mailsSent: mails });
 });
 
 router.post("/groups/:id/reveal", async (req, res) => {
@@ -315,7 +320,7 @@ router.post("/groups/:id/reveal", async (req, res) => {
     g.revealedAt = new Date().toISOString();
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 // Take the reveal back: the draw stays, the assignments are hidden again.
@@ -328,7 +333,7 @@ router.post("/groups/:id/unreveal", async (req, res) => {
     g.revealedAt = null;
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 router.get("/groups/:id/invite-card", async (req, res) => {
@@ -345,7 +350,7 @@ router.post("/groups/:id/rotate-invite", async (req, res) => {
     g.inviteToken = generateToken(cfg.inviteTokenBytes);
     return g;
   });
-  res.json(organizerView(updated));
+  res.json(await view(updated));
 });
 
 module.exports = router;

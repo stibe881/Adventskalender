@@ -11,12 +11,52 @@ if (config.stripe.secretKey) {
   stripeClient = stripe(config.stripe.secretKey);
 }
 
+/* What can be upgraded to PRO: a calendar, a Wichteln round or a Wichteltür.
+ * Each kind knows how to load and own-check its item, where to send the
+ * buyer afterwards and how to flip the PRO flag once Stripe confirms. */
+const KINDS = {
+  calendar: {
+    load: (id) => db.getCalendarById(id),
+    owns: (item, user) => item.ownerId === user.id,
+    successUrl: () => "/admin/index.html?payment=success",
+    cancelUrl: () => "/admin/index.html?payment=cancelled",
+    markPro: (id) => db.updateCalendar(id, (c) => { c.isPro = true; return c; }),
+    label: "Kalender",
+  },
+  wichteln: {
+    load: (id) => db.getWichtelGroupById(id),
+    owns: (item, user) => item.ownerId === user.id,
+    successUrl: (item) => `/admin/wichteln-editor.html?id=${encodeURIComponent(item.id)}&payment=success`,
+    cancelUrl: (item) => `/admin/wichteln-editor.html?id=${encodeURIComponent(item.id)}&payment=cancelled`,
+    markPro: (id) => db.updateWichtelGroup(id, (g) => { g.isPro = true; return g; }),
+    label: "Wichtel-Runde",
+  },
+  wichteltuer: {
+    load: (id) => db.getElfPlanById(id),
+    owns: (item, user) => item.ownerId === user.id,
+    successUrl: (item) => `/e/${encodeURIComponent(item.shareToken)}?payment=success`,
+    cancelUrl: (item) => `/e/${encodeURIComponent(item.shareToken)}?payment=cancelled`,
+    markPro: (id) => db.updateElfPlan(id, (p) => { p.isPro = true; return p; }),
+    label: "Wichteltür",
+  },
+};
+
 // Checkout Session erstellen
 router.post("/checkout", express.json(), requireAuth, async (req, res) => {
   try {
-    const { calendarId } = req.body || {};
-    if (!calendarId) {
+    const body = req.body || {};
+    const kind = body.kind || (body.calendarId ? "calendar" : "");
+    const id = body.id || body.calendarId;
+    const def = KINDS[kind];
+    if (!def || !id) {
       return res.status(400).json({ error: "Kein Kalender angegeben." });
+    }
+    const item = await def.load(id);
+    if (!item || !def.owns(item, req.user)) {
+      return res.status(404).json({ error: `${def.label} nicht gefunden.` });
+    }
+    if (item.isPro) {
+      return res.status(400).json({ error: `${def.label} ist bereits PRO.` });
     }
 
     if (!stripeClient || !config.stripe.priceId) {
@@ -31,9 +71,9 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
           quantity: 1,
         },
       ],
-      client_reference_id: `${req.user.id}:${calendarId}`,
-      success_url: `${config.baseUrl}/admin/index.html?payment=success`,
-      cancel_url: `${config.baseUrl}/admin/index.html?payment=cancelled`,
+      client_reference_id: `${req.user.id}:${kind}:${item.id}`,
+      success_url: `${config.baseUrl}${def.successUrl(item)}`,
+      cancel_url: `${config.baseUrl}${def.cancelUrl(item)}`,
       customer_email: req.user.email,
     });
 
@@ -72,15 +112,17 @@ router.post(
       const refId = session.client_reference_id;
 
       if (refId && refId.includes(":")) {
-        const [userId, calendarId] = refId.split(":");
+        // "user:kind:id" – older sessions carried "user:calendarId".
+        const parts = refId.split(":");
+        const kind = parts.length >= 3 ? parts[1] : "calendar";
+        const id = parts.length >= 3 ? parts.slice(2).join(":") : parts[1];
+        const def = KINDS[kind];
         try {
-          await db.updateCalendar(calendarId, (cal) => {
-            cal.isPro = true;
-            return cal;
-          });
-          console.log(`Kalender ${calendarId} wurde nach Zahlung auf PRO geupgradet.`);
+          if (!def) throw new Error(`Unbekannte Art "${kind}"`);
+          await def.markPro(id);
+          console.log(`${def.label} ${id} wurde nach Zahlung auf PRO geupgradet.`);
         } catch (err) {
-          console.error(`Fehler beim Upgraden von Kalender ${calendarId}:`, err);
+          console.error(`Fehler beim Upgraden von ${kind} ${id}:`, err);
         }
       }
     }

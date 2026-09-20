@@ -234,8 +234,14 @@ function dayView(plan, date, e) {
   };
 }
 
-function planView(plan, { owner = false, now = new Date() } = {}) {
+/** Which parts of the planner need PRO. The kids' page is never gated. */
+function proFeatures(pro) {
+  return { ideas: pro, letters: pro, shopping: pro };
+}
+
+function planView(plan, { owner = false, now = new Date(), pro = Boolean(plan.isPro) } = {}) {
   const today = todayIso(now);
+  const features = proFeatures(pro);
   const dates = seasonDates(plan.year);
   const days = dates.map((d) => dayView(plan, d, plan.days[d]));
   const tonight = days.find((d) => d.date === addDays(today, 1)) || null;
@@ -247,6 +253,8 @@ function planView(plan, { owner = false, now = new Date() } = {}) {
     title: plan.title,
     year: plan.year,
     owner,
+    isPro: pro,
+    features,
     elf: { name: plan.elf?.name || "Wichtel", doorPlace: plan.elf?.doorPlace || "", character: plan.elf?.character || "frech" },
     children: plan.children,
     parents: plan.parents,
@@ -259,7 +267,7 @@ function planView(plan, { owner = false, now = new Date() } = {}) {
     tonight,
     prepTomorrow,
     days,
-    shopping: shoppingList(plan),
+    shopping: features.shopping ? shoppingList(plan) : [],
     post: (plan.post || []).map(postView).sort((a, b) => b.at.localeCompare(a.at)),
     unreadPost: (plan.post || []).filter((l) => l.from === "kid" && !l.read).length,
     categories: cfg.categories,
@@ -347,6 +355,6 @@ const cleanEmails = (list) => (Array.isArray(list) ? [...new Set(list.map((e) =>
 
 module.exports = {
   cfg, shareLink, kidLink, todayIso, seasonDates, isoFor, addDays, weekdayOf, isWeekend, dayNumber, seasonYear, newPlan, cleanChild, cleanParent,
-  cleanMaterials, materialKey, applyDay, letterCtx, autoplan, shoppingList, dayView, planView, kidView, loadByShareToken, loadByKidToken, isOwner,
+  cleanMaterials, materialKey, applyDay, letterCtx, autoplan, shoppingList, dayView, planView, proFeatures, kidView, loadByShareToken, loadByKidToken, isOwner,
   removePhotoFiles, cleanEmails,
 };

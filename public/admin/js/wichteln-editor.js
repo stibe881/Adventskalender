@@ -38,7 +38,29 @@ async function shareInvite() {
 async function load() {
   group = await api.getWichtelGroup(groupId);
   render();
+  const payment = new URLSearchParams(window.location.search).get("payment");
+  if (payment) {
+    window.history.replaceState({}, document.title, `${window.location.pathname}?id=${encodeURIComponent(groupId)}`);
+    if (payment === "success") await UI.alert({ title: "Danke!", text: group.isPro ? "Diese Runde ist jetzt PRO: Wunschzettel, Hinweise für den Wichtel und der anonyme Chat sind für alle Teilnehmenden freigeschaltet." : "Die Zahlung ist eingegangen. Die Freischaltung kann einen Moment dauern – lade die Seite gleich noch einmal.", ok: "Super" });
+    else toast("Zahlung abgebrochen.", true);
+  }
 }
+
+// PRO for this round: Wunschzettel, Hinweise, Chat.
+document.getElementById("upgrade-btn").addEventListener("click", async () => {
+  const ok = await UI.confirm({
+    title: "Runde auf PRO upgraden",
+    body: `<p class="ui-dialog__text">Einmalig für diese Runde. Damit bekommen alle Teilnehmenden:</p><ul class="w-pro-list"><li><i data-icon="clipboard-list"></i> Wunschzettel mit Link, Preis und Bild aus dem Online-Shop</li><li><i data-icon="lightbulb"></i> Hinweise für den Wichtel: Allergien, Hobbys, Lieblingsgeschmack</li><li><i data-icon="message-circle"></i> Anonymer Chat mit dem Wichtelkind und dem eigenen Wichtel</li></ul>`,
+    ok: "Weiter zur Bezahlung",
+  });
+  if (!ok) return;
+  try {
+    const r = await api.checkoutFor("wichteln", groupId);
+    if (r.url) window.location.href = r.url;
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
 
 function render() {
   const g = group;
@@ -53,6 +75,9 @@ function render() {
   document.getElementById("participant-summary").textContent = `${active.length} Teilnehmende${pending.length ? `, ${pending.length} im Warteraum` : ""}${g.eventDate ? ` · Bescherung ${eventLine(g)}` : ""}`;
   document.getElementById("participant-count").textContent = `(${active.length})`;
   document.getElementById("max-participants").textContent = g.maxParticipants;
+
+  document.getElementById("pro-badge").classList.toggle("hidden", !g.isPro);
+  document.getElementById("upgrade-btn").classList.toggle("hidden", Boolean(g.isPro));
 
   const mine = g.participants.find((p) => p.isOrganizer);
   const myLink = document.getElementById("my-area-link");

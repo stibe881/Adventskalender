@@ -9,6 +9,7 @@ const config = require("../../config");
 const db = require("../../db");
 const { isEmail, cleanText, buildIcs } = require("../../utils/wichtel");
 const { notify } = require("./notify");
+const { isProItem, proOrDeny } = require("../../utils/pro");
 const { fetchLinkPreview } = require("./preview");
 const {
   cfg, participantLink, newParticipant, findParticipant, giverOf, activeParticipants, isDrawn, participantView,
@@ -17,6 +18,7 @@ const {
 
 const router = express.Router();
 const newId = () => crypto.randomBytes(6).toString("hex");
+const pview = async (group, me) => participantView(group, me, await isProItem(group));
 
 // ── Join via invite link ────────────────────────────────────────────────────
 
@@ -84,7 +86,7 @@ async function mutateAndRespond(req, res, mutate, status = 200) {
     return g;
   });
   const me = findParticipant(updated, found.me.id);
-  res.status(status).json(participantView(updated, me));
+  res.status(status).json(await pview(updated, me));
   return { group: updated, me, before: found };
 }
 
@@ -99,12 +101,17 @@ router.get("/p/:token", async (req, res) => {
     });
     me = findParticipant(group, me.id);
   }
-  res.json(participantView(group, me));
+  res.json(await pview(group, me));
 });
 
 router.put("/p/:token/profile", async (req, res) => {
   const b = req.body || {};
   if (b.email !== undefined && b.email && !isEmail(b.email)) return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
+  if (b.hints && typeof b.hints === "object") {
+    const found0 = await loadByParticipantToken(req, res);
+    if (!found0) return;
+    if (!proOrDeny(await isProItem(found0.group), res, "Hinweise für den Wichtel")) return;
+  }
   await mutateAndRespond(req, res, () => (g, p) => {
     if (b.name !== undefined && cleanText(b.name, cfg.nameMax)) p.name = cleanText(b.name, cfg.nameMax);
     if (b.email !== undefined) p.email = b.email ? String(b.email).trim().toLowerCase() : "";
@@ -121,6 +128,9 @@ router.put("/p/:token/profile", async (req, res) => {
 });
 
 router.put("/p/:token/wishlist", async (req, res) => {
+  const found0 = await loadByParticipantToken(req, res);
+  if (!found0) return;
+  if (!proOrDeny(await isProItem(found0.group), res, "Den Wunschzettel")) return;
   const raw = Array.isArray(req.body?.wishlist) ? req.body.wishlist.slice(0, cfg.maxWishlistItems) : [];
   const wishlist = raw.map((w) => ({
     id: typeof w.id === "string" && /^[\w-]{1,40}$/.test(w.id) ? w.id : newId(),
@@ -166,6 +176,7 @@ router.post("/p/:token/messages", async (req, res) => {
   const found = await loadByParticipantToken(req, res);
   if (!found) return;
   const { group, me } = found;
+  if (!proOrDeny(await isProItem(group), res, "Den anonymen Chat")) return;
   if (group.chatEnabled === false) return res.status(403).json({ error: "Der anonyme Chat ist in dieser Runde ausgeschaltet." });
   if (!isDrawn(group)) return res.status(400).json({ error: "Der Chat öffnet nach der Auslosung." });
   const text = cleanText(req.body?.text, cfg.messageMax);
@@ -186,7 +197,7 @@ router.post("/p/:token/messages", async (req, res) => {
   });
   const other = toRecipient ? findParticipant(updated, me.assignedTo) : santa;
   if (other) notify("message", { group: updated, p: other, who: toRecipient ? "Dein geheimer Wichtel" : me.name, text }).catch(() => {});
-  res.status(201).json(participantView(updated, findParticipant(updated, me.id)));
+  res.status(201).json(await pview(updated, findParticipant(updated, me.id)));
 });
 
 // Thank-you notes after the event (the recap).
@@ -334,6 +345,7 @@ router.delete("/p/:token/push", async (req, res) => {
 router.post("/p/:token/link-preview", async (req, res) => {
   const found = await loadByParticipantToken(req, res);
   if (!found) return;
+  if (!proOrDeny(await isProItem(found.group), res, "Die Link-Vorschau")) return;
   const url = safeHttpUrl(req.body?.url);
   if (!url) return res.status(400).json({ error: "Bitte einen gültigen Link (http/https) eingeben." });
   try {

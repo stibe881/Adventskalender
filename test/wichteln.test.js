@@ -181,3 +181,53 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   jobs = await runWichtelJobs();
   assert.equal(jobs.giftReminders, 4, "everybody except Anna, who already started");
 });
+
+test("Wichteln: without PRO the wishlist, hints and chat stay locked until the round is upgraded", async (t) => {
+  const h = await startApp();
+  const { call, anon, db } = h;
+  t.after(h.stop);
+  db.user.isPro = false;
+
+  let r = await call("POST", "/api/wichteln/groups", { title: "Büro", organizerName: "Stefan", inviteMode: "names", organizerParticipates: true, chatEnabled: true });
+  assert.equal(r.status, 201);
+  assert.equal(r.d.isPro, false);
+  assert.deepEqual(r.d.features, { wishlist: false, hints: false, chat: false });
+  const gid = r.d.id;
+  for (const name of ["Anna", "Ben"]) await call("POST", `/api/wichteln/groups/${gid}/participants`, { name });
+  const view = (await call("GET", `/api/wichteln/groups/${gid}`)).d;
+  const tok = Object.fromEntries(view.participants.map((p) => [p.name, p.link.split("/").pop()]));
+  r = await call("GET", "/api/wichteln/groups");
+  assert.equal(r.d[0].isPro, false, "list shows the PRO state");
+
+  // Locked features answer 402 with a hint that PRO unlocks them.
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { wishlist: [{ id: "w1", title: "Buch" }] });
+  assert.equal(r.status, 402);
+  assert.equal(r.d.pro, true);
+  assert.match(r.d.error, /PRO/);
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/profile`, { hints: { hobbies: "Lesen" } });
+  assert.equal(r.status, 402);
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/profile`, { email: "anna@x.ch" });
+  assert.equal(r.status, 200, "e-mail and notifications stay free");
+  assert.equal(r.d.me.email, "anna@x.ch");
+  assert.deepEqual(r.d.features, { wishlist: false, hints: false, chat: false });
+  assert.ok(!r.d.wishlists, "shared wishlists stay hidden without PRO");
+
+  r = await call("POST", `/api/wichteln/groups/${gid}/draw`);
+  assert.equal(r.status, 200);
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { to: "recipient", text: "Hallo?" });
+  assert.equal(r.status, 402, "chat is PRO");
+
+  // Upgrading the round (what the Stripe webhook does) unlocks everything for everybody.
+  await db.updateWichtelGroup(gid, (g) => { g.isPro = true; return g; });
+  r = await anon("GET", `/api/wichteln/p/${tok.Anna}`);
+  assert.deepEqual(r.d.features, { wishlist: true, hints: true, chat: true });
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { wishlist: [{ id: "w1", title: "Buch" }] });
+  assert.equal(r.status, 200);
+  assert.equal(r.d.me.wishlist.length, 1);
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/profile`, { hints: { hobbies: "Lesen" } });
+  assert.equal(r.d.me.hints.hobbies, "Lesen");
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { to: "recipient", text: "Hallo?" });
+  assert.equal(r.status, 201);
+  r = await call("GET", `/api/wichteln/groups/${gid}`);
+  assert.equal(r.d.isPro, true);
+});

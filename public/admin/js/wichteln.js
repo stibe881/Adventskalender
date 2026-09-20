@@ -44,7 +44,7 @@ async function loadGroups() {
           <h3 class="font-display font-semibold text-lg text-white">${escapeHtml(g.title)}</h3>
           <p class="text-xs text-slate-400 mt-1">${g.eventDate ? `Bescherung am ${formatDate(g.eventDate)}` : "Noch kein Termin"}</p>
         </div>
-        <span class="text-[11px] font-semibold px-2 py-1 rounded-full ${st.cls}">${st.text}</span>
+        <span class="flex items-center gap-1">${g.isPro ? `<span class="ui-pro-badge">PRO</span>` : ""}<span class="text-[11px] font-semibold px-2 py-1 rounded-full ${st.cls}">${st.text}</span></span>
       </div>
       <div class="flex items-center gap-4 mt-4 text-sm text-slate-300">
         <span><i data-icon="users"></i> ${g.participantCount} Teilnehmende</span>

@@ -44,7 +44,18 @@ function createStubDb() {
 
 function install(db) {
   const pushed = [];
-  const stub = (file, exports) => { require.cache[require.resolve(path.join(SRC, file))] = { id: file, filename: file, loaded: true, exports }; };
+  // Modules keep the exports object they required first, so a second
+  // install() (one per test) swaps the functions inside that same object.
+  const stub = (file, exports) => {
+    const key = require.resolve(path.join(SRC, file));
+    const existing = require.cache[key];
+    if (existing) {
+      for (const k of Object.keys(existing.exports)) delete existing.exports[k];
+      Object.assign(existing.exports, exports);
+    } else {
+      require.cache[key] = { id: file, filename: file, loaded: true, exports };
+    }
+  };
   stub("db.js", db);
   stub("push.js", {
     sendPushNotification: async (sub, payload) => {

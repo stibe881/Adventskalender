@@ -26,7 +26,7 @@ function planCard(p, shared) {
         <h3 class="font-display font-semibold text-lg text-white truncate">${esc(p.title)}</h3>
         <p class="text-xs text-slate-400 mt-1">Wichtel ${esc(p.elfName)} · ${p.children.length ? p.children.map(esc).join(", ") : "keine Kinder eingetragen"}</p>
       </div>
-      <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">${p.year}</span>
+      <span class="flex items-center gap-1">${p.isPro ? `<span class="ui-pro-badge">PRO</span>` : ""}<span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">${p.year}</span></span>
     </div>
     <div class="w-progress mt-4" style="height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#dc2626,#f59e0b)"></div></div>
     <div class="flex items-center gap-4 mt-2 text-sm text-slate-300">
@@ -61,7 +61,7 @@ async function loadShared() {
       const r = await fetch(`/api/wichteltuer/s/${encodeURIComponent(t)}`);
       if (!r.ok) continue;
       const d = await r.json();
-      list.appendChild(planCard({ title: d.title, elfName: d.elf.name, children: d.children.map((c) => c.name), year: d.year, stats: d.stats, unreadPost: d.unreadPost, shareToken: t }, true));
+      list.appendChild(planCard({ title: d.title, isPro: d.isPro, elfName: d.elf.name, children: d.children.map((c) => c.name), year: d.year, stats: d.stats, unreadPost: d.unreadPost, shareToken: t }, true));
     } catch (_) { /* skip */ }
   }
   document.getElementById("shared-section").classList.toggle("hidden", !list.children.length);

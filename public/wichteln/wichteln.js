@@ -312,6 +312,18 @@ function emptyState(iconName, text) {
   return `<div class="ui-empty"><div class="ui-empty__art"><i data-icon="${iconName}"></i></div>${text}</div>`;
 }
 
+// Which parts of the round are unlocked (PRO). Older servers send no flags.
+function feat() {
+  return data.features || { wishlist: true, hints: true, chat: Boolean(data.group.chatEnabled) };
+}
+function proTeaser(iconName, title, text) {
+  return `<div class="w-card w-card--pro">
+    <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
+    <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
+    <p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Der Organisator kann die Runde im Wichtel-Editor auf PRO upgraden – dann ist das hier für alle freigeschaltet.</p>
+  </div>`;
+}
+
 // ── Rendering ───────────────────────────────────────────────────────────────
 function render() {
   const { group: g, me } = data;
@@ -336,7 +348,7 @@ function render() {
     sectionNav(),
     `<div id="push-ask" class="hidden"></div>`,
     `<section id="wichtelkind" class="w-section">${data.reveal ? revealCard() : ""}${drawn && data.recipient ? recipientCard() + todoCard() : notDrawnCard()}</section>`,
-    `<section id="wunschzettel" class="w-section">${myWishlistCard()}${myHintsCard()}${sharedWishlistsCard()}</section>`,
+    `<section id="wunschzettel" class="w-section">${feat().wishlist ? myWishlistCard() : proTeaser("clipboard-list", "Dein Wunschzettel", "Mit PRO trägst du hier deine Wünsche ein – mit Link, Preis und Bild aus dem Online-Shop. Dein Wichtel sieht sie sofort.")}${myHintsCard()}${feat().wishlist ? sharedWishlistsCard() : ""}</section>`,
     `<section id="chat" class="w-section">${chatSection()}</section>`,
     `<section id="rueckblick" class="w-section">${drawn && data.santa ? santaCard() : ""}${recapCard()}</section>`,
     participantsCard(),
@@ -541,11 +553,11 @@ function recipientCard() {
 
     ${b ? `<div class="w-budget mt-4"><i data-icon="wallet"></i> <span>Budget <b>${esc(data.group.budget)}</b>${r.wishlist.length ? ` · ${inBudget} von ${r.wishlist.length} Wünschen ${inBudget === 1 ? "passt" : "passen"} ins Budget` : ""}</span></div>` : ""}
 
-    <h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)}</h3>
-    ${r.wishlist.length ? `<div class="space-y-2">${r.wishlist.map((w) => wishItem(w, false)).join("")}</div>` : emptyState("clipboard-list", `Noch leer. Die Hinweise helfen dir, nicht ins Blaue zu kaufen${data.group.chatEnabled ? ` – oder <a href="#chat" class="text-emerald-300 underline">frag anonym nach</a>` : ""}.`)}
+    <h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)} ${feat().wishlist ? "" : `<span class="ui-pro-badge">PRO</span>`}</h3>
+    ${!feat().wishlist ? `<p class="text-sm text-slate-400">Wunschzettel gibt es in der PRO-Version dieser Runde.</p>` : r.wishlist.length ? `<div class="space-y-2">${r.wishlist.map((w) => wishItem(w, false)).join("")}</div>` : emptyState("clipboard-list", `Noch leer. Die Hinweise helfen dir, nicht ins Blaue zu kaufen${feat().chat ? ` – oder <a href="#chat" class="text-emerald-300 underline">frag anonym nach</a>` : ""}.`)}
 
-    <h3 class="font-semibold text-white mt-5 mb-2">Hinweise</h3>
-    ${hintsBlock(r.hints)}
+    <h3 class="font-semibold text-white mt-5 mb-2">Hinweise ${feat().hints ? "" : `<span class="ui-pro-badge">PRO</span>`}</h3>
+    ${feat().hints ? hintsBlock(r.hints) : `<p class="text-sm text-slate-400">Hinweise für den Wichtel (Allergien, Hobbys, Lieblingsgeschmack) gibt es in der PRO-Version dieser Runde.</p>`}
 
     <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="lightbulb"></i> Ideen${r.hints?.hobbies || r.hints?.favorites ? " aus den Hinweisen" : ""}</h3>
     <div class="flex flex-wrap gap-2">${ideas.map((i) => `<span class="w-chip w-chip--idea">${esc(i)}</span>`).join("")}</div>
@@ -570,8 +582,8 @@ function todoCard() {
   const gs = data.me.giftStatus;
   const items = [
     { done: true, text: `Dein Los: ${r.name}` },
-    { done: r.wishlist.length > 0 || Object.values(r.hints || {}).some(Boolean), text: r.wishlist.length ? `Wunschzettel von ${r.name} angeschaut (${r.wishlist.length} ${r.wishlist.length === 1 ? "Wunsch" : "Wünsche"})` : `${r.name} hat noch nichts eingetragen${g.chatEnabled ? " – frag anonym nach" : ""}`, href: r.wishlist.length ? "#wichtelkind" : "#chat" },
-    { done: data.me.wishlist.length > 0, text: data.me.wishlist.length ? "Dein eigener Wunschzettel ist gefüllt" : "Deinen eigenen Wunschzettel füllen", href: "#wunschzettel" },
+    feat().wishlist ? { done: r.wishlist.length > 0 || Object.values(r.hints || {}).some(Boolean), text: r.wishlist.length ? `Wunschzettel von ${r.name} angeschaut (${r.wishlist.length} ${r.wishlist.length === 1 ? "Wunsch" : "Wünsche"})` : `${r.name} hat noch nichts eingetragen${feat().chat ? " – frag anonym nach" : ""}`, href: r.wishlist.length ? "#wichtelkind" : "#chat" } : null,
+    feat().wishlist ? { done: data.me.wishlist.length > 0, text: data.me.wishlist.length ? "Dein eigener Wunschzettel ist gefüllt" : "Deinen eigenen Wunschzettel füllen", href: "#wunschzettel" } : null,
     { done: gs.done > 0, text: gs.done ? `Geschenk: ${gs.done} von ${gs.total} Schritten` : "Geschenk besorgen und Status abhaken", href: "#wichtelkind" },
     g.eventDate ? { done: g.eventPassed, text: `Bescherung: ${eventLine(g)}`, href: data.me.icsUrl || "" } : null,
   ].filter(Boolean);
@@ -611,16 +623,17 @@ function myWishlistCard() {
 
 function myHintsCard() {
   const me = data.me;
-  const h = me.hints;
-  return `<div class="w-card">
-    <h2 class="w-title text-xl"><i data-icon="lightbulb"></i> Hinweise für deinen Wichtel</h2>
-    <p class="text-sm text-slate-400 mt-1">Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte.</p>
+  const h = me.hints || {};
+  const pro = feat().hints;
+  return `<div class="w-card ${pro ? "" : "w-card--pro"}">
+    <h2 class="w-title text-xl"><i data-icon="lightbulb"></i> Hinweise für deinen Wichtel ${pro ? "" : `<span class="ui-pro-badge">PRO</span>`}</h2>
+    <p class="text-sm text-slate-400 mt-1">${pro ? "Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte." : "In der PRO-Version dieser Runde hinterlegst du hier Allergien, Lieblingsgeschmack und Hobbys – dein Wichtel kauft dann nicht ins Blaue."}</p>
     <form id="hints-form" class="grid sm:grid-cols-2 gap-2 mt-3">
-      <input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
+      ${pro ? `<input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
       <input name="favorites" maxlength="300" class="w-input" placeholder="Lieblingsgeschmack" value="${esc(h.favorites || "")}">
       <input name="hobbies" maxlength="300" class="w-input" placeholder="Hobbys" value="${esc(h.hobbies || "")}">
-      <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">
-      <div class="sm:col-span-2 border-t border-white/10 pt-3 mt-1 grid sm:grid-cols-2 gap-2 items-center">
+      <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">` : ""}
+      <div class="sm:col-span-2 ${pro ? "border-t border-white/10 pt-3 mt-1" : ""} grid sm:grid-cols-2 gap-2 items-center">
         <input name="email" type="email" class="w-input" placeholder="E-Mail für Benachrichtigungen" value="${esc(me.email || "")}">
         <label class="w-check"><input type="checkbox" name="notifyEmail" ${me.notify.email !== false ? "checked" : ""}> <span class="text-sm">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin informieren (E-Mail und, falls aktiv, Push)</span></label>
       </div>
@@ -643,6 +656,7 @@ function sharedWishlistsCard() {
 function chatSection() {
   const g = data.group;
   if (!g.chatEnabled) return `<div class="w-card">${emptyState("message-circle", "Der anonyme Chat ist in dieser Runde ausgeschaltet.")}</div>`;
+  if (!feat().chat) return proTeaser("message-circle", "Anonymer Chat", "Mit PRO fragst du dein Wichtelkind anonym nach Größe, Farbe oder Geschmack – und antwortest deinem geheimen Wichtel, ohne dass jemand erfährt, wer dahintersteckt.");
   if (!isDrawn()) return `<div class="w-card"><h2 class="w-title text-xl"><i data-icon="message-circle"></i> Chat</h2>${emptyState("message-circle", "Der Chat öffnet nach der Auslosung: ein Kanal zu deinem Wichtelkind, einer zu deinem geheimen Wichtel.")}</div>`;
   const r = data.recipient;
   const s = data.santa;
@@ -799,79 +813,81 @@ function bindEvents() {
   }
 
   const wishForm = document.getElementById("wish-form");
-  const details = document.getElementById("wish-details");
-  document.getElementById("wish-more").addEventListener("click", () => {
-    details.classList.toggle("hidden");
-    if (!details.classList.contains("hidden")) wishForm.elements.url.focus();
-  });
-  const looksLikeUrl = (v) => /^https?:\/\/\S+$/i.test(v.trim());
-  async function loadPreview(url) {
-    const f = wishForm.elements;
-    const btn = document.getElementById("wish-preview");
-    btn.disabled = true;
-    btn.textContent = "Lade …";
-    try {
-      const p = await req("POST", "/link-preview", { url });
-      if (!f.title.value || looksLikeUrl(f.title.value)) f.title.value = p.title || "";
-      if (!f.price.value && p.price) f.price.value = p.price;
-      f.image.value = p.image || "";
-      f.url.value = url;
-      details.classList.remove("hidden");
-      const box = document.getElementById("wish-preview-box");
-      box.classList.remove("hidden");
-      box.innerHTML = `<div class="w-wish">${p.image ? `<img src="${esc(p.image)}" alt="">` : `<div class="w-wish-ph"><i data-icon="link"></i></div>`}<div class="min-w-0"><div class="w-wish-title truncate">${esc(p.title || url)}</div><div class="text-xs text-slate-400">${esc(p.note || "Vorschau geladen – Titel und Preis kannst du anpassen.")}</div></div></div>`;
-      return p;
-    } catch (err) {
-      toast(err.message, true);
-      return null;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Vorschau";
+  if (wishForm) {
+    const details = document.getElementById("wish-details");
+    document.getElementById("wish-more").addEventListener("click", () => {
+      details.classList.toggle("hidden");
+      if (!details.classList.contains("hidden")) wishForm.elements.url.focus();
+    });
+    const looksLikeUrl = (v) => /^https?:\/\/\S+$/i.test(v.trim());
+    async function loadPreview(url) {
+      const f = wishForm.elements;
+      const btn = document.getElementById("wish-preview");
+      btn.disabled = true;
+      btn.textContent = "Lade …";
+      try {
+        const p = await req("POST", "/link-preview", { url });
+        if (!f.title.value || looksLikeUrl(f.title.value)) f.title.value = p.title || "";
+        if (!f.price.value && p.price) f.price.value = p.price;
+        f.image.value = p.image || "";
+        f.url.value = url;
+        details.classList.remove("hidden");
+        const box = document.getElementById("wish-preview-box");
+        box.classList.remove("hidden");
+        box.innerHTML = `<div class="w-wish">${p.image ? `<img src="${esc(p.image)}" alt="">` : `<div class="w-wish-ph"><i data-icon="link"></i></div>`}<div class="min-w-0"><div class="w-wish-title truncate">${esc(p.title || url)}</div><div class="text-xs text-slate-400">${esc(p.note || "Vorschau geladen – Titel und Preis kannst du anpassen.")}</div></div></div>`;
+        return p;
+      } catch (err) {
+        toast(err.message, true);
+        return null;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Vorschau";
+      }
     }
+    // A pasted shop link in the main field turns into a wish with preview.
+    wishForm.elements.title.addEventListener("paste", () => setTimeout(() => {
+      const v = wishForm.elements.title.value.trim();
+      if (looksLikeUrl(v)) loadPreview(v);
+    }, 0));
+    wishForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = wishForm.elements;
+      let title = f.title.value.trim();
+      let url = f.url.value.trim();
+      if (looksLikeUrl(title) && !url) {
+        url = title;
+        const p = await loadPreview(url);
+        title = (p && p.title) || new URL(url).hostname;
+      }
+      const item = { id: `w${Date.now().toString(36)}`, url, title, price: f.price.value.trim(), note: f.note.value.trim(), image: f.image.value };
+      try {
+        data = await req("PUT", "/wishlist", { wishlist: [...data.me.wishlist, item] });
+        haptic("success");
+        render();
+        toast("Wunsch gespeichert");
+        maybeAskPush();
+        const again = document.querySelector("#wish-form [name=title]");
+        if (again && window.innerWidth >= 640) again.focus();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+    document.getElementById("wish-preview").addEventListener("click", () => {
+      const url = wishForm.elements.url.value.trim();
+      if (!url) return toast("Bitte zuerst einen Link einfügen.", true);
+      loadPreview(url);
+    });
+    document.getElementById("my-wishes").addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-act='remove-wish']");
+      if (!btn) return;
+      try {
+        data = await req("PUT", "/wishlist", { wishlist: data.me.wishlist.filter((w) => w.id !== btn.dataset.id) });
+        render();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
   }
-  // A pasted shop link in the main field turns into a wish with preview.
-  wishForm.elements.title.addEventListener("paste", () => setTimeout(() => {
-    const v = wishForm.elements.title.value.trim();
-    if (looksLikeUrl(v)) loadPreview(v);
-  }, 0));
-  wishForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = wishForm.elements;
-    let title = f.title.value.trim();
-    let url = f.url.value.trim();
-    if (looksLikeUrl(title) && !url) {
-      url = title;
-      const p = await loadPreview(url);
-      title = (p && p.title) || new URL(url).hostname;
-    }
-    const item = { id: `w${Date.now().toString(36)}`, url, title, price: f.price.value.trim(), note: f.note.value.trim(), image: f.image.value };
-    try {
-      data = await req("PUT", "/wishlist", { wishlist: [...data.me.wishlist, item] });
-      haptic("success");
-      render();
-      toast("Wunsch gespeichert");
-      maybeAskPush();
-      const again = document.querySelector("#wish-form [name=title]");
-      if (again && window.innerWidth >= 640) again.focus();
-    } catch (err) {
-      toast(err.message, true);
-    }
-  });
-  document.getElementById("wish-preview").addEventListener("click", () => {
-    const url = wishForm.elements.url.value.trim();
-    if (!url) return toast("Bitte zuerst einen Link einfügen.", true);
-    loadPreview(url);
-  });
-  document.getElementById("my-wishes").addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-act='remove-wish']");
-    if (!btn) return;
-    try {
-      data = await req("PUT", "/wishlist", { wishlist: data.me.wishlist.filter((w) => w.id !== btn.dataset.id) });
-      render();
-    } catch (err) {
-      toast(err.message, true);
-    }
-  });
 
   document.getElementById("hints-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -879,7 +895,7 @@ function bindEvents() {
     try {
       data = await req("PUT", "/profile", {
         email: f.email.value.trim(),
-        hints: { allergies: f.allergies.value, favorites: f.favorites.value, hobbies: f.hobbies.value, notes: f.notes.value },
+        ...(f.allergies ? { hints: { allergies: f.allergies.value, favorites: f.favorites.value, hobbies: f.hobbies.value, notes: f.notes.value } } : {}),
         notify: { email: f.notifyEmail.checked, push: f.notifyEmail.checked },
       });
       const ok = document.getElementById("hints-saved");

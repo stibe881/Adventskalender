@@ -66,3 +66,13 @@ html.is-native-app .ui-toast { bottom: calc(env(safe-area-inset-bottom) + 24px);
 html.is-native-app .ui-offline { padding-top: calc(env(safe-area-inset-top) + 8px); }
 
 .hidden { display: none !important; }
+
+/* PRO: badge and the teaser card that replaces a locked feature */
+.ui-pro-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: linear-gradient(90deg, #f59e0b, #f97316); color: #fff; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; line-height: 1.4; vertical-align: middle; }
+.w-card--pro { border-color: rgba(245, 158, 11, 0.45); background: linear-gradient(160deg, rgba(146, 64, 14, 0.35), rgba(32, 48, 88, 0.7)); }
+.w-card--pro .w-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.w-pro-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.88rem; color: #e2e8f0; }
+.w-pro-list li { display: flex; gap: 8px; align-items: flex-start; }
+.w-pro-list li svg, .w-pro-list li i { color: #fbbf24; flex-shrink: 0; margin-top: 2px; }
+.w-btn--pro { background: linear-gradient(90deg, #f59e0b, #f97316); color: #fff; }
+.w-btn--pro:hover { filter: brightness(1.08); }

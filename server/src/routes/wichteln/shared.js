@@ -91,6 +91,11 @@ function unreadCount(group, viewer, channelId, readKey) {
   return (group.messages || []).filter((m) => m.channel === channelId && m.from !== viewer.id && m.at > since).length;
 }
 
+// Wish list, hints and the anonymous chat are PRO features of a round.
+function proFeatures(group, pro) {
+  return { wishlist: pro, hints: pro, chat: pro && group.chatEnabled !== false };
+}
+
 function wishView(w, withImage = true) {
   return { id: w.id, url: w.url, title: w.title, image: withImage ? w.image : undefined, price: w.price, note: w.note };
 }
@@ -105,10 +110,12 @@ function photoView(group, ph, me) {
 
 // What the organizer sees. Assignments stay hidden until the reveal so the
 // organizer can take part without knowing the draw.
-function organizerView(group) {
+function organizerView(group, pro = Boolean(group.isPro)) {
   const revealed = group.status === "revealed";
   return {
     id: group.id,
+    isPro: pro,
+    features: proFeatures(group, pro),
     title: group.title,
     organizerName: group.organizerName,
     organizerParticipates: Boolean(group.organizerParticipates),
@@ -155,11 +162,12 @@ function organizerView(group) {
   };
 }
 
-function participantView(group, me) {
+function participantView(group, me, pro = Boolean(group.isPro)) {
   const drawn = isDrawn(group);
   const target = drawn ? findParticipant(group, me.assignedTo) : null;
   const santa = drawn ? giverOf(group, me.id) : null;
-  const chat = group.chatEnabled !== false;
+  const features = proFeatures(group, pro);
+  const chat = features.chat;
   const passed = eventPassed(group);
   return {
     group: {
@@ -173,20 +181,22 @@ function participantView(group, me) {
       eventPlace: group.eventPlace || "",
       description: group.description || "",
       status: group.status || "draft",
-      chatEnabled: chat,
-      wishlistsShared: Boolean(group.wishlistsShared),
+      chatEnabled: group.chatEnabled !== false,
+      isPro: pro,
+      wishlistsShared: Boolean(group.wishlistsShared) && pro,
       deleteAt: group.deleteAt || null,
       participantCount: activeParticipants(group).length,
       eventPassed: passed,
     },
+    features,
     me: {
       id: me.id,
       name: me.name,
       email: me.email,
       pending: Boolean(me.pending),
       isOrganizer: Boolean(me.isOrganizer),
-      hints: me.hints || {},
-      wishlist: me.wishlist || [],
+      hints: pro ? me.hints || {} : {},
+      wishlist: pro ? me.wishlist || [] : [],
       giftStatus: giftProgress(me),
       notify: me.notify || { email: true, push: true },
       pushDevices: (me.subscriptions || []).length,
@@ -195,8 +205,8 @@ function participantView(group, me) {
     recipient: target ? {
       id: target.id,
       name: target.name,
-      hints: target.hints || {},
-      wishlist: (target.wishlist || []).map((w) => wishView(w)),
+      hints: pro ? target.hints || {} : {},
+      wishlist: pro ? (target.wishlist || []).map((w) => wishView(w)) : [],
       messages: chat ? channelMessages(group, me.id, me) : [],
       unread: chat ? unreadCount(group, me, me.id, "recipient") : 0,
     } : null,
@@ -207,7 +217,7 @@ function participantView(group, me) {
     } : null,
     participants: activeParticipants(group).map((p) => ({ id: p.id, name: p.name, isOrganizer: Boolean(p.isOrganizer), joined: Boolean(p.joinedAt) })),
     // Family rounds: everybody may see everybody's wishes.
-    wishlists: group.wishlistsShared
+    wishlists: group.wishlistsShared && pro
       ? activeParticipants(group).filter((p) => p.id !== me.id).map((p) => ({ id: p.id, name: p.name, wishlist: (p.wishlist || []).map((w) => wishView(w)) }))
       : null,
     photos: (group.photos || []).map((ph) => photoView(group, ph, me)),
@@ -295,7 +305,7 @@ function removePhotoFiles(group) {
 }
 
 module.exports = {
-  cfg, participantLink, inviteLink, formatDate, eventLine, todayIso, eventPassed, computeDeleteAt, newParticipant,
+  cfg, proFeatures, participantLink, inviteLink, formatDate, eventLine, todayIso, eventPassed, computeDeleteAt, newParticipant,
   findParticipant, giverOf, activeParticipants, isDrawn, giftProgress, organizerView, participantView,
   loadOwnedGroup, loadByParticipantToken, applySettings, syncOrganizerParticipant, safeHttpUrl, removePhotoFiles,
 };

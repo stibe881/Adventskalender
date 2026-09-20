@@ -15,6 +15,7 @@ const db = require("../../db");
 const { requireAuth, COOKIE_NAME } = require("../../middleware/auth");
 const { generateToken, generateId } = require("../../utils/token");
 const { cleanText } = require("../../utils/wichtel");
+const { isProItem, proOrDeny } = require("../../utils/pro");
 const { IDEAS } = require("../../wichteltuer/ideas");
 const { TEMPLATES, render: renderLetter } = require("../../wichteltuer/letters");
 const S = require("./shared");
@@ -34,18 +35,21 @@ function optionalUser(req) {
 // ── Owner API ───────────────────────────────────────────────────────────────
 router.get("/plans", requireAuth, async (req, res) => {
   const plans = await db.getElfPlansByOwner(req.user.id);
+  const ownerPro = await isProItem({ ownerId: req.user.id });
   res.json(plans.map((p) => {
-    const v = S.planView(p, { owner: true });
-    return { id: p.id, title: p.title, year: p.year, elfName: v.elf.name, children: p.children.map((c) => c.name), shareToken: p.shareToken, shareLink: v.shareLink, kidLink: v.kidLink, stats: v.stats, unreadPost: v.unreadPost, createdAt: p.createdAt };
+    const v = S.planView(p, { owner: true, pro: ownerPro || Boolean(p.isPro) });
+    return { id: p.id, title: p.title, year: p.year, isPro: v.isPro, elfName: v.elf.name, children: p.children.map((c) => c.name), shareToken: p.shareToken, shareLink: v.shareLink, kidLink: v.kidLink, stats: v.stats, unreadPost: v.unreadPost, createdAt: p.createdAt };
   }).sort((a, b) => b.year - a.year || String(b.createdAt).localeCompare(String(a.createdAt))));
 });
 
 router.post("/plans", requireAuth, async (req, res) => {
   const owner = await db.getUserById(req.user.id);
   const plan = S.newPlan({ ...req.user, username: owner?.username || req.user.username }, req.body || {});
-  if (req.body?.autoplan) S.autoplan(plan);
+  const pro = Boolean(owner?.isPro);
+  // The automatic plan draws on the idea library, which is a PRO feature.
+  if (req.body?.autoplan && pro) S.autoplan(plan);
   await db.createElfPlan(plan);
-  res.status(201).json(S.planView(plan, { owner: true }));
+  res.status(201).json(S.planView(plan, { owner: true, pro }));
 });
 
 async function loadOwned(req, res) {
@@ -70,12 +74,10 @@ router.post("/plans/:id/rotate-share", requireAuth, async (req, res) => {
   const plan = await loadOwned(req, res);
   if (!plan) return;
   const updated = await db.updateElfPlan(plan.id, (p) => { p.shareToken = generateToken(cfg.shareTokenBytes); return p; });
-  res.json(S.planView(updated, { owner: true }));
+  res.json(S.planView(updated, { owner: true, pro: await isProItem(updated) }));
 });
 
-// ── Library (public, static) ────────────────────────────────────────────────
-router.get("/ideas", (req, res) => res.json({ ideas: IDEAS, categories: cfg.categories }));
-router.get("/letters/templates", (req, res) => res.json({ templates: TEMPLATES }));
+// ── Library (static, PRO – served per plan below) ───────────────────────────
 router.get("/vapidPublicKey", (req, res) => {
   const { getVapidPublicKey } = require("../../push");
   res.json({ publicKey: getVapidPublicKey() });
@@ -85,21 +87,40 @@ router.get("/vapidPublicKey", (req, res) => {
 const share = express.Router({ mergeParams: true });
 share.use(rateLimit({ windowMs: 60 * 1000, limit: cfg.shareRequestsPerMinute, standardHeaders: true, legacyHeaders: false }));
 
-async function respond(req, res, mutate, status = 200) {
+/** Loads the plan, runs `mutate` (may return false to abort, or a function
+ * to apply inside the update) and answers with the plan view. `mutate`
+ * receives the plan and its PRO state; `feature` gates the whole route. */
+async function respond(req, res, mutate, status = 200, feature = null) {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return null;
   const owner = S.isOwner(plan, optionalUser(req));
+  const pro = await isProItem(plan);
+  if (feature && !proOrDeny(pro, res, feature)) return null;
   let updated = plan;
   if (mutate) {
-    const r = mutate(plan);
+    const r = mutate(plan, pro);
     if (r === false) return null;
-    updated = await db.updateElfPlan(plan.id, (p) => { (typeof r === "function" ? r : mutate)(p); return p; });
+    updated = await db.updateElfPlan(plan.id, (p) => { (typeof r === "function" ? r : mutate)(p, pro); return p; });
   }
-  res.status(status).json(S.planView(updated, { owner }));
+  res.status(status).json(S.planView(updated, { owner, pro }));
   return updated;
 }
 
 share.get("/", (req, res) => respond(req, res));
+
+// The library is part of PRO.
+share.get("/ideas", async (req, res) => {
+  const plan = await S.loadByShareToken(req, res);
+  if (!plan) return;
+  if (!proOrDeny(await isProItem(plan), res, "Die Ideen-Bibliothek")) return;
+  res.json({ ideas: IDEAS, categories: cfg.categories });
+});
+share.get("/letters/templates", async (req, res) => {
+  const plan = await S.loadByShareToken(req, res);
+  if (!plan) return;
+  if (!proOrDeny(await isProItem(plan), res, "Briefvorlagen")) return;
+  res.json({ templates: TEMPLATES });
+});
 
 share.put("/settings", (req, res) => {
   const b = req.body || {};
@@ -132,8 +153,10 @@ share.put("/days/:date", (req, res) => {
   const date = String(req.params.date);
   if (!isoDate(date)) return res.status(400).json({ error: "Ungültiges Datum." });
   const b = req.body || {};
-  return respond(req, res, (p) => {
+  return respond(req, res, (p, pro) => {
     if (!S.seasonDates(p.year).includes(date)) { res.status(400).json({ error: "Das Datum liegt außerhalb der Adventszeit dieses Plans." }); return false; }
+    if (!pro && b.ideaId && !proOrDeny(false, res, "Die Ideen-Bibliothek")) return false;
+    if (!pro && b.letter && !proOrDeny(false, res, "Briefe schreiben")) return false;
     return (x) => { x.days[date] = S.applyDay(x, date, b, x.days[date]); };
   });
 });
@@ -158,7 +181,7 @@ share.post("/days/swap", (req, res) => {
   });
 });
 
-share.post("/autoplan", (req, res) => respond(req, res, (p) => (x) => S.autoplan(x, { overwrite: Boolean(req.body?.overwrite) })));
+share.post("/autoplan", (req, res) => respond(req, res, (p) => (x) => S.autoplan(x, { overwrite: Boolean(req.body?.overwrite) }), 200, "Die automatische Planung aus der Ideen-Bibliothek"));
 
 // Photos (evidence of the prank, the kids' reaction)
 const photoStorage = multer.diskStorage({
@@ -204,7 +227,7 @@ share.put("/shopping/check", (req, res) => {
       if (c) c.checked = checked;
     } else if (checked) x.shopping.checked[key] = true;
     else delete x.shopping.checked[key];
-  });
+  }, 200, "Die Einkaufsliste");
 });
 share.post("/shopping/custom", (req, res) => {
   const text = cleanText(req.body?.text, cfg.shoppingMax);
@@ -213,21 +236,22 @@ share.post("/shopping/custom", (req, res) => {
     if (!x.shopping) x.shopping = { checked: {}, custom: [] };
     if ((x.shopping.custom || []).length >= cfg.maxCustomShopping) return;
     x.shopping.custom.push({ id: newId(), text, checked: false });
-  }, 201);
+  }, 201, "Die Einkaufsliste");
 });
 share.delete("/shopping/custom/:id", (req, res) => respond(req, res, (p) => (x) => {
   if (x.shopping?.custom) x.shopping.custom = x.shopping.custom.filter((i) => i.id !== req.params.id);
-}));
+}, 200, "Die Einkaufsliste"));
 share.post("/shopping/clear-checked", (req, res) => respond(req, res, (p) => (x) => {
   if (!x.shopping) return;
   x.shopping.checked = {};
   x.shopping.custom = (x.shopping.custom || []).filter((i) => !i.checked);
-}));
+}, 200, "Die Einkaufsliste"));
 
 // Letters: render a template into the elf's voice.
 share.post("/letters/render", async (req, res) => {
   const plan = await S.loadByShareToken(req, res);
   if (!plan) return;
+  if (!proOrDeny(await isProItem(plan), res, "Briefe schreiben")) return;
   const b = req.body || {};
   const tpl = TEMPLATES.find((t) => t.id === b.templateId);
   const source = tpl ? tpl.text : cleanText(b.text, cfg.letterMax);
@@ -245,7 +269,7 @@ share.post("/post", (req, res) => {
     const child = x.children.find((c) => c.id === req.body?.childId);
     x.post.push({ id: newId(), from: "elf", childId: child?.id || null, childName: child?.name || "", text, at: new Date().toISOString(), read: true });
     if (x.post.length > cfg.maxLetters) x.post = x.post.slice(-cfg.maxLetters);
-  }, 201);
+  }, 201, "Briefe schreiben");
 });
 share.put("/post/:id/read", (req, res) => respond(req, res, (p) => (x) => {
   const l = (x.post || []).find((i) => i.id === req.params.id);

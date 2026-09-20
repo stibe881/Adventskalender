@@ -79,7 +79,7 @@ test("Wichteltür: owner creates a plan, co-parent edits via share link, kids wr
   assert.equal(r.d.shopping.find((i) => i.key === first.key).checked, false);
 
   // Letters: templates render in the elf's voice.
-  r = await anon("GET", "/api/wichteltuer/letters/templates");
+  r = await anon("GET", `/api/wichteltuer/s/${share}/letters/templates`);
   assert.ok(r.d.templates.length >= 10);
   r = await anon("POST", `/api/wichteltuer/s/${share}/letters/render`, { templateId: "lob", free: "Ihr habt das Zimmer aufgeräumt." });
   assert.ok(r.d.text.startsWith("Mia und Ben, ich habe etwas beobachtet"));
@@ -147,4 +147,57 @@ test("Wichteltür: owner creates a plan, co-parent edits via share link, kids wr
   assert.equal(r.d.ok, true);
   r = await anon("GET", `/api/wichteltuer/k/${kid}`);
   assert.equal(r.status, 404);
+});
+
+test("Wichteltür: without PRO the idea library, letters and shopping list stay locked", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/wichteltuer", require(path.join(SRC, "routes/wichteltuer")));
+  const { call, anon, db } = h;
+  t.after(h.stop);
+  db.user.isPro = false;
+
+  let r = await call("POST", "/api/wichteltuer/plans", { title: "Wichtel", elfName: "Pixi", year: 2026, children: [{ name: "Mia", age: 5 }], autoplan: true });
+  assert.equal(r.status, 201);
+  assert.equal(r.d.isPro, false);
+  assert.deepEqual(r.d.features, { ideas: false, letters: false, shopping: false });
+  assert.equal(r.d.stats.planned, 0, "autoplan needs the library");
+  assert.deepEqual(r.d.shopping, []);
+  const share = r.d.shareLink.split("/").pop();
+  const kid = r.d.kidLink.split("/").pop();
+  r = await call("GET", "/api/wichteltuer/plans");
+  assert.equal(r.d[0].isPro, false);
+
+  for (const [method, p, body] of [
+    ["GET", "/ideas"], ["GET", "/letters/templates"], ["POST", "/autoplan", {}],
+    ["PUT", "/days/2026-12-03", { ideaId: "nikolaus" }], ["PUT", "/days/2026-12-03", { title: "x", letter: "Hallo" }],
+    ["POST", "/letters/render", { templateId: "ankunft" }], ["POST", "/post", { text: "Hallo Mia" }],
+    ["PUT", "/shopping/check", { key: "mehl", checked: true }], ["POST", "/shopping/custom", { text: "Batterien" }], ["POST", "/shopping/clear-checked", {}],
+  ]) {
+    r = await anon(method, `/api/wichteltuer/s/${share}${p}`, body);
+    assert.equal(r.status, 402, `${method} ${p} is PRO`);
+    assert.equal(r.d.pro, true);
+  }
+
+  // Own ideas, notes, photos, the kids' page and their letters stay free.
+  r = await anon("PUT", `/api/wichteltuer/s/${share}/days/2026-12-03`, { title: "Mehlspuren", category: "streich", materials: ["Mehl"], note: "abends" });
+  assert.equal(r.status, 200);
+  assert.equal(r.d.days[2].entry.title, "Mehlspuren");
+  assert.deepEqual(r.d.shopping, [], "no shopping list without PRO");
+  r = await anon("POST", `/api/wichteltuer/k/${kid}/letters`, { text: "Lieber Pixi" });
+  assert.equal(r.status, 201);
+  r = await anon("GET", `/api/wichteltuer/s/${share}`);
+  assert.equal(r.d.unreadPost, 1);
+
+  // The upgrade (Stripe webhook) unlocks it for everybody with the link.
+  await db.updateElfPlan(r.d.id, (p) => { p.isPro = true; return p; });
+  r = await anon("GET", `/api/wichteltuer/s/${share}`);
+  assert.equal(r.d.isPro, true);
+  assert.deepEqual(r.d.features, { ideas: true, letters: true, shopping: true });
+  assert.ok(r.d.shopping.some((i) => i.key === "mehl"));
+  r = await anon("GET", `/api/wichteltuer/s/${share}/ideas`);
+  assert.equal(r.d.ideas.length > 50, true);
+  r = await anon("POST", `/api/wichteltuer/s/${share}/autoplan`, {});
+  assert.equal(r.d.stats.planned, 24);
+  r = await anon("POST", `/api/wichteltuer/s/${share}/post`, { text: "Hallo Mia" });
+  assert.equal(r.status, 201);
 });

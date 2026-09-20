@@ -52,10 +52,11 @@
         <a href="/admin/wichteln.html" class="text-slate-400 hover:text-white text-sm whitespace-nowrap">← Zurück</a>
         <div class="min-w-0">
           <h1 id="group-title" class="font-display font-bold text-lg leading-none truncate">Wichtel-Runde</h1>
-          <p class="text-xs text-slate-400 mt-1"><span id="status-badge" class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-700">…</span> <span id="participant-summary"></span></p>
+          <p class="text-xs text-slate-400 mt-1"><span id="pro-badge" class="ui-pro-badge hidden">PRO</span> <span id="status-badge" class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-700">…</span> <span id="participant-summary"></span></p>
         </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+        <button id="upgrade-btn" class="hidden btn flex-1 sm:flex-none w-btn--pro" style="background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff"><i data-icon="star"></i> PRO freischalten</button>
         <a id="my-area-link" href="#" target="_blank" class="hidden btn btn-ghost flex-1 sm:flex-none"><i data-icon="gift"></i> Mein Wichtel-Bereich</a>
         <button id="invite-card-btn" class="btn btn-primary flex-1 sm:flex-none"><i data-icon="qr-code"></i> Einladungskarte</button>
       </div>
@@ -98,9 +99,9 @@
 
         <div class="sm:col-span-2 border-t border-white/10 pt-4 grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="chatEnabled" class="w-4 h-4 rounded bg-slate-900 border-white/10"> <i data-icon="message-circle"></i> Anonymer Chat</label>
+            <label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="chatEnabled" class="w-4 h-4 rounded bg-slate-900 border-white/10"> <i data-icon="message-circle"></i> Anonymer Chat <span class="ui-pro-badge">PRO</span></label>
             <p class="text-xs text-slate-500 mt-1 ml-6">Zwei getrennte Kanäle: mit dem Wichtelkind und mit dem eigenen geheimen Wichtel. Für Schulklassen o. ä. abschaltbar.</p>
-            <label class="flex items-center gap-2 text-sm text-slate-300 mt-3"><input type="checkbox" name="wishlistsShared" class="w-4 h-4 rounded bg-slate-900 border-white/10"> <i data-icon="users"></i> Wunschzettel für alle sichtbar</label>
+            <label class="flex items-center gap-2 text-sm text-slate-300 mt-3"><input type="checkbox" name="wishlistsShared" class="w-4 h-4 rounded bg-slate-900 border-white/10"> <i data-icon="users"></i> Wunschzettel für alle sichtbar <span class="ui-pro-badge">PRO</span></label>
             <p class="text-xs text-slate-500 mt-1 ml-6">Familienmodus: Jeder sieht die Wünsche aller – praktisch, wenn nebenbei auch andere schenken.</p>
           </div>
           <div>

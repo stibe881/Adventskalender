@@ -20,6 +20,42 @@ let activeTab = TABS.includes(store.get(TAB_KEY)) ? store.get(TAB_KEY) : "heute"
 const PUSH_KEY = `wichteltuer_push_${token}`;
 
 const esc = (s) => UI.esc(s);
+// Which parts of the planner are unlocked (PRO). Older servers send no flags.
+const feat = () => data.features || { ideas: true, letters: true, shopping: true };
+const PRO_POINTS = [
+  ["lightbulb", "Ideen-Bibliothek: 60 Streiche, Aufgaben und Geschenke, passend zum Alter – und die automatische Planung aller 24 Nächte"],
+  ["mail", "Briefe schreiben: fertige Vorlagen in der Stimme des Wichtels, für den Plan und die Wichtelpost"],
+  ["clipboard-list", "Einkaufsliste: alles Material aus dem Plan, nach Wochen sortiert, zum Abhaken und Teilen"],
+];
+function proTeaser(iconName, title, text) {
+  return `<div class="w-card w-card--pro">
+    <h2 class="w-title text-xl"><i data-icon="${iconName}"></i> ${esc(title)} <span class="ui-pro-badge">PRO</span></h2>
+    <p class="text-sm text-slate-300 mt-2">${esc(text)}</p>
+    ${data.owner
+      ? `<button type="button" class="w-btn w-btn--pro mt-3" data-act="upgrade"><i data-icon="star"></i> Wichteltür auf PRO upgraden</button>`
+      : `<p class="text-xs text-slate-400 mt-2"><i data-icon="star"></i> Wer diese Wichteltür angelegt hat, kann sie in seinem Konto auf PRO upgraden – dann ist das hier für euch beide frei.</p>`}
+  </div>`;
+}
+function upgradeCard() {
+  return `<div class="w-card w-card--pro">
+    <h2 class="w-title text-xl"><i data-icon="star"></i> Mehr aus der Wichteltür holen <span class="ui-pro-badge">PRO</span></h2>
+    <p class="text-sm text-slate-300 mt-1">Einmalig für diese Wichteltür, gilt für alle, die den Link haben.</p>
+    <ul class="w-pro-list">${PRO_POINTS.map(([ic, t]) => `<li><i data-icon="${ic}"></i><span>${esc(t)}</span></li>`).join("")}</ul>
+    <button type="button" class="w-btn w-btn--pro mt-4" data-act="upgrade"><i data-icon="star"></i> Jetzt upgraden</button>
+  </div>`;
+}
+async function startUpgrade() {
+  let r;
+  try {
+    r = await fetch("/api/payment/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "wichteltuer", id: data.id }) });
+  } catch (_) {
+    return toast("Verbindung fehlgeschlagen.", true);
+  }
+  const json = await r.json().catch(() => ({}));
+  if (r.status === 401) return toast("Bitte melde dich zuerst in deinem Konto an.", true);
+  if (!r.ok) return toast(json.error || `Fehler ${r.status}`, true);
+  if (json.url) window.location.href = json.url;
+}
 const toast = (msg, isError = false) => UI.toast(msg, { error: isError });
 const haptic = (style) => { if (typeof window.nativeHaptic === "function") window.nativeHaptic(style); };
 function formatDate(iso) {
@@ -115,10 +151,10 @@ function render() {
     sectionNav(),
     sec("heute", todayCard() + overviewCard()),
     sec("plan", planCard()),
-    sec("ideen", ideasCard()),
-    sec("einkauf", shoppingCard()),
+    sec("ideen", feat().ideas ? ideasCard() : proTeaser("lightbulb", "Ideen-Bibliothek", "60 Streiche, Aufgaben, Bastelideen und Geschenke – mit Aufwand, Material und Alter. Einplanen per Tipp oder alle 24 Nächte automatisch füllen lassen.")),
+    sec("einkauf", feat().shopping ? shoppingCard() : proTeaser("clipboard-list", "Einkaufsliste", "Alles Material aus dem Plan, nach Wochen sortiert. Abhaken, ergänzen, teilen oder drucken – erledigte Nächte verschwinden von selbst.")),
     sec("post", postCard()),
-    sec("wichtel", elfCard() + settingsCard() + linksCard()),
+    sec("wichtel", elfCard() + (data.owner && !data.isPro ? upgradeCard() : "") + settingsCard() + linksCard()),
     `<p class="text-center text-xs text-slate-500 pb-6">Wichteltür · Advently</p>`,
   ].join("");
   bindEvents();
@@ -146,7 +182,7 @@ function setTab(name, { scroll = true } = {}) {
 function topBar() {
   const d = data;
   return `<div class="flex flex-wrap items-center justify-between gap-2" id="w-nav">
-    <div class="min-w-0"><p class="text-xs text-amber-300 uppercase tracking-widest font-semibold">Wichteltür ${d.year}</p><h1 class="w-title text-2xl truncate">${esc(d.title)}</h1></div>
+    <div class="min-w-0"><p class="text-xs text-amber-300 uppercase tracking-widest font-semibold">Wichteltür ${d.year}</p><h1 class="w-title text-2xl truncate">${esc(d.title)}${d.isPro ? ` <span class="ui-pro-badge">PRO</span>` : ""}</h1></div>
     <div class="flex gap-2">
       ${d.owner ? `<a href="/admin/wichteltuer.html" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : (window.history.length > 1 ? `<a href="#" data-act="back" class="w-btn w-btn--ghost w-btn--sm">← Zurück</a>` : "")}
       <button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="share-plan"><i data-icon="share-2"></i> Teilen</button>
@@ -168,7 +204,7 @@ function overviewCard() {
     <h2 class="w-title text-xl"><i data-icon="clipboard-list"></i> Auf einen Blick</h2>
     <ul class="w-todo mt-3">
       <li class="${d.stats.open ? "" : "is-done"}">${d.stats.open ? icon("circle") : icon("circle-check")} <a href="#plan" data-tab="plan">${d.stats.open ? `${d.stats.open} Nächte noch ohne Idee` : "Alle 24 Nächte geplant"}</a></li>
-      <li class="${openShop ? "" : "is-done"}">${openShop ? icon("circle") : icon("circle-check")} <a href="#einkauf" data-tab="einkauf">${openShop ? `${openShop} Dinge einkaufen` : "Einkaufsliste erledigt"}</a></li>
+      ${feat().shopping ? `<li class="${openShop ? "" : "is-done"}">${openShop ? icon("circle") : icon("circle-check")} <a href="#einkauf" data-tab="einkauf">${openShop ? `${openShop} Dinge einkaufen` : "Einkaufsliste erledigt"}</a></li>` : ""}
       <li class="${d.unreadPost ? "" : "is-done"}">${d.unreadPost ? icon("circle") : icon("circle-check")} <a href="#post" data-tab="post">${d.unreadPost ? `${d.unreadPost} ungelesene Briefe der Kinder` : "Keine neue Post"}</a></li>
       <li class="${d.notify.pushDevices || d.notify.emails.length ? "is-done" : ""}">${d.notify.pushDevices || d.notify.emails.length ? icon("circle-check") : icon("circle")} <a href="#wichtel" data-tab="wichtel">${d.notify.pushDevices || d.notify.emails.length ? "Abendliche Erinnerung ist eingerichtet" : "Abendliche Erinnerung einrichten"}</a></li>
       <li class="${d.children.length ? "is-done" : ""}">${d.children.length ? icon("circle-check") : icon("circle")} <a href="#wichtel" data-tab="wichtel">${d.children.length ? `Kinder: ${d.children.map((c) => esc(c.name)).join(", ")}` : "Kinder eintragen, damit die Ideen zum Alter passen"}</a></li>
@@ -193,7 +229,7 @@ function todayCard() {
       <div class="w-progress mt-3"><div style="width:${Math.round((d.stats.planned / 24) * 100)}%"></div></div>
       <p class="text-xs text-slate-400 mt-1">${d.stats.planned} von 24 Nächten geplant${d.stats.done ? `, ${d.stats.done} erledigt` : ""}</p>
       <div class="flex flex-wrap gap-2 mt-3">
-        ${d.stats.open ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> ${d.stats.planned ? "Lücken automatisch füllen" : "Alle 24 Nächte automatisch planen"}</button>` : ""}
+        ${d.stats.open && feat().ideas ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> ${d.stats.planned ? "Lücken automatisch füllen" : "Alle 24 Nächte automatisch planen"}</button>` : ""}${d.stats.open && !feat().ideas ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-tab="ideen"><i data-icon="lightbulb"></i> Ideen-Bibliothek <span class="ui-pro-badge">PRO</span></button>` : ""}
         <a href="#einkauf" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="clipboard-list"></i> Einkaufsliste</a>
         ${after ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-recap"><i data-icon="printer"></i> Rückblick drucken</button>` : ""}
       </div>
@@ -218,7 +254,7 @@ function todayCard() {
         ${e.letter ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-print-letter="${t.date}"><i data-icon="printer"></i> Brief drucken</button>` : ""}
         <label class="w-btn w-btn--ghost w-btn--sm"><i data-icon="camera"></i> Foto<input type="file" accept="image/*" capture="environment" class="sr-only" data-photo="${t.date}"></label>
       </div>`
-      : `<p class="text-sm text-slate-300 mt-2">${esc(d.elf.name)} braucht eine Idee für heute Nacht.</p><div class="flex flex-wrap gap-2 mt-3"><button type="button" class="w-btn w-btn--primary w-btn--sm" data-open-day="${t ? t.date : ""}"><i data-icon="lightbulb"></i> Idee wählen</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> Automatisch füllen</button></div>`}
+      : `<p class="text-sm text-slate-300 mt-2">${esc(d.elf.name)} braucht eine Idee für heute Nacht.</p><div class="flex flex-wrap gap-2 mt-3"><button type="button" class="w-btn w-btn--primary w-btn--sm" data-open-day="${t ? t.date : ""}"><i data-icon="lightbulb"></i> Idee wählen</button>${feat().ideas ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> Automatisch füllen</button>` : ""}</div>`}
     ${d.prepTomorrow.length ? `<div class="mt-4 bg-black/25 rounded-xl p-3 text-sm"><b class="text-amber-200"><i data-icon="triangle-alert"></i> Morgen vorbereiten:</b> ${d.prepTomorrow.map((p) => `${esc(p.entry.title)}${p.entry.materials.length ? ` (${p.entry.materials.map(esc).join(", ")})` : ""}`).join("; ")}</div>` : ""}
   </div>`;
 }
@@ -228,7 +264,7 @@ function planCard() {
   return `<div class="w-card">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="w-title text-xl"><i data-icon="calendar"></i> Der Plan</h2>
-      <div class="flex gap-2">${d.stats.open ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> Lücken füllen</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-plan"><i data-icon="printer"></i></button></div>
+      <div class="flex gap-2">${d.stats.open && feat().ideas ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="autoplan"><i data-icon="sparkles"></i> Lücken füllen</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-plan"><i data-icon="printer"></i></button></div>
     </div>
     <p class="text-sm text-slate-400 mt-1 mb-3">Jede Zeile ist der Morgen, an dem die Kinder es entdecken. Vorbereitet wird in der Nacht davor. Tippe auf einen Tag.</p>
     <div class="space-y-2">${d.days.map((day) => dayRow(day)).join("")}</div>
@@ -299,11 +335,11 @@ function postCard() {
   return `<div class="w-card">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="w-title text-xl"><i data-icon="mail"></i> Wichtelpost ${d.unreadPost ? `<span class="ui-badge">${d.unreadPost}</span>` : ""}</h2>
-      <button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="write-post"><i data-icon="pen-line"></i> Brief an die Kinder</button>
+      ${feat().letters ? `<button type="button" class="w-btn w-btn--primary w-btn--sm" data-act="write-post"><i data-icon="pen-line"></i> Brief an die Kinder</button>` : `<span class="ui-pro-badge">Antworten: PRO</span>`}
     </div>
-    <p class="text-sm text-slate-400 mt-1">Briefe der Kinder von der Kinderseite und die Antworten von ${esc(d.elf.name)}. Antworten erscheinen sofort auf der Kinderseite.</p>
+    <p class="text-sm text-slate-400 mt-1">Briefe der Kinder von der Kinderseite${feat().letters ? ` und die Antworten von ${esc(d.elf.name)}. Antworten erscheinen sofort auf der Kinderseite.` : `. Mit PRO antwortet ${esc(d.elf.name)} mit fertigen Briefvorlagen – ${d.owner ? `<a href="#wichtel" data-tab="wichtel" class="text-amber-300 underline">jetzt upgraden</a>` : "wer die Wichteltür angelegt hat, kann upgraden"}.`}</p>
     <div class="space-y-3 mt-3">${post.length ? post.map((l) => l.from === "kid"
-      ? `<div class="t-letter t-letter--kid ${l.read ? "" : "t-letter--unread"}">${esc(l.text)}<small>${esc(l.childName || "Kind")} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-reply="${esc(l.id)}" data-child="${esc(l.childId || "")}"><i data-icon="pen-line"></i> Antworten</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`
+      ? `<div class="t-letter t-letter--kid ${l.read ? "" : "t-letter--unread"}">${esc(l.text)}<small>${esc(l.childName || "Kind")} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions">${feat().letters ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-reply="${esc(l.id)}" data-child="${esc(l.childId || "")}"><i data-icon="pen-line"></i> Antworten</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`
       : `<div class="t-letter t-letter--elf">${esc(l.text)}<small>${esc(d.elf.name)}${l.childName ? ` an ${esc(l.childName)}` : ""} · ${formatDate(l.at.slice(0, 10))}</small><div class="t-letter__actions"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-del-post="${esc(l.id)}"><i data-icon="x"></i></button></div></div>`).join("")
       : `<div class="ui-empty"><div class="ui-empty__art"><i data-icon="mail"></i></div>Noch keine Post. Teile die Kinderseite, dann können die Kinder schreiben.</div>`}</div>
   </div>`;
@@ -359,7 +395,7 @@ function linksCard() {
       <div><b class="text-white">Für die Kinder</b><p class="text-xs text-slate-400 mt-0.5">Die Kinderseite zeigt nur die Tür, den Countdown und die Briefe – nie den Plan. Am Tablet als Lesezeichen speichern.</p>
         <p class="text-xs text-slate-400 break-all mt-1 bg-black/20 rounded-lg p-2 font-mono">${esc(d.kidLink)}</p>
         <div class="flex flex-wrap gap-2 mt-2"><a href="${esc(d.kidLink)}" target="_blank" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="eye"></i> Ansehen</a><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="copy-kid"><i data-icon="copy"></i> Kopieren</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="rotate-kid"><i data-icon="refresh-cw"></i> Link erneuern</button></div></div>
-      <div><b class="text-white">Drucken</b><div class="flex flex-wrap gap-2 mt-2"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-plan"><i data-icon="printer"></i> Plan</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-shopping"><i data-icon="printer"></i> Einkaufsliste</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-letters"><i data-icon="printer"></i> Alle Briefe (Mini-Format)</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-recap"><i data-icon="printer"></i> Rückblick</button></div></div>
+      <div><b class="text-white">Drucken</b><div class="flex flex-wrap gap-2 mt-2"><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-plan"><i data-icon="printer"></i> Plan</button>${feat().shopping ? `<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-shopping"><i data-icon="printer"></i> Einkaufsliste</button>` : ""}<button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-letters"><i data-icon="printer"></i> Alle Briefe (Mini-Format)</button><button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="print-recap"><i data-icon="printer"></i> Rückblick</button></div></div>
       ${d.owner ? `<div class="border-t border-white/10 pt-3"><button type="button" class="w-btn w-btn--sm" style="background:rgba(225,29,72,.15);color:#fda4af" data-act="delete-plan"><i data-icon="trash-2"></i> Wichteltür endgültig löschen</button></div>` : ""}
     </div>
   </div>`;
@@ -369,11 +405,11 @@ function linksCard() {
 async function openDay(date) {
   const day = data.days.find((x) => x.date === date);
   if (!day) return;
-  if (!ideas) await loadLibrary();
+  if (!ideas && feat().ideas) await loadLibrary();
   const e = day.entry || { ideaId: null, title: "", category: "streich", text: "", materials: [], minutes: 10, prepDayBefore: false, assignee: null, note: "", letter: "", letterVisibleToKids: false, photo: null, photoVisibleToKids: false, reaction: "", done: false };
-  const ideaOptions = [`<option value="">– eigene Idee –</option>`].concat(Object.entries(data.categories).map(([k, v]) => `<optgroup label="${esc(v)}">${ideas.filter((i) => i.category === k).map((i) => `<option value="${esc(i.id)}" ${e.ideaId === i.id ? "selected" : ""}>${esc(i.title)} (${i.minutes} Min.)</option>`).join("")}</optgroup>`)).join("");
+  const ideaOptions = [`<option value="">– eigene Idee –</option>`].concat(Object.entries(data.categories).map(([k, v]) => `<optgroup label="${esc(v)}">${(ideas || []).filter((i) => i.category === k).map((i) => `<option value="${esc(i.id)}" ${e.ideaId === i.id ? "selected" : ""}>${esc(i.title)} (${i.minutes} Min.)</option>`).join("")}</optgroup>`)).join("");
   const body = `
-    <label class="ui-field"><span class="ui-field__label">Idee aus der Bibliothek</span><select name="ideaId" class="ui-input" data-idea-select>${ideaOptions}</select></label>
+    ${feat().ideas ? `<label class="ui-field"><span class="ui-field__label">Idee aus der Bibliothek</span><select name="ideaId" class="ui-input" data-idea-select>${ideaOptions}</select></label>` : `<p class="ui-field__hint" style="margin-bottom:10px"><span class="ui-pro-badge">PRO</span> Mit PRO wählst du hier eine von 60 fertigen Ideen aus der Bibliothek.</p>`}
     <label class="ui-field"><span class="ui-field__label">Titel</span><input name="title" class="ui-input" value="${esc(e.title)}" maxlength="100" required></label>
     <div class="grid grid-cols-2 gap-2">
       <label class="ui-field"><span class="ui-field__label">Art</span><select name="category" class="ui-input">${Object.entries(data.categories).map(([k, v]) => `<option value="${k}" ${e.category === k ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>
@@ -386,8 +422,8 @@ async function openDay(date) {
       <label class="ui-check" style="margin-top:18px"><input type="checkbox" name="prepDayBefore" ${e.prepDayBefore ? "checked" : ""}> <span>Am Vortag vorbereiten</span></label>
     </div>
     <label class="ui-field"><span class="ui-field__label">Notiz für uns</span><input name="note" class="ui-input" value="${esc(e.note)}" maxlength="500" placeholder="z. B. Kamera bereitlegen"></label>
-    <div class="ui-field"><span class="ui-field__label">Brief vom Wichtel <button type="button" class="text-amber-300 underline" data-letter-template>Vorlage einsetzen</button></span><textarea name="letter" class="ui-input" rows="4" maxlength="2000" placeholder="Leer lassen, wenn es keinen Brief gibt">${esc(e.letter)}</textarea></div>
-    <label class="ui-check"><input type="checkbox" name="letterVisibleToKids" ${e.letterVisibleToKids ? "checked" : ""}> <span>Brief ab diesem Morgen auch auf der Kinderseite zeigen</span></label>
+    ${feat().letters ? `<div class="ui-field"><span class="ui-field__label">Brief vom Wichtel <button type="button" class="text-amber-300 underline" data-letter-template>Vorlage einsetzen</button></span><textarea name="letter" class="ui-input" rows="4" maxlength="2000" placeholder="Leer lassen, wenn es keinen Brief gibt">${esc(e.letter)}</textarea></div>
+    <label class="ui-check"><input type="checkbox" name="letterVisibleToKids" ${e.letterVisibleToKids ? "checked" : ""}> <span>Brief ab diesem Morgen auch auf der Kinderseite zeigen</span></label>` : `<p class="ui-field__hint" style="margin-bottom:10px"><span class="ui-pro-badge">PRO</span> Briefe vom Wichtel (mit Vorlagen, auch für die Kinderseite) gibt es in der PRO-Version.</p>`}
     ${e.photo ? `<div class="flex items-center gap-3 mt-2"><img src="${esc(e.photo)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px"><label class="ui-check"><input type="checkbox" name="photoVisibleToKids" ${e.photoVisibleToKids ? "checked" : ""}> <span>Foto auf der Kinderseite zeigen</span></label><button type="button" class="ui-btn ui-btn--ghost ui-btn--sm" data-remove-photo>Foto löschen</button></div>` : ""}
     <label class="ui-field"><span class="ui-field__label">${e.photo ? "Anderes Foto" : "Foto (Beweis oder Reaktion der Kinder)"}</span><input type="file" name="photo" accept="image/*" class="ui-input"></label>
     <div class="border-t border-white/10 pt-3 mt-2">
@@ -402,7 +438,7 @@ async function openDay(date) {
   // Wire the extras inside the open dialog.
   const dlg = document.querySelector(".ui-backdrop:last-of-type");
   const form = dlg.querySelector("form");
-  dlg.querySelector("[data-idea-select]").addEventListener("change", (ev) => {
+  dlg.querySelector("[data-idea-select]")?.addEventListener("change", (ev) => {
     const i = ideas.find((x) => x.id === ev.target.value);
     if (!i) return;
     form.elements.title.value = i.title;
@@ -411,9 +447,9 @@ async function openDay(date) {
     form.elements.materials.value = i.materials.join(", ");
     form.elements.minutes.value = i.minutes;
     form.elements.prepDayBefore.checked = i.prepDayBefore;
-    if (i.letter && !form.elements.letter.value) form.elements.letter.value = fill(i.letter);
+    if (i.letter && form.elements.letter && !form.elements.letter.value) form.elements.letter.value = fill(i.letter);
   });
-  dlg.querySelector("[data-letter-template]").addEventListener("click", async () => {
+  dlg.querySelector("[data-letter-template]")?.addEventListener("click", async () => {
     const t = await pickTemplate(date, null);
     if (t) form.elements.letter.value = t;
   });
@@ -438,7 +474,8 @@ async function openDay(date) {
       letterVisibleToKids: Boolean(r.letterVisibleToKids), photoVisibleToKids: r.photoVisibleToKids !== undefined ? Boolean(r.photoVisibleToKids) : undefined, reaction: r.reaction, done: Boolean(r.done),
     };
     // The idea id is only sent when it changed, so edited texts survive re-saves.
-    if (r.ideaId === e.ideaId) delete body2.ideaId; else body2.ideaId = r.ideaId || null;
+    if (!feat().ideas || r.ideaId === e.ideaId) delete body2.ideaId; else body2.ideaId = r.ideaId || null;
+    if (!feat().letters) { delete body2.letter; delete body2.letterVisibleToKids; }
     if (body2.ideaId) { delete body2.title; delete body2.category; delete body2.text; delete body2.materials; delete body2.minutes; delete body2.prepDayBefore; }
     await update("PUT", `/days/${date}`, body2);
     if (r.photo && r.photo.size) await uploadPhoto(date, r.photo);
@@ -463,11 +500,12 @@ function fill(text) {
 }
 
 async function loadLibrary() {
-  if (!ideas) ideas = (await (await fetch("/api/wichteltuer/ideas")).json()).ideas;
-  if (!templates) templates = (await (await fetch("/api/wichteltuer/letters/templates")).json()).templates;
+  if (!ideas) ideas = feat().ideas ? (await req("GET", "/ideas")).ideas : [];
+  if (!templates) templates = feat().letters ? (await req("GET", "/letters/templates")).templates : [];
 }
 
 async function pickTemplate(date, childId) {
+  if (!feat().letters) { toast("Briefe schreiben gibt es in der PRO-Version.", true); return null; }
   await loadLibrary();
   const r = await UI.form({
     title: "Briefvorlage",
@@ -585,7 +623,7 @@ function bindEvents() {
   app.addEventListener("change", onChange);
   const search = document.getElementById("idea-search");
   if (search) search.addEventListener("input", () => { ideaFilter.q = search.value; const pos = search.selectionStart; renderIdeasOnly(); const s2 = document.getElementById("idea-search"); s2.focus(); s2.setSelectionRange(pos, pos); });
-  document.getElementById("shop-form").addEventListener("submit", async (e) => {
+  document.getElementById("shop-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = e.target.elements.text.value.trim();
     if (!text) return;
@@ -626,6 +664,7 @@ async function onClick(e) {
         break;
       }
       case "back": e.preventDefault(); window.history.back(); break;
+      case "upgrade": await startUpgrade(); break;
       case "share-plan": {
         const r = await UI.share({ title: `Wichteltür: ${data.title}`, text: `Unser Wichtel-Plan für ${data.elf.name} – hier kannst du mitplanen:`, url: data.shareLink });
         if (r === "copied") toast("Link kopiert.");
@@ -716,8 +755,14 @@ async function onSettingsSubmit(e) {
     rememberToken();
     document.title = `${data.title} – Wichteltür`;
     render();
-    loadLibrary().then(renderIdeasOnly).catch(() => {});
+    if (feat().ideas) loadLibrary().then(renderIdeasOnly).catch(() => {});
     setupPush();
+    const payment = new URLSearchParams(window.location.search).get("payment");
+    if (payment) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      if (payment === "success") UI.alert({ title: "Danke!", text: data.isPro ? "Diese Wichteltür ist jetzt PRO: Ideen-Bibliothek, Briefe und Einkaufsliste sind für alle mit dem Link freigeschaltet." : "Die Zahlung ist eingegangen. Die Freischaltung kann einen Moment dauern – lade die Seite gleich noch einmal.", ok: "Super" });
+      else toast("Zahlung abgebrochen.", true);
+    }
     setInterval(async () => {
       if (document.hidden || navigator.onLine === false || document.querySelector(".ui-backdrop") || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
       try { const fresh = await req("GET", ""); if (JSON.stringify(fresh) !== JSON.stringify(data)) { data = fresh; render(); } } catch (_) { /* keep */ }
