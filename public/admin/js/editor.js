@@ -133,7 +133,6 @@ async function loadCalendar() {
 
   const settingsForm = document.getElementById("settings-form");
   document.querySelector('input[name="recipientName"]').value = calendar.recipientName;
-  document.querySelector('input[name="recipientEmail"]').value = calendar.recipientEmail || "";
   document.getElementById("theme-select").value = calendar.theme;
   document.querySelector('input[name="year"]').value = calendar.year;
   document.getElementById("strictMode").checked = calendar.strictMode;
@@ -1607,7 +1606,6 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
 
   await api.updateCalendar(calendarId, {
     recipientName: fd.get("recipientName"),
-    recipientEmail: fd.get("recipientEmail"),
     theme: fd.get("theme"),
     year: fd.get("year"),
     strictMode: document.getElementById("strictMode").checked,

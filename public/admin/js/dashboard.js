@@ -424,7 +424,6 @@ createForm.addEventListener("submit", async (e) => {
   try {
     const cal = await api.createCalendar({
       recipientName: fd.get("recipientName"),
-      recipientEmail: fd.get("recipientEmail"),
       theme: fd.get("theme"),
       year: fd.get("year"),
       template: fd.get("template"),

@@ -1,5 +1,7 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const crypto = require("crypto");
+const config = require("../config");
 const db = require("../db");
 const { isDayUnlocked, unlockDateISO, unlockAtMs, getTodayParts } = require("../utils/time");
 const { getBonusDoor, bonusDoorUnlocked, bonusDoorStatus, BONUS_DOOR_DAY, BONUS_REFERRALS_NEEDED } = require("../utils/access");
@@ -170,6 +172,7 @@ router.get("/:token", async (req, res) => {
     economy: calendar.companyMode && user ? economyView(calendar, user) : null,
     bonusReferralsNeeded: BONUS_REFERRALS_NEEDED,
     bonus: bonusDoorStatus(calendar, user),
+    reminder: reminderView(calendar),
     days: [
       ...calendar.days.map((d) => publicDayView(calendar, d, user)),
       ...(bonusDoorUnlocked(calendar, user) ? [bonusDayView(calendar, user)] : []),
@@ -472,4 +475,44 @@ router.post("/:token/subscribe", async (req, res) => {
   res.status(201).json({ success: true });
 });
 
+// ── Morning e-mail reminder: the recipient decides, not the owner ───────────
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || ""));
+const maskEmail = (e) => { const [u, d] = String(e).split("@"); return `${u.slice(0, 1)}${"*".repeat(Math.max(2, u.length - 1))}@${d}`; };
+const unsubscribeKey = (calendar) => crypto.createHmac("sha256", config.jwtSecret).update(`${calendar.token}:${calendar.recipientEmail || ""}`).digest("hex").slice(0, 24);
+const unsubscribeLink = (calendar) => `${config.baseUrl}/api/calendar/${calendar.token}/reminder/unsubscribe?key=${unsubscribeKey(calendar)}`;
+function reminderView(calendar) {
+  return { enabled: Boolean(calendar.recipientEmail), email: calendar.recipientEmail ? maskEmail(calendar.recipientEmail) : null };
+}
+
+router.get("/:token/reminder", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
+  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  res.json(reminderView(calendar));
+});
+router.post("/:token/reminder", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
+  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  if (!isEmail(email)) return res.status(400).json({ error: "Bitte eine gültige E-Mail-Adresse eingeben." });
+  const updated = await db.updateCalendar(calendar.id, (cal) => { cal.recipientEmail = email; return cal; });
+  res.status(201).json(reminderView(updated));
+});
+router.delete("/:token/reminder", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
+  if (!calendar) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const updated = await db.updateCalendar(calendar.id, (cal) => { cal.recipientEmail = null; return cal; });
+  res.json(reminderView(updated));
+});
+// One-click link at the bottom of every reminder mail.
+router.get("/:token/reminder/unsubscribe", async (req, res) => {
+  const calendar = await db.getCalendarByToken(req.params.token);
+  const ok = calendar && calendar.recipientEmail && String(req.query.key || "") === unsubscribeKey(calendar);
+  if (ok) await db.updateCalendar(calendar.id, (cal) => { cal.recipientEmail = null; return cal; });
+  res.setHeader("Cache-Control", "no-store");
+  res.status(ok ? 200 : 400).send(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Erinnerung</title>
+<style>body{font-family:Inter,system-ui,sans-serif;background:#24375e;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:24px}a{color:#fcd34d}</style></head>
+<body><div><h1>${ok ? "Abbestellt" : "Link ungültig"}</h1><p>${ok ? "Du bekommst keine Erinnerungs-Mails mehr. Auf der Kalenderseite kannst du sie jederzeit wieder einschalten." : "Diese Erinnerung ist schon abbestellt oder der Link ist abgelaufen."}</p>${calendar ? `<p><a href="${config.baseUrl}/c/${calendar.token}">Zum Kalender</a></p>` : ""}</div></body></html>`);
+});
+
 module.exports = router;
+module.exports.unsubscribeLink = unsubscribeLink;

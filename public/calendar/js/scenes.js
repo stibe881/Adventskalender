@@ -112,6 +112,8 @@ function renderHeader(themeKey, theme, meta) {
 
 function renderFooter(meta) {
   const footer = document.getElementById("calendar-footer");
+  // The public API and the share link work with the token from the page URL, not the calendar id.
+  const calToken = typeof routeId !== "undefined" && routeId ? routeId : meta.token || meta.id;
   if (!meta.today) {
     footer.textContent = "";
     return;
@@ -131,11 +133,34 @@ function renderFooter(meta) {
   
   footer.innerHTML = text;
   
+  // Morning e-mail reminder – the recipient's own choice.
+  if (meta.reminder) {
+    const r = meta.reminder;
+    footer.innerHTML += `<div class="mt-3 text-sm">${r.enabled
+      ? `<span class="opacity-80"><i data-icon="bell"></i> Erinnerung morgens an ${escapeText(r.email)}</span> <button type="button" data-reminder="off" class="underline opacity-80 hover:opacity-100">abbestellen</button>`
+      : `<button type="button" data-reminder="on" class="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur transition-colors"><i data-icon="bell"></i> Morgens per E-Mail erinnern lassen</button>`}</div>`;
+    // Delegated and assigned (not added): the footer's HTML is rebuilt below and on every render.
+    footer.onclick = async (e) => {
+      const btn = e.target.closest("[data-reminder]");
+      if (!btn) return;
+      const on = btn.dataset.reminder === "on";
+      let email = null;
+      if (on) { email = prompt("An welche E-Mail-Adresse sollen wir dich morgens erinnern, wenn dein Türchen noch zu ist?"); if (!email) return; }
+      try {
+        const res = await fetch(`/api/calendar/${calToken}/reminder`, { method: on ? "POST" : "DELETE", headers: { "Content-Type": "application/json" }, body: on ? JSON.stringify({ email }) : undefined });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || "Fehler");
+        meta.reminder = d;
+        renderFooter(meta);
+      } catch (err) { alert(err.message); }
+    };
+  }
+
   // Door 25: what the recipient can do to unlock it (rule chosen by the owner).
   const bonus = meta.bonus || (meta.referrals !== undefined ? { mode: "referrals", count: meta.bonusReferralsNeeded || 3, unlocked: false, referrals: meta.referrals || 0 } : null);
   if (bonus && !bonus.unlocked) {
     if (bonus.mode === "referrals") {
-      const refLink = `${window.location.origin}/c/${meta.id}?ref=1`;
+      const refLink = `${window.location.origin}/c/${calToken}?ref=1`;
       footer.innerHTML += `<div class="mt-4">
         <button onclick="prompt('Teile diesen Link mit ${bonus.count} Freunden, um ein geheimes Türchen 25 freizuschalten!', '${refLink}')" class="bg-indigo-600/30 hover:bg-indigo-500/50 text-indigo-200 border border-indigo-500/30 px-4 py-2 rounded-full text-sm font-bold backdrop-blur transition-colors">
           <i data-icon="star"></i> Lade Freunde ein (${bonus.referrals || 0}/${bonus.count}) für Türchen 25

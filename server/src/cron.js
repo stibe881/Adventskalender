@@ -47,6 +47,7 @@ function startCron() {
       if (!currentDoor || currentDoor.opened) continue;
 
       const link = `${config.baseUrl}/c/${cal.token}`;
+      const unsub = require("./routes/calendar").unsubscribeLink(cal);
 
       try {
         if (config.smtp.host && config.smtp.user && config.smtp.user !== "dein_ethereal_user@ethereal.email") {
@@ -54,8 +55,8 @@ function startCron() {
             from: config.smtp.from,
             to: cal.recipientEmail,
             subject: `Türchen ${day} wartet auf dich!`,
-            text: `Hallo ${cal.recipientName}!\n\nDein Adventskalender-Türchen Nummer ${day} ist jetzt verfügbar.\n\nKlicke hier, um es zu öffnen:\n${link}\n\nViel Spaß!`,
-            html: `<p>Hallo ${cal.recipientName}!</p><p>Dein Adventskalender-Türchen Nummer <strong>${day}</strong> ist jetzt verfügbar.</p><p><a href="${link}">Klicke hier, um es zu öffnen</a></p><p>Viel Spaß!</p>`,
+            text: `Hallo ${cal.recipientName}!\n\nDein Adventskalender-Türchen Nummer ${day} ist jetzt verfügbar.\n\nKlicke hier, um es zu öffnen:\n${link}\n\nViel Spaß!\n\nKeine Erinnerungen mehr: ${unsub}`,
+            html: `<p>Hallo ${cal.recipientName}!</p><p>Dein Adventskalender-Türchen Nummer <strong>${day}</strong> ist jetzt verfügbar.</p><p><a href="${link}">Klicke hier, um es zu öffnen</a></p><p>Viel Spaß!</p><p style="font-size:12px;color:#888">Du hast diese Erinnerung selbst eingeschaltet. <a href="${unsub}">Keine Erinnerungen mehr</a></p>`,
           });
           console.log(`[CRON] Mail gesendet an: ${cal.recipientEmail}`);
         } else {
