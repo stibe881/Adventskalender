@@ -131,14 +131,19 @@ function renderFooter(meta) {
   
   footer.innerHTML = text;
   
-  if (meta.referrals !== undefined) {
-    const refs = meta.referrals || 0;
-    const refLink = `${window.location.origin}/c/${meta.id}?ref=1`;
-    footer.innerHTML += `<div class="mt-4">
-      <button onclick="prompt('Teile diesen Link mit 3 Freunden, um ein geheimes Türchen 25 freizuschalten!', '${refLink}')" class="bg-indigo-600/30 hover:bg-indigo-500/50 text-indigo-200 border border-indigo-500/30 px-4 py-2 rounded-full text-sm font-bold backdrop-blur transition-colors">
-        <i data-icon="star"></i> Lade Freunde ein (${refs}/3) für Türchen 25
-      </button>
-    </div>`;
+  // Door 25: what the recipient can do to unlock it (rule chosen by the owner).
+  const bonus = meta.bonus || (meta.referrals !== undefined ? { mode: "referrals", count: meta.bonusReferralsNeeded || 3, unlocked: false, referrals: meta.referrals || 0 } : null);
+  if (bonus && !bonus.unlocked) {
+    if (bonus.mode === "referrals") {
+      const refLink = `${window.location.origin}/c/${meta.id}?ref=1`;
+      footer.innerHTML += `<div class="mt-4">
+        <button onclick="prompt('Teile diesen Link mit ${bonus.count} Freunden, um ein geheimes Türchen 25 freizuschalten!', '${refLink}')" class="bg-indigo-600/30 hover:bg-indigo-500/50 text-indigo-200 border border-indigo-500/30 px-4 py-2 rounded-full text-sm font-bold backdrop-blur transition-colors">
+          <i data-icon="star"></i> Lade Freunde ein (${bonus.referrals || 0}/${bonus.count}) für Türchen 25
+        </button>
+      </div>`;
+    } else if (bonus.hint) {
+      footer.innerHTML += `<p class="mt-3 text-sm opacity-80"><i data-icon="star"></i> ${escapeText(bonus.hint)}</p>`;
+    }
   }
 }
 

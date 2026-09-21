@@ -423,6 +423,8 @@ function toSummary(cal) {
     swissMode: Boolean(cal.swissMode),
     collaborators: cal.collaborators || [],
     isPro: Boolean(cal.isPro),
+    bonusUnlock: bonusRule(cal),
+    referrals: cal.referrals || 0,
   };
 }
 
@@ -462,7 +464,7 @@ router.post("/dev-toggle-pro", async (req, res) => {
   }
 });
 
-const { hasAccess, resolveCompanyName, communityCanvasEnabled, getBonusDoor, BONUS_DOOR_DAY } = require("../utils/access");
+const { hasAccess, resolveCompanyName, communityCanvasEnabled, getBonusDoor, BONUS_DOOR_DAY, bonusRule, cleanBonusRule } = require("../utils/access");
 const spotify = require("../services/spotify");
 
 // ---------- Calendars ----------
@@ -747,7 +749,7 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
   if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > BONUS_DOOR_DAY) {
     return res.status(400).json({ error: "Ungültiger Tag (1-25)." });
   }
-  const { contentType, content } = req.body || {};
+  const { contentType, content, bonusUnlock } = req.body || {};
   if (contentType !== null && !CONTENT_TYPES.includes(contentType)) {
     return res.status(400).json({ error: `Ungültiger Inhaltstyp. Erlaubt: ${CONTENT_TYPES.join(", ")}` });
   }
@@ -768,10 +770,11 @@ router.put("/calendars/:id/days/:day", async (req, res) => {
         contentType: contentType || null,
         content: contentType ? finalContent : null,
       };
+      if (bonusUnlock && typeof bonusUnlock === "object") cal.bonusUnlock = cleanBonusRule(bonusUnlock, cal);
       return cal;
     });
     const bonus = getBonusDoor(updated);
-    return res.json({ day: BONUS_DOOR_DAY, bonus: true, contentType: updated.bonusDoor.contentType, content: updated.bonusDoor.content, opened: bonus.opened, openedAt: bonus.openedAt });
+    return res.json({ day: BONUS_DOOR_DAY, bonus: true, contentType: updated.bonusDoor.contentType, content: updated.bonusDoor.content, opened: bonus.opened, openedAt: bonus.openedAt, bonusUnlock: bonusRule(updated) });
   }
 
   const updated = await db.updateCalendar(req.params.id, (cal) => {

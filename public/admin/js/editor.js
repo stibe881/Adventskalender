@@ -254,7 +254,7 @@ function renderDoorGrid() {
     }`;
     btn.draggable = !isBonus;
     btn.dataset.day = door.day;
-    if (isBonus) btn.title = "Geheimes Türchen 25 – erscheint, sobald der Beschenkte 3 Freunde eingeladen hat. Ohne eigenen Inhalt wird ein Standard-Dankeschön gezeigt.";
+    if (isBonus) btn.title = `Geheimes Türchen 25 – ${bonusRuleLabel(calendar.bonusUnlock)}. Ohne eigenen Inhalt wird ein Standard-Dankeschön gezeigt.`;
     btn.innerHTML = `
       <span class="text-lg">${meta ? meta.icon : isBonus ? icon("star") : icon("door-open")}</span>
       <span class="text-xs font-semibold">${isBonus ? "25 · Geheim" : door.day}</span>
@@ -624,11 +624,39 @@ function getSpecificPreviewMockup(type) {
   }
 }
 
+// Door 25: when it appears, in words.
+function bonusRuleLabel(rule) {
+  const r = rule || { mode: "referrals", count: 3 };
+  const [y, m, d] = String(r.date || "").split("-");
+  return { referrals: `erscheint nach ${r.count} Einladung${r.count === 1 ? "" : "en"}`, allOpened: "erscheint, wenn alle 24 Türchen offen sind", date: `erscheint ab ${Number(d)}.${Number(m)}.${y}`, always: "ist von Anfang an sichtbar", never: "ist ausgeschaltet" }[r.mode] || "";
+}
+function syncBonusRuleUi() {
+  const mode = document.getElementById("f-bonusMode").value;
+  document.getElementById("f-bonusCountRow").classList.toggle("hidden", mode !== "referrals");
+  document.getElementById("f-bonusDateRow").classList.toggle("hidden", mode !== "date");
+  document.getElementById("f-bonusHint").textContent = {
+    referrals: "Der Beschenkte sieht unten einen Einladungs-Link. Jeder Besuch über diesen Link zählt als Einladung.",
+    allOpened: "Belohnung fürs Durchhalten: Das Türchen taucht auf, sobald das 24. Türchen offen ist.",
+    date: "Zum Beispiel am 25. Dezember – ein Türchen nach Heiligabend.",
+    always: "Das Türchen steht von Anfang an neben den 24 anderen.",
+    never: "Kein Türchen 25 – der Kalender endet am 24.",
+  }[mode] || "";
+}
+document.getElementById("f-bonusMode").addEventListener("change", syncBonusRuleUi);
+
 function openModal(day) {
   currentDay = day;
   const door = calendar.days.find((d) => d.day === day);
   currentContent = JSON.parse(JSON.stringify(door.content || {}));
-  document.getElementById("modal-day").textContent = day === 25 ? "25 – Geheimes Bonus-Türchen (nach 3 Einladungen)" : day;
+  document.getElementById("modal-day").textContent = day === 25 ? "25 – Geheimes Bonus-Türchen" : day;
+  document.getElementById("bonus-unlock").classList.toggle("hidden", day !== 25);
+  if (day === 25) {
+    const r = calendar.bonusUnlock || { mode: "referrals", count: 3, date: `${calendar.year}-12-25` };
+    document.getElementById("f-bonusMode").value = r.mode || "referrals";
+    document.getElementById("f-bonusCount").value = r.count || 3;
+    document.getElementById("f-bonusDate").value = r.date || `${calendar.year}-12-25`;
+    syncBonusRuleUi();
+  }
   
   applySelectedType(door.contentType || "");
   renderTypeFields(door.contentType, currentContent);
@@ -1495,7 +1523,10 @@ document.getElementById("modal-save").addEventListener("click", async () => {
   }
 
   try {
-    const updatedDoor = await api.saveDay(calendarId, currentDay, { contentType: type, content });
+    const payload = { contentType: type, content };
+    if (currentDay === 25) payload.bonusUnlock = { mode: document.getElementById("f-bonusMode").value, count: document.getElementById("f-bonusCount").value, date: document.getElementById("f-bonusDate").value };
+    const updatedDoor = await api.saveDay(calendarId, currentDay, payload);
+    if (updatedDoor.bonusUnlock) calendar.bonusUnlock = updatedDoor.bonusUnlock;
     const idx = calendar.days.findIndex((d) => d.day === currentDay);
     calendar.days[idx] = updatedDoor;
     renderDoorGrid();

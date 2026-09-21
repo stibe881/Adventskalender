@@ -69,3 +69,24 @@ test("Schweizer Modus converts door texts both ways and leaves links alone", () 
   convertDays(days, false);
   assert.equal(days[0].content.message, "Grüße vom Weihnachtsmann");
 });
+
+test("Türchen 25 appears by the owner's rule: invitations, all doors open, a date, always or never", () => {
+  const { bonusDoorUnlocked, bonusDoorStatus, cleanBonusRule, getBonusDoor } = require(path.join(SRC, "utils/access"));
+  const days = Array.from({ length: 24 }, (_, i) => ({ day: i + 1, opened: true }));
+  const cal = { year: 2026, referrals: 2, days };
+  assert.equal(bonusDoorUnlocked(cal), false, "default: three invitations");
+  assert.equal(bonusDoorUnlocked({ ...cal, referrals: 3 }), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "referrals", count: 2 } }), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "allOpened" } }), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "allOpened" }, days: days.slice(0, 23) }), false);
+  assert.equal(bonusDoorUnlocked({ ...cal, companyMode: true, bonusUnlock: { mode: "allOpened" }, userStates: { anna: { openedDays: days.map((d) => d.day) } } }, "anna"), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, companyMode: true, bonusUnlock: { mode: "allOpened" }, userStates: { anna: { openedDays: [1, 2] } } }, "anna"), false);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "date", date: "2000-01-01" } }), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "date", date: "2099-12-25" } }), false);
+  assert.equal(bonusDoorUnlocked({ ...cal, bonusUnlock: { mode: "always" } }), true);
+  assert.equal(bonusDoorUnlocked({ ...cal, referrals: 99, bonusUnlock: { mode: "never" } }), false);
+  assert.match(bonusDoorStatus(cal).hint, /3 Freunde/);
+  assert.match(bonusDoorStatus({ ...cal, bonusUnlock: { mode: "date" } }).hint, /25\.12\.2026/);
+  assert.deepEqual(cleanBonusRule({ mode: "bogus", count: "999", date: "nope" }, cal), { mode: "referrals", count: 50, date: "2026-12-25" });
+  assert.match(getBonusDoor({ ...cal, bonusUnlock: { mode: "allOpened" } }).content.message, /Alle 24 Türchen/);
+});

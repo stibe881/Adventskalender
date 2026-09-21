@@ -2,7 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const db = require("../db");
 const { isDayUnlocked, unlockDateISO, unlockAtMs, getTodayParts } = require("../utils/time");
-const { getBonusDoor, bonusDoorUnlocked, BONUS_DOOR_DAY, BONUS_REFERRALS_NEEDED } = require("../utils/access");
+const { getBonusDoor, bonusDoorUnlocked, bonusDoorStatus, BONUS_DOOR_DAY, BONUS_REFERRALS_NEEDED } = require("../utils/access");
 
 // Public view of the secret door 25, mirroring publicDayView's rules.
 function bonusDayView(calendar, user) {
@@ -169,9 +169,10 @@ router.get("/:token", async (req, res) => {
     leaderboard: calendar.leaderboard || [],
     economy: calendar.companyMode && user ? economyView(calendar, user) : null,
     bonusReferralsNeeded: BONUS_REFERRALS_NEEDED,
+    bonus: bonusDoorStatus(calendar, user),
     days: [
       ...calendar.days.map((d) => publicDayView(calendar, d, user)),
-      ...(bonusDoorUnlocked(calendar) ? [bonusDayView(calendar, user)] : []),
+      ...(bonusDoorUnlocked(calendar, user) ? [bonusDayView(calendar, user)] : []),
     ],
   });
 });
@@ -185,8 +186,9 @@ router.post("/:token/days/:day/open", async (req, res) => {
   const door = isBonus ? getBonusDoor(calendar) : calendar.days.find((d) => d.day === dayNum);
   if (!door) return res.status(400).json({ error: "Ungültiges Türchen." });
 
-  if (isBonus && !bonusDoorUnlocked(calendar)) {
-    return res.status(403).json({ error: `Das geheime Türchen öffnet sich erst, wenn ${BONUS_REFERRALS_NEEDED} Freunde eingeladen wurden.` });
+  if (isBonus) {
+    const who = String(req.body?.user || "").trim().toLowerCase() || null;
+    if (!bonusDoorUnlocked(calendar, who)) return res.status(403).json({ error: bonusDoorStatus(calendar, who).hint || "Das geheime Türchen ist noch nicht freigeschaltet." });
   }
 
   // Server-side-only truth: never trust any date the client might send.
