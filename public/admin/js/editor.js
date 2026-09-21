@@ -94,6 +94,30 @@ function handleSpotifyReturn() {
   }
 }
 
+// Rudi's coins per door: the sub-option only makes sense while Rudi is on.
+function syncRudiCoinsUi() {
+  const rudiOn = document.getElementById("rudiEnabled").checked;
+  document.getElementById("rudi-coins-block").classList.toggle("opacity-50", !rudiOn);
+  document.getElementById("rudiCoinsEnabled").disabled = !rudiOn;
+  document.getElementById("rudi-coins-row").classList.toggle("hidden", !(rudiOn && document.getElementById("rudiCoinsEnabled").checked));
+}
+document.getElementById("rudiEnabled").addEventListener("change", syncRudiCoinsUi);
+document.getElementById("rudiCoinsEnabled").addEventListener("change", syncRudiCoinsUi);
+document.getElementById("shop-info-btn").addEventListener("click", () => {
+  const swiss = document.getElementById("swissMode").checked;
+  const items = (window.RUDI_SHOP_ITEMS || []).map((i) => ({ ...i, name: swiss && i.swissName ? i.swissName : i.name }));
+  const per = parseInt(document.getElementById("rudiCoinsPerDoor").value, 10) || 0;
+  const n = calendar?.dayCount || 24;
+  const rows = items.map((i) => `<tr><td class="py-1 pr-3 text-white">${UI.esc(i.name)}</td><td class="py-1 pr-3 text-slate-400 text-xs">${UI.esc(i.desc)}</td><td class="py-1 text-right whitespace-nowrap text-amber-300 font-semibold">${i.price} <i data-icon="coins"></i></td></tr>`).join("");
+  UI.alert({
+    title: "Rudis Nordpol-Shop",
+    body: `<p class="ui-dialog__text">Mit den Münzen aus den Türchen kauft der Beschenkte Rudi Ausstattung. Die Artikel und ihre Preise:</p>
+      <table class="w-full text-sm"><tbody>${rows}</tbody></table>
+      <p class="ui-field__hint mt-3">Summe aller Artikel: ${items.reduce((s, i) => s + i.price, 0)} Münzen.${per ? ` Mit ${per} Münzen pro Türchen kommen über ${n} Türchen ${per * n} Münzen zusammen – zusätzlich zu Münz-Türchen und Quiz-Preisen.` : ""}</p>`,
+    ok: "Schließen",
+  });
+});
+
 // Template later on: warn, then replace the content of all 24 doors.
 document.getElementById("apply-template-btn").addEventListener("click", async () => {
   const sel = document.getElementById("template-select");
@@ -173,6 +197,9 @@ async function loadCalendar() {
   document.getElementById("companyMode").checked = calendar.companyMode || false;
   document.getElementById("communityCanvas").checked = calendar.communityCanvas !== false;
   document.getElementById("rudiEnabled").checked = calendar.rudiEnabled !== false;
+  document.getElementById("rudiCoinsEnabled").checked = Boolean(calendar.rudiCoinsPerDoor);
+  document.getElementById("rudiCoinsPerDoor").value = calendar.rudiCoinsPerDoor || 10;
+  syncRudiCoinsUi();
   document.getElementById("swissMode").checked = Boolean(calendar.swissMode);
   
   const metaCheckbox = document.getElementById("metaPuzzle");
@@ -1687,6 +1714,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     companyMode: document.getElementById("companyMode").checked,
     communityCanvas: document.getElementById("communityCanvas").checked,
     rudiEnabled: document.getElementById("rudiEnabled").checked,
+    rudiCoinsPerDoor: document.getElementById("rudiCoinsEnabled").checked ? document.getElementById("rudiCoinsPerDoor").value : 0,
     swissMode: document.getElementById("swissMode").checked,
     customConfig: calendar.customConfig,
   });

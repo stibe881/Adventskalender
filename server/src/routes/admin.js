@@ -531,7 +531,7 @@ router.get("/calendars/:id", async (req, res) => {
 });
 
 router.put("/calendars/:id", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled, swissMode } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled, rudiCoinsPerDoor, swissMode } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   // period: undefined = untouched, null = back to Advent, { start, end } = custom days
@@ -547,6 +547,7 @@ router.put("/calendars/:id", async (req, res) => {
     if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
     if (communityCanvas !== undefined) cal.communityCanvas = Boolean(communityCanvas);
     if (rudiEnabled !== undefined) cal.rudiEnabled = Boolean(rudiEnabled);
+    if (rudiCoinsPerDoor !== undefined) { const n = parseInt(rudiCoinsPerDoor, 10); cal.rudiCoinsPerDoor = Number.isInteger(n) && n > 0 ? Math.min(n, 500) : 0; }
     // Swiss mode: Christkind instead of Weihnachtsmann, Samichlaus instead of Nikolaus.
     // Switching converts the texts of all doors (and back again).
     if (swissMode !== undefined && Boolean(swissMode) !== Boolean(cal.swissMode)) {
@@ -729,9 +730,10 @@ router.get("/calendars/:id/preview", async (req, res) => {
     companyName: await resolveCompanyName(calendar),
     communityCanvas: communityCanvasEnabled(calendar),
     rudiEnabled: calendar.rudiEnabled !== false,
+    rudiCoinsPerDoor: calendar.rudiCoinsPerDoor || 0,
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
-    hasCoins: calendar.days.some((d) => d.contentType === "coins"),
+    hasCoins: calendar.days.some((d) => d.contentType === "coins") || Boolean(calendar.rudiCoinsPerDoor),
     year: calendar.year,
     period: calendar.period || null,
     dayCount: dayCount(calendar),

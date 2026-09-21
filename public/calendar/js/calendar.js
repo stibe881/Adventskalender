@@ -478,20 +478,8 @@ function applyEffects(enabled) {
 
 // ---------- Tamagotchi reindeer ----------
 
-const SHOP_ITEMS = [
-  { id: "bow", name: "Schleife", slot: "neck", price: 20, desc: "Hübsch verpackt." },
-  { id: "scarf", name: "Kuschelschal", slot: "neck", price: 30, desc: "Gegen kalte Nordpol-Nächte." },
-  { id: "santahat", get name() { return calendarMeta?.swissMode ? "Christkind" : "Weihnachtsmann"; }, slot: "rider", price: 40, desc: "Reitet auf Rudis Rücken durch die Nacht." },
-  { id: "hat", name: "Zylinder", slot: "head", price: 50, desc: "Für den eleganten Auftritt." },
-  { id: "bell", name: "Glöckchen", slot: "neck", price: 60, desc: "Kling, Glöckchen, klingelingeling." },
-  { id: "skis", name: "Schlittschuhe", slot: "feet", price: 90, desc: "Elegant übers Eis gleiten." },
-  { id: "glasses", name: "Sonnenbrille", slot: "face", price: 100, desc: "Cool bleiben, auch bei Schnee." },
-  { id: "lights", name: "Lichterkette", slot: "aura", price: 120, desc: "Funkelt bei jedem Schritt." },
-  { id: "sleigh", name: "Schlitten", slot: "ride", price: 150, desc: "Rentiere ziehen, Rentiere fahren." },
-  { id: "wings", name: "Engelsflügel", slot: "aura", price: 180, desc: "Fast schon himmlisch." },
-  { id: "crown", name: "Krone", slot: "head", price: 200, desc: "König der Weihnachtswiese." },
-  { id: "star", name: "Weihnachtsstern", slot: "aura", price: 250, desc: "Das seltenste Stück im Shop." },
-];
+// Shared with the editor (public/shared/shop-items.js); the rider's name follows the Swiss mode.
+const SHOP_ITEMS = (window.RUDI_SHOP_ITEMS || []).map((i) => (i.swissName ? { ...i, get name() { return calendarMeta?.swissMode ? i.swissName : "Weihnachtsmann"; } } : i));
 
 function initPet(streak = calendarMeta?.streak || 0) {
   const petEl = document.getElementById("digital-pet");
@@ -1639,7 +1627,19 @@ async function tryOpenDoor(dayNum, sceneEl, body = {}) {
   }
 
   const updatedDoor = days.find((d) => d.day === dayNum) || door;
+  awardDoorCoins(dayNum);
   openDoorAnimation(sceneEl, updatedDoor);
+}
+
+// Rudi's pocket money: the owner can put coins behind every door, on top of its content.
+function awardDoorCoins(dayNum) {
+  const n = parseInt(calendarMeta?.rudiCoinsPerDoor, 10) || 0;
+  if (!n || isPreview || calendarMeta?.rudiEnabled === false || hasClaimed(`door:${dayNum}`)) return;
+  markClaimed(`door:${dayNum}`);
+  userCoins += n;
+  saveUserCoins();
+  updateCoinDisplay();
+  setTimeout(() => showLockToast(`+${n} Münzen für Rudi`), 900);
 }
 
 function shakeDoor(sceneEl) {
