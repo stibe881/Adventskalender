@@ -54,13 +54,53 @@ function planCard(p, shared) {
   return card;
 }
 
-async function loadPlans() {
-  const plans = await api.listElfPlans();
-  const list = document.getElementById("plan-list");
+function planRow(p, shared) {
+  const row = document.createElement("tr");
+  row.className = "hover:bg-white/5 transition-colors cursor-pointer";
+  row.addEventListener("click", () => { window.location.href = `/e/${encodeURIComponent(p.shareToken)}`; });
+  const kids = p.children.length ? p.children.map(esc).join(", ") : "keine Kinder eingetragen";
+  row.innerHTML = `
+    <td class="px-2 sm:px-4 py-3" style="max-width:0;width:100%">
+      <div class="font-display font-semibold text-white flex items-center gap-2" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span class="truncate">${esc(p.title)}</span>${p.isPro ? `<span class="ui-pro-badge">PRO</span>` : ""}</div>
+      <div class="text-xs text-slate-500" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Wichtel ${esc(p.elfName)}<span class="md:hidden"> · ${kids}</span>${shared ? " · Mit dir geteilt" : ""}</div>
+    </td>
+    <td class="px-2 sm:px-4 py-3 whitespace-nowrap"><span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">${p.year}</span></td>
+    <td class="px-2 sm:px-4 py-3 whitespace-nowrap">
+      <div class="flex items-center gap-2">
+        <span class="text-amber-300 font-bold">${p.stats.planned}/24</span>
+        <div class="hidden sm:block w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full" style="width:${Math.round((p.stats.planned / 24) * 100)}%;background:linear-gradient(90deg,#dc2626,#f59e0b)"></div></div>
+        ${p.unreadPost ? `<span class="text-rose-300 text-xs whitespace-nowrap"><i data-icon="mail"></i> ${p.unreadPost}</span>` : ""}
+      </div>
+    </td>
+    <td class="px-4 py-3 hidden md:table-cell">${kids}</td>`;
+  return row;
+}
+
+// Fills either the card grid or the table of one section, depending on the chosen view.
+function renderPlans(plans, shared, ids) {
+  const list = document.getElementById(ids.list);
+  const wrap = document.getElementById(ids.table);
+  const body = document.getElementById(ids.body);
   list.innerHTML = "";
-  document.getElementById("empty-state").classList.toggle("hidden", plans.length > 0);
-  for (const p of plans) list.appendChild(planCard(p, false));
-  return plans;
+  body.innerHTML = "";
+  const grid = view.get() === "grid";
+  list.classList.toggle("hidden", !grid || !plans.length);
+  wrap.classList.toggle("hidden", grid || !plans.length);
+  for (const p of plans) (grid ? list : body).appendChild(grid ? planCard(p, shared) : planRow(p, shared));
+}
+
+let plansCache = [];
+let sharedCache = [];
+const view = UI.viewSwitch({ key: "wichteltuerView", gridBtn: document.getElementById("view-grid-btn"), tableBtn: document.getElementById("view-table-btn"), onChange: () => {
+  renderPlans(plansCache, false, { list: "plan-list", table: "plan-table-container", body: "plan-table-body" });
+  renderPlans(sharedCache, true, { list: "shared-list", table: "shared-table-container", body: "shared-table-body" });
+} });
+
+async function loadPlans() {
+  plansCache = await api.listElfPlans();
+  document.getElementById("empty-state").classList.toggle("hidden", plansCache.length > 0);
+  renderPlans(plansCache, false, { list: "plan-list", table: "plan-table-container", body: "plan-table-body" });
+  return plansCache;
 }
 
 // Plans that were shared with this device (opened via /e/… link) but belong to someone else.
@@ -68,19 +108,19 @@ async function loadShared() {
   let tokens = [];
   try { tokens = JSON.parse(localStorage.getItem("wichteltuer_tokens") || "[]"); } catch (_) {}
   if (!tokens.length) return;
-  const mine = new Set((await api.listElfPlans()).map((p) => p.shareToken));
-  const list = document.getElementById("shared-list");
-  list.innerHTML = "";
+  const mine = new Set(plansCache.map((p) => p.shareToken));
+  sharedCache = [];
   for (const t of tokens) {
     if (mine.has(t)) continue;
     try {
       const r = await fetch(`/api/wichteltuer/s/${encodeURIComponent(t)}`);
       if (!r.ok) continue;
       const d = await r.json();
-      list.appendChild(planCard({ title: d.title, isPro: d.isPro, elfName: d.elf.name, children: d.children.map((c) => c.name), year: d.year, stats: d.stats, unreadPost: d.unreadPost, shareToken: t }, true));
+      sharedCache.push({ title: d.title, isPro: d.isPro, elfName: d.elf.name, children: d.children.map((c) => c.name), year: d.year, stats: d.stats, unreadPost: d.unreadPost, shareToken: t });
     } catch (_) { /* skip */ }
   }
-  document.getElementById("shared-section").classList.toggle("hidden", !list.children.length);
+  renderPlans(sharedCache, true, { list: "shared-list", table: "shared-table-container", body: "shared-table-body" });
+  document.getElementById("shared-section").classList.toggle("hidden", !sharedCache.length);
 }
 
 const createModal = document.getElementById("create-modal");

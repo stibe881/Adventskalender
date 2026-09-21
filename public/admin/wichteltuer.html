@@ -49,10 +49,33 @@
           <h2 class="font-display text-2xl font-semibold">Deine Wichteltüren</h2>
           <p class="text-sm text-slate-400 mt-1">Der Weihnachtswichtel, der nachts Streiche spielt: 24 Nächte planen, Material einkaufen, abends erinnert werden – und die Kinder schreiben ihm Briefe.</p>
         </div>
-        <button id="new-plan-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap">+ Neue Wichteltür</button>
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10">
+            <button id="view-grid-btn" type="button" class="p-1.5 rounded-md bg-emerald-600 text-white shadow" title="Kachel-Ansicht" aria-label="Kachel-Ansicht">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            </button>
+            <button id="view-table-btn" type="button" class="p-1.5 rounded-md hover:bg-slate-700 text-slate-400" title="Listen-Ansicht" aria-label="Listen-Ansicht">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </button>
+          </div>
+          <button id="new-plan-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap">+ Neue Wichteltür</button>
+        </div>
       </div>
 
       <div id="plan-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+      <div id="plan-table-container" class="hidden bg-white/5 border border-white/10 rounded-xl">
+        <table class="w-full text-left text-sm text-slate-300" style="table-layout:auto">
+          <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
+            <tr>
+              <th class="px-2 sm:px-4 py-3" style="width:100%">Wichteltür</th>
+              <th class="px-2 sm:px-4 py-3">Jahr</th>
+              <th class="px-2 sm:px-4 py-3">Geplant</th>
+              <th class="px-4 py-3 hidden md:table-cell">Kinder</th>
+            </tr>
+          </thead>
+          <tbody id="plan-table-body" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
       <div id="empty-state" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl mt-4">
         <div class="text-4xl mb-3 text-amber-400"><i data-icon="door-open"></i></div>
         <h3 class="text-lg font-semibold text-white mb-1">Noch keine Wichteltür</h3>
@@ -64,6 +87,19 @@
         <h3 class="font-display text-lg font-semibold mb-1">Geteilt mit dir</h3>
         <p class="text-sm text-slate-400 mb-3">Wichteltüren, die jemand mit diesem Gerät geteilt hat.</p>
         <div id="shared-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+      <div id="shared-table-container" class="hidden bg-white/5 border border-white/10 rounded-xl">
+        <table class="w-full text-left text-sm text-slate-300" style="table-layout:auto">
+          <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
+            <tr>
+              <th class="px-2 sm:px-4 py-3" style="width:100%">Wichteltür</th>
+              <th class="px-2 sm:px-4 py-3">Jahr</th>
+              <th class="px-2 sm:px-4 py-3">Geplant</th>
+              <th class="px-4 py-3 hidden md:table-cell">Kinder</th>
+            </tr>
+          </thead>
+          <tbody id="shared-table-body" class="divide-y divide-white/10"></tbody>
+        </table>
+      </div>
       </div>
     </section>
   </main>

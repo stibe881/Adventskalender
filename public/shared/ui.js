@@ -185,5 +185,22 @@
     window.addEventListener("offline", () => setOffline(true));
   }
 
-  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc, proDialog, proButtonLabel, openCheckout, inNativeApp };
+
+  // Grid/list switch for the admin overviews. Same markup as on the calendar
+  // dashboard; the choice is remembered per page in localStorage.
+  function viewSwitch({ key, gridBtn, tableBtn, onChange }) {
+    let view = localStorage.getItem(key) || "grid";
+    const paint = () => {
+      const on = (b) => { b.classList.remove("text-slate-400", "hover:bg-slate-700"); b.classList.add("text-white", "bg-emerald-600", "shadow"); };
+      const off = (b) => { b.classList.remove("text-white", "bg-emerald-600", "shadow"); b.classList.add("text-slate-400", "hover:bg-slate-700"); };
+      if (view === "grid") { on(gridBtn); off(tableBtn); } else { on(tableBtn); off(gridBtn); }
+    };
+    const set = (v) => { view = v; try { localStorage.setItem(key, v); } catch (_) {} paint(); onChange(view); };
+    gridBtn.addEventListener("click", () => set("grid"));
+    tableBtn.addEventListener("click", () => set("table"));
+    paint();
+    return { get: () => view };
+  }
+
+  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc, proDialog, proButtonLabel, openCheckout, inNativeApp, viewSwitch };
 })();
