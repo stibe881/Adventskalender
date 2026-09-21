@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "ca3d828d-fb88-4542-bebd-9c9fc5be8c72"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.stibe88.adventskalender",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

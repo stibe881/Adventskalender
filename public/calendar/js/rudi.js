@@ -1,55 +1,118 @@
-/* Rudi, the Tamagotchi reindeer, drawn as SVG (no emojis).
- * Everything lives in one 64×64 coordinate system so gear from the Nordpol-Shop
- * can be composed onto him: RudiArt.rudi({ worn, state, extras }) renders Rudi
- * with whatever he wears; RudiArt.gear(id) renders a single item as an icon. */
+/* Rudi, the Tamagotchi reindeer, drawn as SVG.
+ * Everything lives in one 64x64 coordinate system so gear from the Nordpol-Shop
+ * can be composed onto him. Overflows are used for large items like the sleigh. */
 (function () {
-  // Base reindeer, side view facing left. Slots are just documented positions.
+  // Base reindeer, side view facing left. Cute, detailed cartoon style!
   const BODY = `
-    <g id="rudi-antlers" fill="none" stroke="#5b3a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17 15 C15 9 13 7 10 5 M16 11 L12 10 M15 8 L13 4"/>
-      <path d="M26 15 C28 9 30 7 33 5 M27 11 L31 10 M28 8 L30 4"/>
+    <!-- Antlers -->
+    <g id="rudi-antlers" fill="none" stroke="#E6C280" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 22 20 L 26 10 L 34 6 M 28 14 L 34 14"/>
+      <path d="M 16 18 L 14 8 L 20 2 M 15 12 L 10 6"/>
     </g>
-    <path d="M30 34 C36 28 50 28 52 40 C53 48 46 52 38 52 L30 52 Z" fill="#8b5a2b"/>
-    <path d="M30 34 C36 30 46 30 50 38 C50 42 44 46 38 46 L30 46 Z" fill="#a0693a" opacity="0.55"/>
-    <g fill="#6b4423">
-      <rect x="31" y="49" width="4.5" height="10" rx="1.5"/><rect x="37" y="49" width="4.5" height="10" rx="1.5"/>
-      <rect x="43" y="49" width="4.5" height="10" rx="1.5"/><rect x="48" y="47" width="4.5" height="12" rx="1.5"/>
-    </g>
-    <g fill="#3b2412">
-      <rect x="31" y="57" width="4.5" height="2.5" rx="1"/><rect x="37" y="57" width="4.5" height="2.5" rx="1"/>
-      <rect x="43" y="57" width="4.5" height="2.5" rx="1"/><rect x="48" y="57" width="4.5" height="2.5" rx="1"/>
-    </g>
-    <path d="M52 40 C56 38 58 41 55 44 Z" fill="#6b4423"/>
-    <path d="M26 30 C26 24 30 22 32 26 L31 36 Z" fill="#8b5a2b"/>
-    <ellipse cx="21.5" cy="26" rx="10" ry="9.5" fill="#a0693a"/>
-    <ellipse cx="14" cy="21" rx="3.2" ry="1.9" transform="rotate(-30 14 21)" fill="#a0693a"/>
-    <ellipse cx="29" cy="21" rx="3.2" ry="1.9" transform="rotate(30 29 21)" fill="#a0693a"/>
-    <ellipse cx="16.5" cy="31" rx="6.5" ry="4.8" fill="#c98d5a"/>
-    <circle cx="12.5" cy="30.5" r="3.4" fill="#e11d48"/>
-    <circle cx="11.5" cy="29.5" r="1.1" fill="#fecdd3" opacity="0.9"/>
+    
+    <!-- Back Legs -->
+    <path d="M 40 45 Q 38 55 40 62" fill="none" stroke="#6B4226" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 48 45 Q 50 55 48 62" fill="none" stroke="#6B4226" stroke-width="4" stroke-linecap="round"/>
+    <!-- Hooves back -->
+    <path d="M 38 62 H 42 L 41 64 H 39 Z" fill="#222"/>
+    <path d="M 46 62 H 50 L 49 64 H 47 Z" fill="#222"/>
+
+    <!-- Tail -->
+    <path d="M 54 34 Q 60 36 58 40 Q 54 38 52 36 Z" fill="#8B5A2B"/>
+
+    <!-- Body -->
+    <path d="M 26 30 C 36 26 50 26 56 36 C 58 42 52 48 40 46 C 28 44 20 40 26 30 Z" fill="#8B5A2B"/>
+    <path d="M 26 30 C 36 26 50 26 56 36 C 58 42 52 48 40 46 C 28 44 20 40 26 30 Z" fill="none" stroke="#5C3A21" stroke-width="1.5"/>
+    
+    <!-- Belly (lighter) -->
+    <path d="M 30 36 C 38 34 46 36 50 40 C 48 44 38 44 30 42 C 26 40 26 38 30 36 Z" fill="#D2B48C"/>
+
+    <!-- Front Legs -->
+    <path d="M 30 44 Q 28 55 30 63" fill="none" stroke="#8B5A2B" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M 36 44 Q 34 55 36 63" fill="none" stroke="#8B5A2B" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Hooves front -->
+    <path d="M 28 63 H 32 L 31 65 H 29 Z" fill="#111"/>
+    <path d="M 34 63 H 38 L 37 65 H 35 Z" fill="#111"/>
+
+    <!-- Neck -->
+    <path d="M 30 32 Q 26 24 22 20 L 16 24 Q 20 32 24 36 Z" fill="#8B5A2B"/>
+
+    <!-- Ears -->
+    <path d="M 21 16 Q 28 12 30 16 Q 26 18 21 16 Z" fill="#8B5A2B"/>
+    <path d="M 11 12 Q 7 6 3 8 Q 5 12 11 12 Z" fill="#8B5A2B"/>
+
+    <!-- Head -->
+    <ellipse cx="16" cy="24" rx="9" ry="11" fill="#8B5A2B" transform="rotate(-15 16 24)"/>
+    <ellipse cx="10" cy="26" rx="6" ry="4.5" fill="#D2B48C" transform="rotate(-15 10 26)"/>
+    
+    <!-- Red Nose -->
+    <circle cx="5" cy="27" r="3.5" fill="#FF0000"/>
+    <circle cx="4" cy="26" r="1.2" fill="#FFC0C0"/>
+
+    <!-- Eyes -->
     <g id="rudi-eyes">
-      <circle cx="19" cy="23.5" r="1.7" fill="#1f1209"/><circle cx="25" cy="23.5" r="1.7" fill="#1f1209"/>
-      <circle cx="19.6" cy="22.9" r="0.55" fill="#fff"/><circle cx="25.6" cy="22.9" r="0.55" fill="#fff"/>
+      <circle cx="12" cy="20" r="2" fill="#111"/>
+      <circle cx="11.5" cy="19.5" r="0.8" fill="#FFF"/>
+      <circle cx="19" cy="19" r="2" fill="#111"/>
+      <circle cx="18.5" cy="18.5" r="0.8" fill="#FFF"/>
     </g>
-    <g id="rudi-eyes-sleepy" fill="none" stroke="#1f1209" stroke-width="1.4" stroke-linecap="round">
-      <path d="M17.3 24 Q19 25.4 20.7 24"/><path d="M23.3 24 Q25 25.4 26.7 24"/>
+    <!-- Sleepy eyes -->
+    <g id="rudi-eyes-sleepy" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round">
+      <path d="M 10 20 Q 12 21.5 14 20"/>
+      <path d="M 17 19 Q 19 20.5 21 19"/>
     </g>
-    <path d="M17 34.5 Q19 36 21 34.5" fill="none" stroke="#7a4a22" stroke-width="1.1" stroke-linecap="round"/>`;
+  `;
 
   // Gear in Rudi coordinates. `box` is the viewBox used when the item is shown alone.
   const GEAR = {
-    bow: { box: "24 30 14 12", svg: `<g transform="translate(31 36)"><path d="M0 0 L-6 -4.5 L-6 4.5 Z" fill="#f472b6"/><path d="M0 0 L6 -4.5 L6 4.5 Z" fill="#f472b6"/><path d="M0 0 L-6 -4.5 L-4 0 Z" fill="#be185d" opacity="0.5"/><path d="M0 0 L6 -4.5 L4 0 Z" fill="#be185d" opacity="0.5"/><circle r="2" fill="#fbcfe8" stroke="#be185d" stroke-width="0.8"/></g>` },
-    scarf: { box: "22 30 16 16", svg: `<path d="M24 33 Q31 38 37 34 L37 38 Q31 42 24 37 Z" fill="#dc2626"/><path d="M33 37 L35 45 L30 45 L30 38 Z" fill="#dc2626"/><path d="M30 42 L35 42" stroke="#fca5a5" stroke-width="1"/><path d="M24 35 Q31 40 37 36" fill="none" stroke="#fca5a5" stroke-width="1"/>` },
-    bell: { box: "26 32 12 12", svg: `<g transform="translate(32 38)"><path d="M-4 3 Q-4 -3 0 -4 Q4 -3 4 3 Z" fill="#fbbf24" stroke="#b45309" stroke-width="0.8"/><rect x="-4.8" y="2.5" width="9.6" height="1.6" rx="0.8" fill="#d97706"/><circle cy="4.8" r="1.2" fill="#b45309"/><path d="M0 -4 L0 -6" stroke="#b45309" stroke-width="1"/></g>` },
-    hat: { box: "9 -1 26 18", svg: `<g transform="translate(22 12) rotate(-6)"><rect x="-6" y="-11" width="12" height="10" rx="1" fill="#111827"/><rect x="-6" y="-4" width="12" height="2.2" fill="#dc2626"/><rect x="-9" y="-1.6" width="18" height="2.6" rx="1.3" fill="#111827"/></g>` },
-    crown: { box: "12 2 20 14", svg: `<g transform="translate(22 12)"><path d="M-7 1 L-7 -6 L-3.5 -2 L0 -7 L3.5 -2 L7 -6 L7 1 Z" fill="#fbbf24" stroke="#b45309" stroke-width="0.8" stroke-linejoin="round"/><rect x="-7" y="0" width="14" height="2.4" fill="#f59e0b"/><circle cx="-3.5" cy="-2" r="1" fill="#ef4444"/><circle cx="0" cy="-5" r="1" fill="#3b82f6"/><circle cx="3.5" cy="-2" r="1" fill="#22c55e"/></g>` },
-    glasses: { box: "13 18 18 10", svg: `<g fill="#0f172a" stroke="#0f172a" stroke-width="1"><rect x="15.5" y="21" width="7" height="4.8" rx="2" fill-opacity="0.9"/><rect x="24" y="21" width="7" height="4.8" rx="2" fill-opacity="0.9"/><path d="M22.5 23 L24 23" fill="none"/><path d="M13.5 22.5 L15.5 22"/></g><path d="M17 22 L20 22" stroke="#93c5fd" stroke-width="0.7" opacity="0.8"/><path d="M25.5 22 L28.5 22" stroke="#93c5fd" stroke-width="0.7" opacity="0.8"/>` },
-    skis: { box: "28 54 28 8", svg: `<g fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round"><path d="M29 60.5 L42 60.5"/><path d="M42 60.5 Q45 60.5 45 58"/><path d="M42 60.5 L55 60.5"/><path d="M55 60.5 Q58 60.5 58 58"/></g><g fill="#e2e8f0"><rect x="30.5" y="58" width="5.5" height="2.2" rx="0.6"/><rect x="36.5" y="58" width="5.5" height="2.2" rx="0.6"/><rect x="42.5" y="58" width="5.5" height="2.2" rx="0.6"/><rect x="47.5" y="58" width="5.5" height="2.2" rx="0.6"/></g>` },
-    lights: { box: "24 22 34 26", svg: `<path d="M27 40 Q40 22 56 40" fill="none" stroke="#166534" stroke-width="1"/><g><circle cx="29" cy="37.5" r="1.7" fill="#ef4444"/><circle cx="34" cy="32" r="1.7" fill="#facc15"/><circle cx="40" cy="28.5" r="1.7" fill="#3b82f6"/><circle cx="46" cy="28.8" r="1.7" fill="#22c55e"/><circle cx="51.5" cy="33" r="1.7" fill="#f97316"/><circle cx="55" cy="38.5" r="1.7" fill="#a855f7"/></g>` },
-    sleigh: { box: "36 36 28 24", svg: `<g transform="translate(40 40)"><path d="M0 4 L18 4 L20 -2 L22 -2 L22 8 Q22 12 18 12 L2 12 Q-2 12 -2 8 Z" fill="#dc2626"/><path d="M-1 8 L20 8" stroke="#fca5a5" stroke-width="1"/><path d="M22 -2 Q24 -4 22 -6" fill="none" stroke="#dc2626" stroke-width="2"/><path d="M-3 15 L21 15 Q25 15 26 12" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round"/><path d="M0 12 L0 15 M18 12 L18 15" stroke="#fbbf24" stroke-width="1.5"/></g>` },
-    wings: { box: "34 14 22 24", svg: `<g fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8" stroke-linejoin="round"><path d="M38 32 C40 22 48 16 55 16 C52 21 50 24 48 27 C50 27 52 26 54 26 C51 30 48 32 45 33 C47 33 48 33 50 33 C46 36 41 37 38 35 Z"/><path d="M38 33 C39 26 43 21 48 19" fill="none"/></g>` },
-    star: { box: "40 0 22 22", svg: `<g transform="translate(51 10)"><circle r="9" fill="#fde047" opacity="0.18"/><path d="M0 -8 L2 -2.7 L7.6 -2.5 L3.2 1 L4.7 6.5 L0 3.3 L-4.7 6.5 L-3.2 1 L-7.6 -2.5 L-2 -2.7 Z" fill="#fbbf24" stroke="#b45309" stroke-width="0.8" stroke-linejoin="round"/><path d="M0 -8 L2 -2.7 L0 -0.8 Z" fill="#fff" opacity="0.55"/></g>` },
-    santahat: { box: "28 6 22 26", svg: `<g transform="translate(39 22)"><rect x="-5" y="-2" width="10" height="9" rx="2.5" fill="#dc2626"/><rect x="-5" y="5" width="10" height="2" fill="#f8fafc"/><circle cy="-5" r="4" fill="#fcd9b6"/><path d="M-4 -4 Q0 -2 4 -4 L4 -1 Q0 3 -4 -1 Z" fill="#f8fafc"/><path d="M-4.5 -6.5 Q0 -13 5.5 -7 L-4.5 -6.5 Z" fill="#dc2626"/><rect x="-5" y="-7.4" width="10.5" height="1.8" rx="0.9" fill="#f8fafc"/><circle cx="5.6" cy="-11" r="1.5" fill="#f8fafc"/><circle cx="-1.2" cy="-5.5" r="0.6" fill="#1f1209"/><circle cx="1.2" cy="-5.5" r="0.6" fill="#1f1209"/><circle cy="-4.2" r="0.9" fill="#f87171"/></g>` },
+    bow: { box: "16 28 16 16", svg: `<g transform="translate(24, 36)"><path d="M0 0 L-5 -4 L-5 4 Z" fill="#f472b6"/><path d="M0 0 L5 -4 L5 4 Z" fill="#f472b6"/><circle r="2.5" fill="#fbcfe8" stroke="#be185d" stroke-width="0.8"/></g>` },
+    scarf: { box: "16 28 16 16", svg: `<g transform="translate(24, 34)"><path d="M-6 -2 Q 0 -4 6 -2 L 5 4 Q 0 6 -5 4 Z" fill="#dc2626"/><path d="M 2 2 L 4 14 L -2 14 L 0 2 Z" fill="#dc2626"/><path d="M-2 14 L4 14" stroke="#fca5a5" stroke-width="1.5"/><path d="M -5 2 Q 0 4 5 2" fill="none" stroke="#fca5a5" stroke-width="1"/></g>` },
+    bell: { box: "18 32 12 12", svg: `<g transform="translate(24, 40)"><circle cy="2" r="3" fill="#fbbf24" stroke="#b45309" stroke-width="0.8"/><rect x="-4" y="-2" width="8" height="2" rx="1" fill="#d97706"/><circle cy="3" r="1.5" fill="#b45309"/><path d="M0 -2 L0 -5" stroke="#b45309" stroke-width="1.5"/></g>` },
+    hat: { box: "5 -2 22 22", svg: `<g transform="translate(16, 11) rotate(-15)"><rect x="-7" y="-12" width="14" height="11" rx="1" fill="#111827"/><rect x="-7" y="-3" width="14" height="2.5" fill="#dc2626"/><rect x="-10" y="-1" width="20" height="2.5" rx="1" fill="#111827"/></g>` },
+    crown: { box: "6 0 20 16", svg: `<g transform="translate(16, 12) rotate(-10)"><path d="M-8 0 L-8 -7 L-4 -3 L0 -8 L4 -3 L8 -7 L8 0 Z" fill="#fbbf24" stroke="#b45309" stroke-width="0.8" stroke-linejoin="round"/><rect x="-8" y="0" width="16" height="2.5" fill="#f59e0b"/><circle cx="-4" cy="-3" r="1.2" fill="#ef4444"/><circle cx="0" cy="-6" r="1.2" fill="#3b82f6"/><circle cx="4" cy="-3" r="1.2" fill="#22c55e"/></g>` },
+    glasses: { box: "6 14 20 12", svg: `<g transform="translate(15, 19) rotate(-15)"><rect x="-6" y="-3" width="6.5" height="5" rx="1.5" fill="#0f172a" fill-opacity="0.9"/><rect x="2" y="-3" width="6.5" height="5" rx="1.5" fill="#0f172a" fill-opacity="0.9"/><path d="M 0.5 -1.5 L 2 -1.5 M -6 -1.5 L -8 -1.5" stroke="#0f172a" stroke-width="1.5"/><path d="M -4 -1 L -2 -1 M 4 -1 L 6 -1" stroke="#93c5fd" stroke-width="0.8" opacity="0.8"/></g>` },
+    skis: { box: "20 56 38 12", svg: `<g fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M 22 65 L 56 65 Q 60 65 60 62"/></g><g fill="#e2e8f0"><rect x="28" y="62" width="6" height="2.5" rx="1"/><rect x="34" y="62" width="6" height="2.5" rx="1"/><rect x="46" y="62" width="6" height="2.5" rx="1"/><rect x="52" y="62" width="6" height="2.5" rx="1"/></g>` },
+    lights: { box: "16 20 36 28", svg: `<path d="M 20 36 Q 30 20 50 36" fill="none" stroke="#166534" stroke-width="1.5"/><g><circle cx="23" cy="32" r="2" fill="#ef4444"/><circle cx="28" cy="27" r="2" fill="#facc15"/><circle cx="35" cy="24" r="2" fill="#3b82f6"/><circle cx="42" cy="27" r="2" fill="#22c55e"/><circle cx="47" cy="32" r="2" fill="#f97316"/></g>` },
+    sleigh: { box: "65 25 50 40", svg: `
+      <path d="M 32 38 Q 50 44 70 42" fill="none" stroke="#B22222" stroke-width="2" stroke-dasharray="4 2"/>
+      <path d="M 28 32 Q 50 40 70 38" fill="none" stroke="#B22222" stroke-width="2" stroke-dasharray="4 2"/>
+      <g transform="translate(70, 30)">
+        <path d="M 0 25 L 30 25 L 35 12 L 45 12 L 42 28 L -5 28 Z" fill="#8B0000"/>
+        <path d="M 0 25 L 30 25 L 35 12 L 45 12 L 42 28 L -5 28 Z" fill="none" stroke="#5C0000" stroke-width="1.5"/>
+        <path d="M -10 32 L 50 32" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 50 32 Q 55 32 55 28" fill="none" stroke="#C0C0C0" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="2" y1="28" x2="2" y2="32" stroke="#C0C0C0" stroke-width="2"/>
+        <line x1="15" y1="28" x2="15" y2="32" stroke="#C0C0C0" stroke-width="2"/>
+        <line x1="28" y1="28" x2="28" y2="32" stroke="#C0C0C0" stroke-width="2"/>
+        <line x1="40" y1="28" x2="40" y2="32" stroke="#C0C0C0" stroke-width="2"/>
+        <rect x="5" y="8" width="14" height="17" fill="#228B22" rx="1"/>
+        <rect x="10" y="8" width="4" height="17" fill="#FFD700"/>
+        <rect x="5" y="14" width="14" height="4" fill="#FFD700"/>
+        <rect x="22" y="14" width="11" height="11" fill="#1E90FF" rx="1"/>
+        <rect x="26" y="14" width="3" height="11" fill="#FFF"/>
+      </g>
+    ` },
+    wings: { box: "30 15 26 26", svg: `<g transform="translate(38, 25)" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" stroke-linejoin="round"><path d="M 0 5 C 4 -5 12 -10 18 -10 C 16 -4 14 0 12 4 C 14 4 16 3 18 3 C 15 7 12 9 9 10 C 11 10 12 10 14 10 C 10 14 5 15 2 13 Z"/><path d="M 2 11 C 3 4 7 -2 12 -4" fill="none"/></g>` },
+    star: { box: "45 -5 26 26", svg: `<g transform="translate(56, 8)"><circle r="12" fill="#fde047" opacity="0.25"/><path d="M0 -10 L2.5 -3.5 L10 -3.5 L4 1.5 L6 9 L0 4.5 L-6 9 L-4 1.5 L-10 -3.5 L-2.5 -3.5 Z" fill="#fbbf24" stroke="#b45309" stroke-width="0.8" stroke-linejoin="round"/><path d="M0 -10 L2.5 -3.5 L0 -1 Z" fill="#fff" opacity="0.55"/></g>` },
+    santahat: { box: "28 8 26 26", svg: `
+      <g transform="translate(42, 28)">
+        <rect x="-8" y="-18" width="16" height="20" rx="6" fill="#D32F2F"/>
+        <rect x="-8" y="-5" width="16" height="3" fill="#111"/>
+        <rect x="-2" y="-6" width="4" height="5" fill="none" stroke="#FFD700" stroke-width="1.2"/>
+        <circle cx="0" cy="-24" r="7" fill="#FFCDD2"/>
+        <circle cx="-2" cy="-26" r="1" fill="#111"/>
+        <circle cx="2" cy="-26" r="1" fill="#111"/>
+        <path d="M -7 -22 Q 0 -12 7 -22 Q 0 -16 -7 -22 Z" fill="#FFF"/>
+        <path d="M -7 -26 L 0 -38 L 7 -26 Z" fill="#D32F2F"/>
+        <rect x="-8" y="-27" width="16" height="3.5" rx="1.5" fill="#FFF"/>
+        <circle cx="0" cy="-38" r="3.5" fill="#FFF"/>
+        <path d="M -4 0 L -2 12 L -6 12 Z" fill="#D32F2F"/>
+        <rect x="-7" y="12" width="6" height="5" rx="1.5" fill="#111"/>
+        <rect x="-6" y="11" width="4" height="2" fill="#FFF"/>
+        <path d="M -2 -12 L -12 -5" stroke="#D32F2F" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="-12" cy="-5" r="2.5" fill="#111"/>
+      </g>
+    ` },
   };
 
   const DUST = `<g fill="#cbd5e1" opacity="0.8"><circle cx="20" cy="40" r="5"/><circle cx="30" cy="44" r="7"/><circle cx="42" cy="40" r="5.5"/><circle cx="35" cy="34" r="4"/></g>`;

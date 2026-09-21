@@ -45,17 +45,21 @@
   <!-- Digital Pet -->
   <div id="digital-pet" class="fixed bottom-4 left-4 z-40 hidden cursor-pointer select-none" title="Rudis Stall – klick auf Rudi für ein Kunststück">
     <div class="rudi-stable">
-      <svg class="stable-art" viewBox="0 -16 200 166" aria-hidden="true">
+      <svg class="stable-art" viewBox="0 -16 200 166" aria-hidden="true" style="overflow:visible;">
         <defs>
-          <linearGradient id="stable-wood" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#9a6538"/><stop offset="1" stop-color="#6e4423"/>
+          <linearGradient id="wood-dark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#4a2e1b"/><stop offset="1" stop-color="#2a1a0f"/>
           </linearGradient>
-          <linearGradient id="stable-roof" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#7a4630"/><stop offset="1" stop-color="#4f2c1c"/>
+          <linearGradient id="wood-light" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#8B5A2B"/><stop offset="1" stop-color="#6B4226"/>
           </linearGradient>
-          <radialGradient id="stable-lantern" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#ffd27a" stop-opacity="0.9"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+          <linearGradient id="snow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E2E8F0"/>
+          </linearGradient>
+          <radialGradient id="lantern-glow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stop-color="#FFD700" stop-opacity="0.8"/><stop offset="1" stop-color="#FF8C00" stop-opacity="0"/>
           </radialGradient>
+          <!-- Keep original star glows in case they are used -->
           <radialGradient id="stable-star-glow" cx="0.5" cy="0.5" r="0.5">
             <stop offset="0" stop-color="#fff3b0" stop-opacity="0.95"/><stop offset="0.55" stop-color="#ffd54a" stop-opacity="0.35"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/>
           </radialGradient>
@@ -63,52 +67,8 @@
             <stop offset="0" stop-color="#fff6c2"/><stop offset="0.5" stop-color="#ffd23f"/><stop offset="1" stop-color="#e0a100"/>
           </linearGradient>
         </defs>
-        <!-- walls with planks -->
-        <rect x="18" y="58" width="164" height="88" rx="3" fill="url(#stable-wood)"/>
-        <g stroke="rgba(0,0,0,0.22)" stroke-width="1.5">
-          <line x1="18" y1="72" x2="182" y2="72"/><line x1="18" y1="86" x2="182" y2="86"/><line x1="18" y1="100" x2="182" y2="100"/>
-          <line x1="18" y1="114" x2="182" y2="114"/><line x1="18" y1="128" x2="182" y2="128"/>
-        </g>
-        <!-- dark stall opening -->
-        <path d="M56,146 V84 a44,30 0 0 1 88,0 V146 Z" fill="#1c1008"/>
-        <path d="M56,146 V84 a44,30 0 0 1 88,0 V146" fill="none" stroke="#c8934f" stroke-width="4"/>
-        <!-- hay -->
-        <g stroke="#e3b94b" stroke-width="2" stroke-linecap="round" opacity="0.9">
-          <line x1="62" y1="140" x2="74" y2="128"/><line x1="66" y1="142" x2="82" y2="132"/><line x1="60" y1="134" x2="70" y2="122"/>
-          <line x1="124" y1="142" x2="136" y2="130"/><line x1="130" y1="144" x2="140" y2="136"/>
-        </g>
-        <!-- lantern -->
-        <circle class="stable-glow" cx="164" cy="80" r="18" fill="url(#stable-lantern)"/>
-        <rect x="159" y="72" width="10" height="14" rx="2" fill="#3a2a12" stroke="#c8934f" stroke-width="1.5"/>
-        <rect x="161.5" y="75" width="5" height="8" rx="1" fill="#ffd27a" class="stable-flame"/>
-        <line x1="164" y1="66" x2="164" y2="72" stroke="#c8934f" stroke-width="1.5"/>
-        <!-- roof with snow -->
-        <polygon points="6,62 100,10 194,62" fill="url(#stable-roof)"/>
-        <path d="M10,60 L100,12 L190,60" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="52" cy="40" r="3" fill="#fff"/><circle cx="140" cy="38" r="3.5" fill="#fff"/><circle cx="82" cy="24" r="2.5" fill="#fff"/>
-        <!-- chimney -->
-        <rect x="140" y="20" width="12" height="20" fill="#5a3416"/><rect x="138" y="17" width="16" height="5" rx="2" fill="#fff"/>
-        <g class="stable-smoke" fill="#fff"><circle cx="146" cy="10" r="3.5" opacity=".7"/><circle cx="150" cy="3" r="4.5" opacity=".45"/></g>
-        <!-- Christmas star on the roof (shown once purchased) -->
-        <g id="stable-star" class="stable-star" style="display:none" transform="translate(100 3)">
-          <circle r="22" fill="url(#stable-star-glow)" class="stable-star-glow"/>
-          <g stroke="#ffe680" stroke-width="1.2" stroke-linecap="round" opacity="0.8" class="stable-star-rays">
-            <line x1="0" y1="-19" x2="0" y2="-14"/><line x1="13.4" y1="-13.4" x2="10" y2="-10"/><line x1="19" y1="0" x2="14" y2="0"/>
-            <line x1="-13.4" y1="-13.4" x2="-10" y2="-10"/><line x1="-19" y1="0" x2="-14" y2="0"/>
-          </g>
-          <path d="M0,-11 L2.7,-3.7 L10.5,-3.4 L4.4,1.4 L6.5,8.9 L0,4.6 L-6.5,8.9 L-4.4,1.4 L-10.5,-3.4 L-2.7,-3.7 Z" fill="url(#stable-star-fill)" stroke="#b8860b" stroke-width="1" stroke-linejoin="round"/>
-          <path d="M0,-11 L2.7,-3.7 L0,-1 Z" fill="#fff" opacity="0.55"/>
-        </g>
-        <!-- name sign -->
-        <rect x="62" y="44" width="76" height="17" rx="3" fill="#4a2c14" stroke="#c8934f" stroke-width="2"/>
-        <text x="100" y="56.5" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="10.5" letter-spacing="1.5" fill="#f6e2a3">RUDIS STALL</text>
       </svg>
       <div class="stable-rudi"><span id="pet-emoji" class="transition-transform duration-200"></span></div>
-      <svg class="stable-gate" viewBox="0 -16 200 166" aria-hidden="true">
-        <rect x="56" y="122" width="88" height="24" fill="#a06a3a" stroke="#6e4423" stroke-width="2"/>
-        <line x1="58" y1="124" x2="142" y2="144" stroke="#6e4423" stroke-width="3"/><line x1="142" y1="124" x2="58" y2="144" stroke="#6e4423" stroke-width="3"/>
-        <line x1="56" y1="122" x2="144" y2="122" stroke="#c8934f" stroke-width="2"/>
-      </svg>
     </div>
     <div id="pet-items" class="stable-items" style="display:none"></div>
   </div>
