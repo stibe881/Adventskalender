@@ -361,7 +361,7 @@ function setsCard() {
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="sparkles"></i> Fertige Monatspläne</h2>
     <p class="text-sm text-slate-400 mt-1">Ein Tipp füllt ${data.stats.open ? `die ${data.stats.open} freien Nächte` : "den Monat"} – passend zum Alter der Kinder. Danach lässt sich jeder Tag ändern.</p>
-    <div class="grid sm:grid-cols-2 gap-2 mt-3">${sets.map((s) => `<button type="button" class="t-set" data-set="${esc(s.id)}"><b>${esc(s.title)}</b><span>${esc(s.desc)}</span></button>`).join("")}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${sets.map((s) => `<button type="button" class="t-set" data-set="${esc(s.id)}"><b>${esc(s.title)}</b><span>${esc(s.desc)}</span></button>`).join("")}</div>
   </div>`;
 }
 
@@ -383,7 +383,7 @@ function ideasCard() {
     <p class="text-sm text-slate-400 mt-1">Aufwand, Material und Alter stehen dabei. „Einplanen“ legt die Idee auf einen freien Tag. Eigene Ideen bleiben für nächstes Jahr gespeichert.</p>
     <input id="idea-search" class="w-input mt-3" placeholder="Suchen: Mehl, Brief, Rätsel …" value="${esc(ideaFilter.q)}">
     <div class="t-filter mt-2" id="idea-filter"><button type="button" data-cat="" class="${ideaFilter.cat ? "" : "is-active"}">Alle</button>${own ? `<button type="button" data-cat="eigene" class="${ideaFilter.cat === "eigene" ? "is-active" : ""}">Eigene (${own})</button>` : ""}${Object.entries(data.categories).map(([k, v]) => `<button type="button" data-cat="${k}" class="${ideaFilter.cat === k ? "is-active" : ""}">${esc(v)}</button>`).join("")}</div>
-    <div class="grid sm:grid-cols-2 gap-2 mt-3">${list.map((i) => `<div class="t-idea ${used.has(i.id) ? "is-used" : ""} ${i.custom ? "t-idea--own" : ""}">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${list.map((i) => `<div class="t-idea ${used.has(i.id) ? "is-used" : ""} ${i.custom ? "t-idea--own" : ""}">
       <div class="t-idea__head"><div class="t-idea__title">${i.custom ? `<i data-icon="star"></i> ` : ""}${esc(i.title)}</div>${catChip(i.category)}</div>
       <div class="t-idea__text">${esc(i.text)}</div>
       <div class="t-day__meta"><span><i data-icon="clock"></i> ${i.minutes} Min.</span><span><i data-icon="user"></i> ${i.ageMin}–${i.ageMax} J.</span>${i.prepDayBefore ? `<span class="text-amber-300"><i data-icon="triangle-alert"></i> Vortag</span>` : ""}${i.weekend ? `<span><i data-icon="calendar"></i> Wochenende</span>` : ""}${!fits(i) ? `<span class="text-rose-300">passt nicht zum Alter</span>` : ""}</div>
@@ -463,7 +463,7 @@ function settingsCard() {
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="settings"></i> Einstellungen</h2>
     <form id="settings-form" class="space-y-4 mt-3">
-      <div class="grid sm:grid-cols-2 gap-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label class="ui-field"><span class="ui-field__label">Titel</span><input name="title" value="${esc(d.title)}" maxlength="80" class="w-input"></label>
         <label class="ui-field"><span class="ui-field__label">Name des Wichtels</span><input name="elfName" value="${esc(d.elf.name)}" maxlength="40" class="w-input"></label>
         <label class="ui-field"><span class="ui-field__label">Charakter</span><select name="character" class="w-input">${[["frech", "Frech"], ["lieb", "Lieb"], ["verpeilt", "Verpeilt"], ["neugierig", "Neugierig"]].map(([v, l]) => `<option value="${v}" ${d.elf.character === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
@@ -474,7 +474,7 @@ function settingsCard() {
       <div><span class="ui-field__label">Eltern / Helfer <span class="text-slate-500">(wer ist dran)</span></span><div class="space-y-2" id="parent-rows">${rows(d.parents, "parent", false)}</div><button type="button" class="text-xs text-amber-300 mt-2" data-act="add-parent">+ Person hinzufügen</button></div>
       ${d.parents.length > 1 ? `<div class="border-t border-white/10 pt-3">
         <span class="ui-field__label">Wer ist dran? <span class="text-slate-500">(automatische Verteilung)</span></span>
-        <div class="grid sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label class="ui-field"><select name="assignMode" class="w-input" id="assign-mode"><option value="manual" ${rule.mode === "manual" ? "selected" : ""}>Von Hand pro Tag</option><option value="alternate" ${rule.mode === "alternate" ? "selected" : ""}>Abwechselnd, Tag für Tag</option><option value="weekdays" ${rule.mode === "weekdays" ? "selected" : ""}>Feste Wochentage</option></select></label>
           <button type="button" class="w-btn w-btn--ghost self-start" data-act="assign-now"><i data-icon="shuffle"></i> Jetzt verteilen</button>
         </div>
@@ -487,7 +487,7 @@ function settingsCard() {
       </div>
       <div class="border-t border-white/10 pt-3">
         <span class="ui-field__label">Abendliche Erinnerung</span>
-        <div class="grid sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label class="w-check"><input type="checkbox" name="notifyEnabled" ${d.notify.enabled ? "checked" : ""}> <span>Jeden Abend erinnern</span></label>
           <label class="ui-field"><span class="ui-field__label">Uhrzeit</span><input name="notifyTime" type="time" value="${esc(d.notify.time)}" class="w-input"></label>
           <label class="ui-field sm:col-span-2"><span class="ui-field__label">Zusätzlich per E-Mail an (mit Komma trennen)</span><input name="emails" value="${esc(d.notify.emails.join(", "))}" class="w-input" placeholder="mama@…, papa@…"></label>

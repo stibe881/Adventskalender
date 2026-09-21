@@ -51,7 +51,7 @@
         <span class="transform group-open:rotate-180 transition-transform">▼</span>
       </summary>
       <div class="p-5 pt-0 border-t border-white/10 mt-2 space-y-4">
-        <form id="settings-form" class="grid sm:grid-cols-4 gap-4 items-end mt-4">
+        <form id="settings-form" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end mt-4">
           <div class="sm:col-span-2">
             <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
             <input name="recipientName" required class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
@@ -222,8 +222,8 @@
                 <label for="dailyReminderEnabled" class="text-sm font-semibold text-indigo-300"><i data-icon="bell"></i> Automatische tägliche Push-Erinnerung</label>
               </div>
               <p class="text-xs text-slate-400 ml-7">Der Empfänger bekommt jeden Tag im Dezember (1–24) eine Push-Benachrichtigung, wenn das Türchen noch nicht geöffnet wurde. Nur aktiv, wenn der Empfänger Push-Benachrichtigungen erlaubt hat.</p>
-              <div class="ml-7 flex items-center gap-3" id="reminderTimeRow">
-                <label class="text-sm text-slate-300 shrink-0">Uhrzeit der Erinnerung:</label>
+              <div class="ml-7 flex flex-wrap items-center gap-2" id="reminderTimeRow">
+                <label class="text-sm text-slate-300">Uhrzeit der Erinnerung:</label>
                 <input type="time" id="dailyReminderTime" name="dailyReminderTime" value="08:00" class="rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 <span class="text-xs text-slate-500">(Server-Zeitzone: Europe/Berlin)</span>
               </div>

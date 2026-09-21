@@ -72,7 +72,7 @@
     <section id="einstellungen" class="card">
       <h2><i data-icon="settings"></i> Einstellungen</h2>
       <p class="lead">Titel, Termin, Budget und Regeln der Runde. Alles lässt sich jederzeit ändern.</p>
-      <form id="settings-form" class="grid sm:grid-cols-2 gap-4">
+      <form id="settings-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="sm:col-span-2"><label class="block text-sm text-slate-300 mb-1">Titel</label><input name="title" required maxlength="80" class="field" /></div>
         <div><label class="block text-sm text-slate-300 mb-1">Organisator (Name)</label><input name="organizerName" maxlength="60" class="field" /></div>
         <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="organizerParticipates" class="w-4 h-4 rounded bg-slate-900 border-white/10"> Organisator wichtelt mit</label></div>
@@ -89,7 +89,7 @@
 
         <div class="sm:col-span-2 border-t border-white/10 pt-4">
           <label class="block text-sm text-slate-300 mb-2">Einladungsmodus</label>
-          <div class="grid sm:grid-cols-3 gap-2 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
             <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="email" class="mt-1"><span><b class="text-white">Per E-Mail</b><br><span class="text-slate-400 text-xs">Jede Person bekommt ihren Link zugeschickt.</span></span></label>
             <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="link" class="mt-1"><span><b class="text-white">Teilbarer Link</b><br><span class="text-slate-400 text-xs">Alle tragen sich selbst ein.</span></span></label>
             <label class="flex items-start gap-2 p-2 rounded-lg border border-white/10 cursor-pointer"><input type="radio" name="inviteMode" value="names" class="mt-1"><span><b class="text-white">Ohne E-Mail</b><br><span class="text-slate-400 text-xs">Links selbst verteilen.</span></span></label>
@@ -128,7 +128,7 @@
         <button id="invite-all-btn" class="btn btn-ghost"><i data-icon="mail"></i> Alle per E-Mail einladen</button>
       </div>
       <p class="lead">Namen eintragen – oder den Einladungslink teilen, dann tragen sich alle selbst ein.</p>
-      <form id="add-participant-form" class="grid sm:grid-cols-5 gap-3 mb-4">
+      <form id="add-participant-form" class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-4">
         <input name="name" required maxlength="60" placeholder="Name" class="sm:col-span-2 field" />
         <input name="email" type="email" placeholder="E-Mail (optional)" class="sm:col-span-2 field" />
         <button type="submit" class="btn btn-primary">+ Hinzufügen</button>

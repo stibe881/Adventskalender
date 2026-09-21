@@ -23,7 +23,7 @@ function render(d) {
 
     <div class="w-card">
       <h2 class="w-title text-xl"><i data-icon="camera"></i> Was ${esc(d.elf.name)} angestellt hat</h2>
-      ${withStuff.length ? `<div class="grid sm:grid-cols-2 gap-3 mt-3">${withStuff.map((x) => `<div class="t-idea">
+      ${withStuff.length ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">${withStuff.map((x) => `<div class="t-idea">
           <div class="t-idea__head"><div class="t-idea__title">${x.day}. Dezember</div><span class="t-cat t-cat--${esc(x.entry.category)}"><i data-icon="${catIcon[x.entry.category] || "gift"}"></i> ${esc(x.entry.categoryLabel)}</span></div>
           <div class="text-white font-semibold">${esc(x.entry.title)}</div>
           ${x.entry.photo ? `<img src="${esc(x.entry.photo)}" alt="" style="width:100%;border-radius:10px;max-height:260px;object-fit:cover">` : ""}

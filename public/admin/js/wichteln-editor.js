@@ -125,7 +125,7 @@ function renderDraw(active) {
     box.classList.add("hidden");
     if (group.status === "revealed") {
       table.classList.remove("hidden");
-      table.innerHTML = `<h3 class="text-sm font-semibold text-amber-200 mb-2">Auflösung</h3><div class="grid sm:grid-cols-2 gap-1 text-sm">${active.map((p) => `<div class="bg-black/20 rounded-lg px-3 py-1.5">${escapeHtml(p.name)} <span class="text-slate-500">→</span> <b>${escapeHtml(p.assignedToName || "?")}</b></div>`).join("")}</div>`;
+      table.innerHTML = `<h3 class="text-sm font-semibold text-amber-200 mb-2">Auflösung</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">${active.map((p) => `<div class="bg-black/20 rounded-lg px-3 py-1.5">${escapeHtml(p.name)} <span class="text-slate-500">→</span> <b>${escapeHtml(p.assignedToName || "?")}</b></div>`).join("")}</div>`;
     } else {
       table.classList.add("hidden");
     }

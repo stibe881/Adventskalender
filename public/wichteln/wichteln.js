@@ -509,7 +509,7 @@ function hintsBlock(h) {
     h.notes ? [`<i data-icon="lightbulb"></i> Sonstiges`, h.notes] : null,
   ].filter(Boolean);
   if (!rows.length) return `<p class="text-sm text-slate-500">Keine Hinweise hinterlegt.</p>`;
-  return `<dl class="grid sm:grid-cols-2 gap-2 text-sm">${rows.map(([k, v]) => `<div class="bg-black/20 rounded-xl p-3"><dt class="text-xs text-slate-400">${k}</dt><dd class="text-slate-100 mt-0.5 whitespace-pre-line">${esc(v)}</dd></div>`).join("")}</dl>`;
+  return `<dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">${rows.map(([k, v]) => `<div class="bg-black/20 rounded-xl p-3"><dt class="text-xs text-slate-400">${k}</dt><dd class="text-slate-100 mt-0.5 whitespace-pre-line">${esc(v)}</dd></div>`).join("")}</dl>`;
 }
 
 function chatBlock(messages, channel, placeholder) {
@@ -563,7 +563,7 @@ function recipientCard() {
       </select>
       <div class="flex-1 min-w-[140px]"><div class="w-progress"><div style="width:${Math.round((gs.done / gs.total) * 100)}%"></div></div></div>
     </div>
-    <div class="grid sm:grid-cols-2">${gs.steps.map((s) => `<label class="w-check"><input type="checkbox" data-step="${s.key}" ${s.done ? "checked" : ""}> <span>${esc(s.label)}</span></label>`).join("")}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2">${gs.steps.map((s) => `<label class="w-check"><input type="checkbox" data-step="${s.key}" ${s.done ? "checked" : ""}> <span>${esc(s.label)}</span></label>`).join("")}</div>
   </div>`;
 }
 
@@ -602,7 +602,7 @@ function myWishlistCard() {
           <input name="url" type="url" class="w-input" placeholder="Link zum Produkt im Online-Shop">
           <button type="button" id="wish-preview" class="w-btn w-btn--ghost whitespace-nowrap">Vorschau</button>
         </div>
-        <div class="grid sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input name="price" maxlength="20" class="w-input" placeholder="Preis, z. B. 19.90">
           <input name="note" maxlength="300" class="w-input" placeholder="Notiz: Farbe, Größe, Alternative …">
         </div>
@@ -620,7 +620,7 @@ function myHintsCard() {
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="${pro ? "lightbulb" : "bell"}"></i> ${pro ? "Hinweise für deinen Wichtel" : "Benachrichtigungen"}</h2>
     <p class="text-sm text-slate-400 mt-1">${pro ? "Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte." : "Wir sagen dir Bescheid, wenn es in der Runde etwas Neues gibt."}</p>
-    <form id="hints-form" class="grid sm:grid-cols-2 gap-2 mt-3">
+    <form id="hints-form" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
       ${pro ? `<input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
       <input name="favorites" maxlength="300" class="w-input" placeholder="Lieblingsgeschmack" value="${esc(h.favorites || "")}">
       <input name="hobbies" maxlength="300" class="w-input" placeholder="Hobbys" value="${esc(h.hobbies || "")}">
@@ -681,7 +681,7 @@ function revealCard() {
   return `<div class="w-card w-card--reveal">
     <h2 class="w-title text-xl"><i data-icon="drama"></i> Die Auflösung</h2>
     <p class="text-sm text-slate-300 mt-1 mb-3">Nur für dich als Organisator sichtbar: wer wen beschenkt.</p>
-    <div class="grid sm:grid-cols-2 gap-1">${data.reveal.map((r) => `<div class="w-reveal-row"><span>${esc(r.giver)}</span><span class="text-slate-500">→</span><b>${esc(r.receiver)}</b></div>`).join("")}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">${data.reveal.map((r) => `<div class="w-reveal-row"><span>${esc(r.giver)}</span><span class="text-slate-500">→</span><b>${esc(r.receiver)}</b></div>`).join("")}</div>
   </div>`;
 }
 

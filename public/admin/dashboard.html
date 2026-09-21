@@ -62,7 +62,7 @@
         </div>
       </div>
       
-      <div id="calendar-list" class="grid sm:grid-cols-2 gap-4"></div>
+      <div id="calendar-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
       <div id="calendar-table-container" class="hidden bg-white/5 border border-white/10 rounded-xl">
         <table class="w-full text-left text-sm text-slate-300" style="table-layout:auto">
           <thead class="bg-slate-800/50 text-slate-400 uppercase text-xs border-b border-white/10">
@@ -93,7 +93,7 @@
     <div class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
       <button onclick="document.getElementById('create-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl"><i data-icon="x"></i></button>
       <h2 class="font-display text-xl font-semibold mb-6">Neuen Kalender erstellen</h2>
-      <form id="create-form" class="grid sm:grid-cols-4 gap-4 items-end">
+      <form id="create-form" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
         <div class="sm:col-span-2">
           <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
           <input name="recipientName" required placeholder="z. B. Bine"
