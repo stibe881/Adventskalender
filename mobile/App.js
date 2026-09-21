@@ -38,6 +38,11 @@ function pathFromDeepLink(url) {
     const u = new URL(url);
     if (u.origin === SERVER_ORIGIN) return u.pathname + u.search + u.hash;
     if (u.protocol === "adventskalender:") {
+      // adventskalender://open?path=/e/abc?payment=success – the return from a browser sheet (Stripe).
+      if (u.host === "open" && u.searchParams.get("path")) {
+        const p = u.searchParams.get("path");
+        return p.startsWith("/") && !p.startsWith("//") ? p : "/";
+      }
       const path = `/${(u.host || "") + u.pathname}`.replace(/\/{2,}/g, "/");
       return path + u.search + u.hash;
     }
@@ -157,6 +162,21 @@ function Shell() {
       case "openExternal":
         if (typeof msg.url === "string") WebBrowser.openBrowserAsync(msg.url).catch(() => Linking.openURL(msg.url));
         break;
+      case "checkout": {
+        // Stripe in a browser sheet; its return page redirects to adventskalender://open?path=…,
+        // which closes the sheet and brings the user back to the right page in the app.
+        if (typeof msg.url !== "string") break;
+        try {
+          const result = await WebBrowser.openAuthSessionAsync(msg.url, "adventskalender://open");
+          if (result.type === "success" && result.url) {
+            const path = pathFromDeepLink(result.url);
+            if (path) navigateTo(path);
+          }
+        } catch (_) {
+          Linking.openURL(msg.url).catch(() => {});
+        }
+        break;
+      }
       case "download":
         // ICS / PDF: hand over to the system so the OS offers the right app.
         if (typeof msg.url === "string") Linking.openURL(msg.url).catch(() => WebBrowser.openBrowserAsync(msg.url));
@@ -172,7 +192,7 @@ function Shell() {
       default:
         break;
     }
-  }, [sendToPage]);
+  }, [sendToPage, navigateTo]);
 
   const onNavigationStateChange = useCallback((nav) => {
     setCanGoBack(nav.canGoBack);

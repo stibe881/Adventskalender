@@ -61,7 +61,7 @@ document.getElementById("upgrade-btn").addEventListener("click", async () => {
   if (!ok) return;
   try {
     const r = await api.checkoutFor("wichteln", groupId);
-    if (r.url) window.location.href = r.url;
+    if (r.url) UI.openCheckout(r.url);
   } catch (err) {
     toast(err.message, true);
   }

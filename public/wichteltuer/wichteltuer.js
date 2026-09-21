@@ -39,14 +39,14 @@ async function startUpgrade() {
   if (!ok) return;
   let r;
   try {
-    r = await fetch("/api/payment/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "wichteltuer", id: data.id }) });
+    r = await fetch("/api/payment/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "wichteltuer", id: data.id, app: UI.inNativeApp() }) });
   } catch (_) {
     return toast("Verbindung fehlgeschlagen.", true);
   }
   const json = await r.json().catch(() => ({}));
   if (r.status === 401) return toast("Bitte melde dich zuerst in deinem Konto an.", true);
   if (!r.ok) return toast(json.error || `Fehler ${r.status}`, true);
-  if (json.url) window.location.href = json.url;
+  if (json.url) UI.openCheckout(json.url);
 }
 const toast = (msg, isError = false) => UI.toast(msg, { error: isError });
 const haptic = (style) => { if (typeof window.nativeHaptic === "function") window.nativeHaptic(style); };

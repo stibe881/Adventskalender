@@ -143,6 +143,12 @@
       <ul class="w-pro-list">${points.map(([ic, t]) => `<li><i data-icon="${esc(ic)}"></i><span>${esc(t)}</span></li>`).join("")}</ul>`;
     return openDialog({ title, body, ok: price ? `${ok} – ${price}` : ok }).then((r) => r !== null);
   }
+  // Hands the Stripe page to the app (browser sheet that comes back) or navigates.
+  function openCheckout(url) {
+    if (window.__NATIVE_APP && typeof window.nativeCheckout === "function") window.nativeCheckout(url);
+    else window.location.href = url;
+  }
+  const inNativeApp = () => Boolean(window.__NATIVE_APP);
   const proButtonLabel = (price) => `<i data-icon="star"></i> PRO freischalten${price ? ` · ${esc(price)}` : ""}`;
 
   // ── Offline hint ──────────────────────────────────────────────────────────
@@ -179,5 +185,5 @@
     window.addEventListener("offline", () => setOffline(true));
   }
 
-  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc, proDialog, proButtonLabel };
+  window.UI = { toast, confirm, alert, prompt, form, dialog: openDialog, copy, share, canShare, watchOffline, setOffline, esc, proDialog, proButtonLabel, openCheckout, inNativeApp };
 })();

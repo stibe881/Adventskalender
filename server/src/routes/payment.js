@@ -54,6 +54,9 @@ function modulePrice(name, description) {
 router.post("/checkout", express.json(), requireAuth, async (req, res) => {
   try {
     const body = req.body || {};
+    // From the iOS/Android app: Stripe runs in a browser sheet, the return
+    // page then hands the user back to the app instead of the web version.
+    const inApp = Boolean(body.app);
     const kind = body.kind || (body.calendarId ? "calendar" : "");
     const id = body.id || body.calendarId;
     const def = KINDS[kind];
@@ -77,8 +80,8 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
       mode: "payment",
       line_items: [lineItem],
       client_reference_id: `${req.user.id}:${kind}:${item.id}`,
-      success_url: `${config.baseUrl}${def.successUrl(item)}`,
-      cancel_url: `${config.baseUrl}${def.cancelUrl(item)}`,
+      success_url: inApp ? returnUrl("success", def.successUrl(item)) : `${config.baseUrl}${def.successUrl(item)}`,
+      cancel_url: inApp ? returnUrl("cancelled", def.cancelUrl(item)) : `${config.baseUrl}${def.cancelUrl(item)}`,
       customer_email: req.user.email,
     });
 
@@ -87,6 +90,23 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
     console.error("Stripe Checkout Error:", error);
     res.status(500).json({ error: "Fehler beim Erstellen der Bezahlseite: " + error.message });
   }
+});
+
+const returnUrl = (status, to) => `${config.baseUrl}/api/payment/return?app=1&status=${status}&to=${encodeURIComponent(to)}`;
+
+// After Stripe: back into the app (custom scheme) or on to the page.
+router.get("/return", (req, res) => {
+  const to = String(req.query.to || "/admin/index.html");
+  const safe = to.startsWith("/") && !to.startsWith("//") ? to : "/admin/index.html";
+  if (!req.query.app) return res.redirect(safe);
+  const deep = `adventskalender://open?path=${encodeURIComponent(safe)}`;
+  const ok = req.query.status === "success";
+  res.setHeader("Cache-Control", "no-store");
+  res.send(`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="1;url=${deep}"><title>${ok ? "Zahlung erfolgreich" : "Zahlung abgebrochen"}</title>
+<style>body{font-family:Inter,system-ui,sans-serif;background:#24375e;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:24px}a{display:inline-block;margin-top:18px;background:linear-gradient(90deg,#f59e0b,#f97316);color:#fff;padding:12px 22px;border-radius:12px;text-decoration:none;font-weight:700}</style></head>
+<body><div><h1>${ok ? "Danke!" : "Abgebrochen"}</h1><p>${ok ? "Die Zahlung ist eingegangen." : "Es wurde nichts abgebucht."} Du kommst gleich zurück in die App.</p><a href="${deep}">Zurück zur App</a></div>
+<script>setTimeout(function(){location.replace(${JSON.stringify(deep)})},300)</script></body></html>`);
 });
 
 // Webhook

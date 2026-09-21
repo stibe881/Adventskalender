@@ -125,7 +125,7 @@ async function loadCalendar() {
     if (!ok) return;
     try {
       const res = await api.checkoutFor("calendar", calendar.id);
-      if (res.url) window.location.href = res.url;
+      if (res.url) UI.openCheckout(res.url);
     } catch (err) {
       UI.toast(err.message, { error: true });
     }

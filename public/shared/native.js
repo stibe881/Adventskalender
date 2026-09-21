@@ -61,6 +61,8 @@
   window.nativeShare = async ({ title, text, url }) => { send({ type: "share", title, text, url }); return true; };
   window.nativeHaptic = (style = "light") => send({ type: "haptic", style });
   window.nativeOpen = (url) => send({ type: "openExternal", url });
+  // Stripe checkout in a browser sheet that returns to the app afterwards.
+  window.nativeCheckout = (url) => send({ type: "checkout", url });
 
   // Push: the app fetches an Expo push token and answers with { type: "pushToken", token }.
   window.nativeRequestPushToken = () => new Promise((resolve) => {

@@ -44,8 +44,8 @@ const api = {
   updateProfile: (username, company, defaultApp) => request("PUT", "/auth/profile", { username, company, defaultApp }),
   changePassword: (currentPassword, newPassword) => request("POST", "/auth/change-password", { currentPassword, newPassword }),
   deleteAccount: (password) => request("DELETE", "/auth/delete-account", { password }),
-  checkout: (calendarId) => request("POST", "/payment/checkout", { calendarId }),
-  checkoutFor: (kind, id) => request("POST", "/payment/checkout", { kind, id }),
+  checkout: (calendarId) => request("POST", "/payment/checkout", { calendarId, app: Boolean(window.__NATIVE_APP) }),
+  checkoutFor: (kind, id) => request("POST", "/payment/checkout", { kind, id, app: Boolean(window.__NATIVE_APP) }),
   refreshToken: () => request("POST", "/admin/refresh"),
   devTogglePro: () => request("POST", "/admin/dev-toggle-pro"),
 

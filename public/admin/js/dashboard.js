@@ -24,7 +24,7 @@ async function startCalendarUpgrade(id, name) {
   if (!ok) return;
   try {
     const res = await api.checkoutFor("calendar", id);
-    if (res.url) window.location.href = res.url;
+    if (res.url) UI.openCheckout(res.url);
   } catch (err) {
     UI.toast(err.message, { error: true });
   }
@@ -189,7 +189,7 @@ window.upgradeCalendar = async (id) => {
   try {
     const res = await api.checkout(id);
     if (res.url) {
-      window.location.href = res.url;
+      UI.openCheckout(res.url);
     }
   } catch(e) { 
     alert(e.message); 
