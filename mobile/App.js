@@ -259,8 +259,8 @@ function Shell() {
           pullToRefreshEnabled
           applicationNameForUserAgent="AdventskalenderApp/1.0"
           startInLoadingState={false}
-          decelerationRate="normal"
-          contentInsetAdjustmentBehavior="never"
+          // "normal"/"fast" only exist on iOS; Android expects a number and crashes on the string.
+          {...(Platform.OS === "ios" ? { decelerationRate: "normal", contentInsetAdjustmentBehavior: "never" } : {})}
           // Geolocation for "Standort"-Türchen, file input for photo uploads
           geolocationEnabled
           allowFileAccess
