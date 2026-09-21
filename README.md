@@ -37,7 +37,10 @@ Adventskalender/
 
 **Admin-Bereich** (`/admin`, geschützt durch Login als „Stibe“)
 - Dashboard mit allen Kalendern, Fortschrittsanzeige, Link kopieren, Vorschau, Löschen
-- Editor mit 24-Türchen-Raster, pro Türchen wählbarer Inhaltstyp
+- Adventskalender (1.–24. Dezember) oder eigener Zeitraum mit einem Türchen pro Tag
+  (2 bis 62 Tage, z. B. bis zum Geburtstag); Türchen öffnen sich am jeweiligen Datum
+- Editor mit Türchen-Raster, pro Türchen wählbarer Inhaltstyp, Vorlage auch nachträglich
+  anwendbar (mit Warnung, dass Inhalte ersetzt werden)
 - 9 Inhaltstypen: Text-Nachricht, Gutscheincode, QR-Code (automatisch generiert), Video-Embed (YouTube/Vimeo), Audio (Spotify-Embed oder MP3-Upload), Bilder-Galerie, **digitales Rubbellos**, **interaktive Quiz-Frage**, **Event-Countdown**
 - Generiert einen sicheren, zufälligen Freigabe-Link pro Kalender
 

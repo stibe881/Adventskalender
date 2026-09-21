@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const db = require("./db");
 const config = require("./config");
 const nodemailer = require("nodemailer");
-const { getTodayParts } = require("./utils/time");
+const { getTodayParts, todayDoor } = require("./utils/time");
 const { sendPushNotification } = require("./push");
 
 const transporter = nodemailer.createTransport({
@@ -33,15 +33,12 @@ function startCron() {
     console.log("[CRON] Starte täglichen E-Mail-Erinnerungs-Job...");
     pushedToday.clear(); // Reset Push-Tracker täglich um 07:00
 
-    const { month, day } = getTodayParts();
-    if (month !== 12 || day > 24) {
-      console.log("[CRON] Nicht im Dezember (1-24), überspringe Mails.");
-      return;
-    }
-
     const calendars = await db.getAllCalendars();
     for (const cal of calendars) {
       if (!cal.recipientEmail) continue;
+      // Advent calendars run 1–24 December, others on their own days.
+      const day = todayDoor(cal);
+      if (!day) continue;
 
       const currentDoor = cal.days.find(d => d.day === day);
       if (!currentDoor || currentDoor.opened) continue;
@@ -80,9 +77,6 @@ function startCron() {
   // ── Minütlicher Check: Per-Kalender Push-Erinnerungen ─────────────────────
   // Prüft jede Minute ob ein Kalender jetzt seine konfigurierte Push-Zeit hat.
   cron.schedule("* * * * *", async () => {
-    const { month, day } = getTodayParts();
-    if (month !== 12 || day > 24) return;
-
     // Aktuelle Zeit in der konfigurierten Zeitzone (HH:MM)
     const nowStr = new Date().toLocaleTimeString("de-DE", {
       timeZone: config.timezone,
@@ -98,6 +92,8 @@ function startCron() {
 
       const reminderTime = cfg.dailyReminderTime || "08:00"; // default 08:00
       if (nowStr !== reminderTime) continue;
+      const day = todayDoor(cal);
+      if (!day) continue;
 
       // Nicht doppelt senden
       const key = `${cal.id}-${day}`;

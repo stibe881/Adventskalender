@@ -3,7 +3,7 @@ const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
 const config = require("../config");
 const db = require("../db");
-const { isDayUnlocked, unlockDateISO, unlockAtMs, getTodayParts } = require("../utils/time");
+const { getTodayParts, dayCount, doorDateISO, isDoorUnlocked, doorUnlockAtMs, todayDoor, periodLabel } = require("../utils/time");
 const { getBonusDoor, bonusDoorUnlocked, bonusDoorStatus, BONUS_DOOR_DAY, BONUS_REFERRALS_NEEDED } = require("../utils/access");
 
 // Public view of the secret door 25, mirroring publicDayView's rules.
@@ -47,7 +47,7 @@ const tokenLimiter = rateLimit({
 router.use(tokenLimiter);
 
 function publicDayView(calendar, door, user = null) {
-  const unlocked = calendar.strictMode ? isDayUnlocked(calendar.year, door.day) : true;
+  const unlocked = calendar.strictMode ? isDoorUnlocked(calendar, door.day) : true;
   const isLocked = door.content?.lockPassword ? true : false;
   
   let isOpened = door.opened;
@@ -61,7 +61,7 @@ function publicDayView(calendar, door, user = null) {
   if (isOpened) {
     return {
       day: door.day,
-      unlockDate: unlockDateISO(calendar.year, door.day),
+      unlockDate: doorDateISO(calendar, door.day),
       unlocked,
       opened: true,
       filled: Boolean(door.contentType),
@@ -85,8 +85,8 @@ function publicDayView(calendar, door, user = null) {
 
   return {
     day: door.day,
-    unlockDate: unlockDateISO(calendar.year, door.day),
-    unlockAt: unlockAtMs(calendar.year, door.day),
+    unlockDate: doorDateISO(calendar, door.day),
+    unlockAt: doorUnlockAtMs(calendar, door.day),
     unlocked,
     opened: false,
     filled: Boolean(door.contentType),
@@ -118,10 +118,9 @@ router.get("/:token", async (req, res) => {
 
   // Calculate streak based on openedAt or user state
   let streak = 0;
-  const todayNum = getTodayParts().day;
-  const month = getTodayParts().month;
-  
-  if (month === 12 && todayNum <= 24) {
+  const todayNum = todayDoor(calendar);
+
+  if (todayNum) {
     let currentDay = todayNum;
     while (currentDay > 0) {
       const door = calendar.days.find(d => d.day === currentDay);
@@ -165,6 +164,13 @@ router.get("/:token", async (req, res) => {
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     hasCoins: calendar.days.some((d) => d.contentType === "coins"),
     year: calendar.year,
+    period: calendar.period || null,
+    dayCount: dayCount(calendar),
+    lastDay: dayCount(calendar),
+    todayDoor: todayDoor(calendar),
+    periodLabel: periodLabel(calendar),
+    firstDate: doorDateISO(calendar, 1),
+    lastDate: doorDateISO(calendar, dayCount(calendar)),
     today: getTodayParts(),
     serverNow: Date.now(),
     streak: streak,
@@ -195,20 +201,21 @@ router.post("/:token/days/:day/open", async (req, res) => {
   }
 
   // Server-side-only truth: never trust any date the client might send.
-  const unlocked = isBonus ? true : calendar.strictMode ? isDayUnlocked(calendar.year, dayNum) : true;
+  const unlocked = isBonus ? true : calendar.strictMode ? isDoorUnlocked(calendar, dayNum) : true;
   if (!unlocked) {
     return res.status(403).json({
-      error: "Noch nicht so weit! Dieses Türchen öffnet sich erst am " + unlockDateISO(calendar.year, dayNum) + ".",
-      unlockDate: unlockDateISO(calendar.year, dayNum),
+      error: "Noch nicht so weit! Dieses Türchen öffnet sich erst am " + doorDateISO(calendar, dayNum) + ".",
+      unlockDate: doorDateISO(calendar, dayNum),
     });
   }
 
+  const lastDay = dayCount(calendar);
   if (calendar.metaPuzzle && calendar.metaPassword && calendar.metaPassword.length >= dayNum) {
-    if (dayNum < 24) {
-      // Days 1-23: reveal a letter
+    if (dayNum < lastDay) {
+      // Every day but the last: reveal a letter
       if (!door.content) door.content = {};
       door.content.metaLetter = calendar.metaPassword[dayNum - 1];
-    } else if (dayNum === 24) {
+    } else if (dayNum === lastDay) {
       const provided = req.body.metaPassword;
       if (!provided || provided.toLowerCase().trim() !== calendar.metaPassword.toLowerCase().trim()) {
         return res.status(403).json({ error: "Das Master-Passwort ist leider falsch!", locked: true });
@@ -256,8 +263,8 @@ router.post("/:token/days/:day/open", async (req, res) => {
     return res.json({ day: BONUS_DOOR_DAY, contentType: bonus.contentType, content: bonus.content });
   }
 
-  // Check if day 24 was just opened and trigger postcard!
-  if (dayNum === 24) {
+  // The last door was just opened: send the postcard.
+  if (dayNum === lastDay) {
     const postcard = require("../services/postcard");
     postcard.sendPostcard(calendar.recipientName, calendar.title || "Dein Adventskalender", door.content).catch(console.error);
   }

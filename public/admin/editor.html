@@ -56,9 +56,21 @@
             <label class="block text-sm text-slate-300 mb-1">Name des Beschenkten</label>
             <input name="recipientName" required class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
-          <div>
+          <div id="year-row">
             <label class="block text-sm text-slate-300 mb-1">Jahr</label>
             <input name="year" type="number" min="2000" max="2200" class="w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div class="sm:col-span-4">
+            <label class="block text-sm text-slate-300 mb-1">Zeitraum</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-slate-200 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-900/30"><input type="radio" name="periodMode" value="advent" class="accent-emerald-500"> Adventskalender <span class="text-slate-500 hidden sm:inline">(1.–24. Dez.)</span></label>
+              <label class="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-sm text-slate-200 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-900/30"><input type="radio" name="periodMode" value="custom" class="accent-emerald-500"> Zeitraum selber wählen</label>
+            </div>
+            <div id="period-fields" class="hidden grid grid-cols-2 gap-2 mt-2">
+              <label class="text-sm text-slate-300">Von<input name="periodStart" type="date" class="mt-1 w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /></label>
+              <label class="text-sm text-slate-300">Bis<input name="periodEnd" type="date" class="mt-1 w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /></label>
+            </div>
+            <p id="period-info" class="text-xs text-slate-500 mt-1"></p>
           </div>
           <div>
             <label class="block text-sm text-slate-300 mb-1">Theme</label>
@@ -93,7 +105,7 @@
               </select>
               <button type="button" id="apply-template-btn" class="rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2 text-sm font-semibold text-white whitespace-nowrap">Anwenden</button>
             </div>
-            <p class="text-xs text-slate-500 mt-1">Füllt alle 24 Türchen neu. Bereits eingetragene Inhalte werden dabei ersetzt – du wirst vorher gefragt.</p>
+            <p class="text-xs text-slate-500 mt-1">Füllt alle Türchen neu. Bereits eingetragene Inhalte werden dabei ersetzt – du wirst vorher gefragt.</p>
           </div>
 
           <!-- Funktionen: alle Ein/Aus-Schalter an einem Ort -->
@@ -113,7 +125,7 @@
                 <input type="checkbox" id="randomLayout" name="randomLayout" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
                 <label for="randomLayout" class="text-sm text-slate-300"><i data-icon="shuffle"></i> Zahlen mischen</label>
               </div>
-              <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der 24 Türchen werden zufällig angeordnet statt der Reihe nach.</p>
+              <p class="text-xs text-slate-500 mt-1 ml-6">Die Positionen der Türchen werden zufällig angeordnet statt der Reihe nach.</p>
             </div>
 
             <div>
@@ -273,7 +285,7 @@
     </details>
 
     <section>
-      <h2 class="font-display text-lg font-semibold mb-3">24 Türchen</h2>
+      <h2 class="font-display text-lg font-semibold mb-3"><span id="door-count">24</span> Türchen</h2>
       <div id="door-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3 relative"></div>
     </section>
 

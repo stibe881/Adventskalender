@@ -99,10 +99,22 @@
           <input name="recipientName" required placeholder="z. B. Bine"
             class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         </div>
-        <div>
+        <div id="year-row">
           <label class="block text-sm text-slate-300 mb-1">Jahr</label>
           <input name="year" type="number" required value="2026" min="2000" max="2200"
             class="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-sm text-slate-300 mb-1">Zeitraum</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-sm text-slate-200 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-900/30"><input type="radio" name="periodMode" value="advent" checked class="accent-emerald-500"> Adventskalender <span class="text-slate-500 hidden sm:inline">(1.–24. Dez.)</span></label>
+            <label class="flex items-center gap-2 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-sm text-slate-200 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-900/30"><input type="radio" name="periodMode" value="custom" class="accent-emerald-500"> Zeitraum selber wählen</label>
+          </div>
+          <div id="period-fields" class="hidden grid grid-cols-2 gap-2 mt-2">
+            <label class="text-sm text-slate-300">Von<input name="periodStart" type="date" class="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /></label>
+            <label class="text-sm text-slate-300">Bis<input name="periodEnd" type="date" class="mt-1 w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" /></label>
+            <p id="period-info" class="col-span-2 text-xs text-slate-500">Ein Türchen pro Tag, höchstens 62 Tage – zum Beispiel bis zum Geburtstag, zur Hochzeit oder zu den Ferien.</p>
+          </div>
         </div>
         <div>
           <label class="block text-sm text-slate-300 mb-1">Theme</label>

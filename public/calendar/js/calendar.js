@@ -421,10 +421,7 @@ function initNextDoorCountdown() {
 
 function nextDoorTarget() {
   if (isPreview) return null;
-  const today = calendarMeta.today;
-  const todaysDoor = today && today.month === 12 && today.year === calendarMeta.year
-    ? days.find((d) => d.day === today.day)
-    : null;
+  const todaysDoor = calendarMeta.todayDoor ? days.find((d) => d.day === calendarMeta.todayDoor) : null;
   if (todaysDoor && todaysDoor.unlocked && !todaysDoor.opened) return null;
   const next = days.filter((d) => !d.unlocked && d.unlockAt).sort((a, b) => a.day - b.day)[0];
   return next || null;
@@ -1152,7 +1149,7 @@ function renderDoorGrid() {
     doorGrid.appendChild(scene);
     applyDoorState(scene, door);
 
-    if (calendarMeta.today?.month === 12 && calendarMeta.today?.day === door.day && !door.opened) {
+    if (calendarMeta.todayDoor === door.day && !door.opened) {
       scene.classList.add("is-today");
     }
   });
@@ -1235,8 +1232,9 @@ async function handleDoorClick(dayNum, sceneEl) {
 
   let requestBody = {};
   
-  if (dayNum === 24 && calendarMeta.metaPuzzle && !isPreview) {
-    const pwd = prompt(`Das 24. Türchen ist durch das Meta-Rätsel versiegelt!\n\nSetze alle Buchstaben aus den Tagen 1-23 zusammen.\n\nPasswort eingeben:`);
+  const lastDay = calendarMeta.lastDay || 24;
+  if (dayNum === lastDay && calendarMeta.metaPuzzle && !isPreview) {
+    const pwd = prompt(`Das ${lastDay}. Türchen ist durch das Meta-Rätsel versiegelt!\n\nSetze alle Buchstaben aus den Tagen 1-${lastDay - 1} zusammen.\n\nPasswort eingeben:`);
     if (!pwd) return;
     requestBody.metaPassword = pwd;
   }
@@ -1675,7 +1673,7 @@ function openDoorAnimation(sceneEl, door) {
     if (window.atmosphere) window.atmosphere.playMagicChime();
     if (effectsEnabled) setTimeout(() => field.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.burstColors), 380);
     
-    if (door.day === 24 && window.confetti && effectsEnabled) {
+    if (door.day === (calendarMeta.lastDay || 24) && window.confetti && effectsEnabled) {
       setTimeout(() => {
         confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, zIndex: 9999 });
       }, 400);
@@ -2165,7 +2163,7 @@ function renderContent(type, c, dayNum) {
            <textarea id="diary-ans-${dayNum}" rows="4" placeholder="Deine Antwort..." style="width: 100%; padding: 16px; border-radius: 12px; border: 2px solid rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--modal-text); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='var(--modal-accent)'" onblur="this.style.borderColor='rgba(128,128,128,0.2)'">${escapeHtml(savedAns)}</textarea>
            <button onclick="saveDiary(${dayNum})" style="width: 100%; padding: 16px; border-radius: 12px; border: none; background: var(--modal-accent, #10b981); color: var(--modal-bg, #fff); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"><i data-icon="pen-line"></i> Eintrag speichern</button>`;
       
-      if (dayNum === 24) {
+      if (dayNum === (calendarMeta.lastDay || 24)) {
         html += `<button onclick="printDiaryPdf()" style="width: 100%; padding: 16px; border-radius: 12px; border: 2px dashed var(--modal-accent); background: transparent; color: var(--modal-text); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;" onmouseover="this.style.background='rgba(128,128,128,0.1)'" onmouseout="this.style.background='transparent'"><span><i data-icon="printer"></i></span> Gesamtes Tagebuch drucken</button>`;
       }
       

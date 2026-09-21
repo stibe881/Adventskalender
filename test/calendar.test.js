@@ -63,3 +63,60 @@ test("Kalender: a template can be applied later; it replaces every door's conten
   assert.match(cal.days[0].content.message, /Christkind/, "Swiss mode applied to the template");
   assert.equal(cal.days.length, 24);
 });
+
+test("Kalender: a self-chosen period gives one door per day, unlocks by date, and has no door 25", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/admin", require(path.join(SRC, "routes/admin")));
+  h.app.use("/api/calendar", require(path.join(SRC, "routes/calendar")));
+  const { call, anon, db } = h;
+  t.after(h.stop);
+  const T = require(path.join(SRC, "utils/time"));
+  const today = T.todayIso();
+  const start = T.addDaysIso(today, -2);
+  const end = T.addDaysIso(today, 6);
+
+  let r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", period: { start, end: start } });
+  assert.equal(r.status, 400, "at least two days");
+  r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", period: { start, end: T.addDaysIso(start, 70) } });
+  assert.equal(r.status, 400, "at most 62 days");
+  r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", period: { start, end }, template: "kids_mix", strictMode: true });
+  assert.equal(r.status, 201);
+  assert.equal(r.d.dayCount, 9);
+  assert.deepEqual(r.d.period, { start, end });
+  assert.equal(r.d.filledDoors, 9, "template filled every door of the period");
+  assert.equal(r.d.year, Number(start.slice(0, 4)));
+  const cal = r.d;
+
+  r = await anon("GET", `/api/calendar/${cal.token}`);
+  assert.equal(r.d.days.length, 9);
+  assert.equal(r.d.todayDoor, 3);
+  assert.equal(r.d.lastDay, 9);
+  assert.equal(r.d.firstDate, start);
+  assert.equal(r.d.days[2].unlockDate, today);
+  assert.equal(r.d.days[2].unlocked, true);
+  assert.equal(r.d.days[3].unlocked, false, "tomorrow's door stays shut in strict mode");
+  assert.equal(r.d.bonus.mode, "never", "no door 25 outside Advent");
+  assert.ok(!r.d.days.some((d) => d.day === 25));
+  r = await anon("POST", `/api/calendar/${cal.token}/days/4/open`, {});
+  assert.equal(r.status, 403);
+  r = await anon("POST", `/api/calendar/${cal.token}/days/3/open`, {});
+  assert.equal(r.status, 200);
+
+  // Shortening the period drops the last doors, extending adds empty ones; back to Advent gives 24 again.
+  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { period: { start, end: T.addDaysIso(start, 3) } });
+  assert.equal(r.d.dayCount, 4);
+  assert.equal(db.calendars[cal.id].days.length, 4);
+  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { period: { start, end: T.addDaysIso(start, 5) } });
+  assert.equal(db.calendars[cal.id].days.length, 6);
+  assert.equal(db.calendars[cal.id].days[5].contentType, null);
+  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { period: null });
+  assert.equal(r.d.dayCount, 24);
+  assert.equal(r.d.period, null);
+  assert.equal(db.calendars[cal.id].days.length, 24);
+
+  // An Advent calendar is untouched by all this.
+  r = await call("POST", "/api/admin/calendars", { recipientName: "Bine", theme: "partner", year: 2026 });
+  assert.equal(r.d.dayCount, 24);
+  assert.equal(r.d.period, null);
+  assert.equal(T.doorDateISO({ year: 2026 }, 24), "2026-12-24");
+});

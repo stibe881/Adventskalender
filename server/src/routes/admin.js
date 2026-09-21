@@ -8,13 +8,13 @@ const { requireAuth, signUserToken, setAuthCookie } = require("../middleware/aut
 const { generateToken, generateId } = require("../utils/token");
 const { generateQrDataUrl } = require("../utils/qr");
 const { CONTENT_TYPES, THEMES } = require("../utils/contentTypes");
-const { unlockDateISO, getTodayParts } = require("../utils/time");
+const { getTodayParts, parsePeriod, dayCount, doorDateISO, periodLabel } = require("../utils/time");
 
 const router = express.Router();
 router.use(requireAuth);
 
-function makeEmptyDays() {
-  return Array.from({ length: 24 }, (_, i) => ({
+function makeEmptyDays(count = 24) {
+  return Array.from({ length: count }, (_, i) => ({
     day: i + 1,
     contentType: null,
     content: null,
@@ -425,6 +425,9 @@ function toSummary(cal) {
     isPro: Boolean(cal.isPro),
     bonusUnlock: bonusRule(cal),
     referrals: cal.referrals || 0,
+    period: cal.period || null,
+    dayCount: dayCount(cal),
+    periodLabel: periodLabel(cal),
   };
 }
 
@@ -483,14 +486,17 @@ router.post("/calendars", async (req, res) => {
   if (!THEMES.includes(theme)) {
     return res.status(400).json({ error: `Ungültiges Theme. Erlaubt: ${THEMES.join(", ")}` });
   }
-  const parsedYear = parseInt(year, 10);
+  // Advent (1–24 December of `year`) or a self-chosen period.
+  const period = parsePeriod(req.body.period);
+  if (typeof period === "string") return res.status(400).json({ error: period });
+  const parsedYear = period ? Number(period.start.slice(0, 4)) : parseInt(year, 10);
   if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2200) {
     return res.status(400).json({ error: "Ungültiges Jahr." });
   }
 
-  let days = makeEmptyDays();
+  let days = makeEmptyDays(period ? dayCount({ period }) : 24);
   if (template) {
-    days = applyTemplate(days, template, Number(year) || new Date().getFullYear());
+    days = applyTemplate(days, template, parsedYear);
     if (swissMode) convertDays(days, true);
   }
 
@@ -508,6 +514,7 @@ router.post("/calendars", async (req, res) => {
     randomLayout: Boolean(randomLayout),
     swissMode: Boolean(swissMode),
     year: parsedYear,
+    period,
     createdAt: new Date().toISOString(),
     days,
   };
@@ -520,13 +527,20 @@ router.get("/calendars/:id", async (req, res) => {
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden oder kein Zugriff." });
   // Never hand OAuth tokens to the browser; the editor only needs to know the link exists.
   const { spotify: spotifyLink, ...safe } = calendar;
-  res.json({ ...safe, spotifyConnected: Boolean(spotifyLink?.refreshToken), spotifyAccount: spotifyLink?.displayName || null });
+  res.json({ ...safe, spotifyConnected: Boolean(spotifyLink?.refreshToken), spotifyAccount: spotifyLink?.displayName || null, dayCount: dayCount(calendar), periodLabel: periodLabel(calendar), bonusUnlock: bonusRule(calendar) });
 });
 
 router.put("/calendars/:id", async (req, res) => {
   const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled, swissMode } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  // period: undefined = untouched, null = back to Advent, { start, end } = custom days
+  let periodChange;
+  if (req.body && "period" in req.body) {
+    periodChange = req.body.period === null ? null : parsePeriod(req.body.period);
+    if (typeof periodChange === "string") return res.status(400).json({ error: periodChange });
+    if (periodChange === null && req.body.period !== null) return res.status(400).json({ error: "Bitte Start- und Enddatum wählen." });
+  }
 
   const updated = await db.updateCalendar(req.params.id, (cal) => {
     if (syncOpen !== undefined) cal.syncOpen = Boolean(syncOpen);
@@ -558,9 +572,18 @@ router.put("/calendars/:id", async (req, res) => {
     }
     if (strictMode !== undefined) cal.strictMode = Boolean(strictMode);
     if (randomLayout !== undefined) cal.randomLayout = Boolean(randomLayout);
-    if (year) {
+    if (year && !cal.period) {
       const parsedYear = parseInt(year, 10);
       if (Number.isInteger(parsedYear) && parsedYear >= 2000 && parsedYear <= 2200) cal.year = parsedYear;
+    }
+    if (periodChange !== undefined) {
+      cal.period = periodChange;
+      if (periodChange) cal.year = Number(periodChange.start.slice(0, 4));
+      const n = dayCount(cal);
+      // More days: add empty doors. Fewer days: the last doors go (the editor warns first).
+      cal.days = cal.days.filter((d) => d.day <= n);
+      for (let d = cal.days.length + 1; d <= n; d++) cal.days.push({ day: d, contentType: null, content: null, opened: false, openedAt: null });
+      cal.days.sort((a, b) => a.day - b.day);
     }
     return cal;
   });
@@ -626,7 +649,7 @@ router.post("/calendars/:id/import", async (req, res) => {
         const day = parseInt(parts[0], 10);
         const type = parts[1].trim();
         let contentStr = parts.slice(2).join(";").trim();
-        if (day >= 1 && day <= 24 && CONTENT_TYPES.includes(type)) {
+        if (day >= 1 && day <= dayCount(cal) && CONTENT_TYPES.includes(type)) {
           try {
             const content = JSON.parse(contentStr);
             const idx = cal.days.findIndex(d => d.day === day);
@@ -710,12 +733,16 @@ router.get("/calendars/:id/preview", async (req, res) => {
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
     hasCoins: calendar.days.some((d) => d.contentType === "coins"),
     year: calendar.year,
+    period: calendar.period || null,
+    dayCount: dayCount(calendar),
+    lastDay: dayCount(calendar),
+    periodLabel: periodLabel(calendar),
     today: getTodayParts(),
     preview: true,
     days: [
       ...calendar.days.map((d) => ({
         day: d.day,
-        unlockDate: unlockDateISO(calendar.year, d.day),
+        unlockDate: doorDateISO(calendar, d.day),
         unlocked: true,
         filled: Boolean(d.contentType),
         contentType: d.contentType,
@@ -752,7 +779,7 @@ router.post("/calendars/:id/apply-template", async (req, res) => {
   const probe = applyTemplate(makeEmptyDays(), templateId, calendar.year);
   if (!probe.some((d) => d.contentType)) return res.status(400).json({ error: "Unbekannte Vorlage." });
   const updated = await db.updateCalendar(req.params.id, (cal) => {
-    const fresh = applyTemplate(makeEmptyDays(), templateId, cal.year);
+    const fresh = applyTemplate(makeEmptyDays(dayCount(cal)), templateId, cal.year);
     if (cal.swissMode) convertDays(fresh, true);
     cal.days = cal.days.map((d) => {
       const t = fresh.find((f) => f.day === d.day);

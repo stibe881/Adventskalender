@@ -69,7 +69,7 @@ function renderHeader(themeKey, theme, meta) {
     header.innerHTML = `
       ${headerTopHtml}
       ${titleHtml}
-      <p class="text-xl md:text-2xl text-slate-300 font-medium">Dezember ${meta.year}</p>
+      <p class="text-xl md:text-2xl text-slate-300 font-medium">${meta.period ? escapeText(meta.periodLabel) : `Dezember ${meta.year}`}</p>
     `;
   } else if (themeKey === "classic") {
     header.innerHTML = `
@@ -87,7 +87,7 @@ function renderHeader(themeKey, theme, meta) {
     header.innerHTML = `
       ${headerTopHtml}
       ${titleHtml}
-      <p class="text-xl md:text-2xl font-bold opacity-80" style="color: var(--accent-light)">Dezember ${meta.year}</p>
+      <p class="text-xl md:text-2xl font-bold opacity-80" style="color: var(--accent-light)">${meta.period ? escapeText(meta.periodLabel) : `Dezember ${meta.year}`}</p>
     `;
   } else if (themeKey === "space") {
     header.innerHTML = `
@@ -105,7 +105,7 @@ function renderHeader(themeKey, theme, meta) {
     header.innerHTML = `
       ${headerTopHtml}
       ${titleHtml}
-      <p class="text-xl md:text-2xl opacity-90 drop-shadow">Dezember ${meta.year}</p>
+      <p class="text-xl md:text-2xl opacity-90 drop-shadow">${meta.period ? escapeText(meta.periodLabel) : `Dezember ${meta.year}`}</p>
     `;
   }
 }
@@ -119,8 +119,17 @@ function renderFooter(meta) {
     return;
   }
   const { year, month, day } = meta.today;
+  const fmt = (iso) => iso ? iso.split("-").reverse().map(Number).join(".") : "";
   let text;
-  if (year === meta.year && month === 12 && day < 24) {
+  if (meta.period) {
+    // A calendar with its own days: count down to the last door.
+    const last = meta.lastDay || meta.dayCount || 24;
+    const t = meta.todayDoor;
+    if (t && t < last) { const left = last - t; text = left === 1 ? "Morgen öffnet sich das letzte Türchen." : `Noch ${left} Tage bis zum letzten Türchen.`; }
+    else if (t === last) text = "Das letzte Türchen ist da!";
+    else if (meta.firstDate && `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` < meta.firstDate) text = `Das erste Türchen öffnet sich am ${fmt(meta.firstDate)}.`;
+    else text = "Alle Türchen sind offen – danke fürs Mitmachen.";
+  } else if (year === meta.year && month === 12 && day < 24) {
     const left = 24 - day;
     text = left === 1 ? "Morgen ist Heiligabend." : `Noch ${left} Tage bis Heiligabend.`;
   } else if (year === meta.year && month === 12) {

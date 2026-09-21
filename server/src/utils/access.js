@@ -68,7 +68,8 @@ function getBonusDoor(calendar) {
 const BONUS_MODES = ["referrals", "allOpened", "date", "always", "never"];
 function bonusRule(calendar) {
   const raw = calendar?.bonusUnlock || {};
-  const mode = BONUS_MODES.includes(raw.mode) ? raw.mode : "referrals";
+  // A calendar with its own period has no door 25 – the number is taken.
+  const mode = calendar?.period ? "never" : BONUS_MODES.includes(raw.mode) ? raw.mode : "referrals";
   const count = Math.max(1, Math.min(50, parseInt(raw.count, 10) || BONUS_REFERRALS_NEEDED));
   const year = calendar?.year || new Date().getFullYear();
   const date = /^\d{4}-\d{2}-\d{2}$/.test(raw.date || "") ? raw.date : `${year}-12-25`;
@@ -83,6 +84,7 @@ function openedCount(calendar, user) {
     return (st?.openedDays || []).filter((d) => d >= 1 && d <= 24).length;
   }
   return (calendar?.days || []).filter((d) => d.day <= 24 && d.opened).length;
+  // (door 25 exists only for Advent calendars, so 24 is the right bound here)
 }
 function todayIso() {
   const { getTodayParts } = require("./time");

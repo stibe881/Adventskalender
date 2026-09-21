@@ -295,25 +295,25 @@ function renderTableRow(cal) {
   const row = document.createElement("tr");
   row.className = "hover:bg-white/5 transition-colors group";
   openOnClick(row, cal.id);
-  const progressPct = Math.round((cal.filledDoors / 24) * 100);
+  const progressPct = Math.round((cal.filledDoors / (cal.dayCount || 24)) * 100);
   
   row.innerHTML = `
     <td class="px-2 sm:px-4 py-3" style="max-width:0;width:100%">
       <div class="font-display font-semibold text-white" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(cal.recipientName)}</div>
-      <div class="text-xs text-slate-500 md:hidden" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${THEME_LABELS[cal.theme] || cal.theme} · ${cal.year}</div>
+      <div class="text-xs text-slate-500 md:hidden" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${THEME_LABELS[cal.theme] || cal.theme} · ${cal.period ? escapeHtml(cal.periodLabel) : cal.year}</div>
       <div class="text-xs text-slate-500 hidden md:block">Erstellt: ${new Date(cal.createdAt).toLocaleDateString("de-DE")}</div>
     </td>
     <td class="px-4 py-3 hidden md:table-cell">${THEME_LABELS[cal.theme] || cal.theme} (${cal.year})</td>
     <td class="px-2 sm:px-4 py-3 whitespace-nowrap">
       <div class="flex items-center gap-2">
-        <span class="text-emerald-400 font-bold">${cal.filledDoors}/24</span>
+        <span class="text-emerald-400 font-bold">${cal.filledDoors}/${cal.dayCount || 24}</span>
         <div class="hidden sm:block w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
           <div class="h-full bg-emerald-500" style="width: ${progressPct}%"></div>
         </div>
       </div>
     </td>
     <td class="px-2 sm:px-4 py-3 whitespace-nowrap">
-      <span class="text-amber-400 font-bold">${cal.openedDoors}/24</span>
+      <span class="text-amber-400 font-bold">${cal.openedDoors}/${cal.dayCount || 24}</span>
     </td>
     <td class="px-1 sm:px-4 py-3 text-right">
       <div class="relative inline-block text-left">
@@ -337,13 +337,13 @@ function renderCard(cal) {
   const card = document.createElement("div");
   card.className = "bg-white/5 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col gap-3 transition-colors";
   openOnClick(card, cal.id);
-  const progressPct = Math.round((cal.filledDoors / 24) * 100);
+  const progressPct = Math.round((cal.filledDoors / (cal.dayCount || 24)) * 100);
 
   card.innerHTML = `
     <div class="flex items-start justify-between gap-2">
       <div>
         <h3 class="font-display font-semibold text-lg">${escapeHtml(cal.recipientName)}</h3>
-        <p class="text-xs text-slate-400">${THEME_LABELS[cal.theme] || cal.theme} · Dezember ${cal.year}</p>
+        <p class="text-xs text-slate-400">${THEME_LABELS[cal.theme] || cal.theme} · ${cal.period ? escapeHtml(cal.periodLabel) : `Dezember ${cal.year}`}</p>
       </div>
       <div class="relative inline-block text-left">
         <button class="calendar-menu-btn text-slate-400 hover:text-white p-2" onclick="toggleMenu('${cal.id}')">
@@ -361,7 +361,7 @@ function renderCard(cal) {
 
     <div>
       <div class="flex justify-between text-xs text-slate-400 mb-1">
-        <span>${cal.filledDoors}/24 Türchen befüllt</span>
+        <span>${cal.filledDoors}/${cal.dayCount || 24} Türchen befüllt</span>
         <span>${cal.openedDoors} geöffnet</span>
       </div>
       <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -418,6 +418,25 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Advent (default) or a self-chosen period with a door per day.
+function periodInfo(start, end) {
+  if (!start || !end) return "Ein Türchen pro Tag, höchstens 62 Tage – zum Beispiel bis zum Geburtstag, zur Hochzeit oder zu den Ferien.";
+  const n = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+  if (n < 2) return "Das Ende muss nach dem Anfang liegen.";
+  if (n > 62) return `${n} Tage sind zu viele – höchstens 62.`;
+  return `${n} Türchen, vom ${start.split("-").reverse().map(Number).join(".")} bis ${end.split("-").reverse().map(Number).join(".")}.`;
+}
+function syncPeriodUi() {
+  const custom = createForm.elements.periodMode.value === "custom";
+  document.getElementById("period-fields").classList.toggle("hidden", !custom);
+  document.getElementById("year-row").classList.toggle("hidden", custom);
+  createForm.elements.periodStart.required = custom;
+  createForm.elements.periodEnd.required = custom;
+  document.getElementById("period-info").textContent = periodInfo(createForm.elements.periodStart.value, createForm.elements.periodEnd.value);
+}
+createForm.querySelectorAll("[name=periodMode], [name=periodStart], [name=periodEnd]").forEach((el) => el.addEventListener("change", syncPeriodUi));
+createForm.elements.periodStart.addEventListener("change", () => { if (!createForm.elements.periodEnd.value && createForm.elements.periodStart.value) createForm.elements.periodEnd.min = createForm.elements.periodStart.value; });
+
 createForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(createForm);
@@ -426,12 +445,14 @@ createForm.addEventListener("submit", async (e) => {
       recipientName: fd.get("recipientName"),
       theme: fd.get("theme"),
       year: fd.get("year"),
+      period: fd.get("periodMode") === "custom" ? { start: fd.get("periodStart"), end: fd.get("periodEnd") } : null,
       template: fd.get("template"),
       strictMode: document.getElementById("strictMode").checked,
       randomLayout: document.getElementById("randomLayout").checked,
       swissMode: document.getElementById("swissMode").checked,
     });
     createForm.reset();
+    syncPeriodUi();
     window.location.href = `/admin/editor.html?id=${cal.id}`;
   } catch (err) {
     alert(err.message);

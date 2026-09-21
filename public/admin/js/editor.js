@@ -99,12 +99,13 @@ document.getElementById("apply-template-btn").addEventListener("click", async ()
   const sel = document.getElementById("template-select");
   const template = sel.value;
   if (!template) return UI.toast("Bitte zuerst eine Vorlage wählen.", { error: true });
-  const filled = calendar.days.filter((d) => d.day <= 24 && d.contentType).length;
+  const n = calendar.dayCount || 24;
+  const filled = calendar.days.filter((d) => d.day <= n && d.contentType).length;
   const ok = await UI.confirm({
     title: `Vorlage „${sel.options[sel.selectedIndex].text}“ anwenden?`,
     text: filled
-      ? `Achtung: Alle 24 Türchen werden neu befüllt. Die Inhalte von ${filled} bereits erstellten Türchen werden dabei ersetzt und sind danach weg. Bilder, Texte und Einstellungen der einzelnen Türchen lassen sich nicht wiederherstellen.`
-      : "Alle 24 Türchen werden mit der Vorlage befüllt. Du kannst jedes Türchen danach anpassen.",
+      ? `Achtung: Alle ${n} Türchen werden neu befüllt. Die Inhalte von ${filled} bereits erstellten Türchen werden dabei ersetzt und sind danach weg. Bilder, Texte und Einstellungen der einzelnen Türchen lassen sich nicht wiederherstellen.`
+      : `Alle ${n} Türchen werden mit der Vorlage befüllt. Du kannst jedes Türchen danach anpassen.`,
     ok: filled ? "Ja, alle Inhalte ersetzen" : "Vorlage anwenden",
     danger: Boolean(filled),
   });
@@ -121,13 +122,19 @@ document.getElementById("apply-template-btn").addEventListener("click", async ()
 
 async function loadCalendar() {
   calendar = await api.getCalendar(calendarId);
-  // Secret door 25 is stored separately (bonusDoor); show it as a 25th tile.
-  if (!calendar.days.find((d) => d.day === 25)) {
+  // Secret door 25 is stored separately (bonusDoor); show it as a 25th tile – Advent calendars only.
+  if (!calendar.period && !calendar.days.find((d) => d.day === 25)) {
     const b = calendar.bonusDoor || {};
     calendar.days.push({ day: 25, bonus: true, contentType: b.contentType || null, content: b.content || null, opened: Boolean(b.opened), openedAt: b.openedAt || null });
   }
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
-  document.getElementById("cal-subtitle").textContent = `Dezember ${calendar.year} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
+  document.getElementById("cal-subtitle").textContent = `${calendar.period ? calendar.periodLabel : `Dezember ${calendar.year}`} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
+  document.getElementById("door-count").textContent = calendar.dayCount || 24;
+  const sform = document.getElementById("settings-form");
+  sform.elements.periodMode.value = calendar.period ? "custom" : "advent";
+  sform.elements.periodStart.value = calendar.period?.start || "";
+  sform.elements.periodEnd.value = calendar.period?.end || "";
+  syncEditorPeriodUi();
 
   // Without PRO the branding block is not shown at all; the header button
   // explains what PRO adds and leads to the checkout.
@@ -1596,9 +1603,42 @@ if (wBtn) {
   });
 }
 
+function periodDays(start, end) {
+  if (!start || !end) return 0;
+  return Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
+}
+function syncEditorPeriodUi() {
+  const form = document.getElementById("settings-form");
+  const custom = form.elements.periodMode.value === "custom";
+  document.getElementById("period-fields").classList.toggle("hidden", !custom);
+  document.getElementById("year-row").classList.toggle("hidden", custom);
+  const n = custom ? periodDays(form.elements.periodStart.value, form.elements.periodEnd.value) : 24;
+  const info = document.getElementById("period-info");
+  if (!custom) info.textContent = "24 Türchen, 1. bis 24. Dezember.";
+  else if (n < 2) info.textContent = "Von und Bis wählen – das Ende muss nach dem Anfang liegen.";
+  else if (n > 62) info.textContent = `${n} Tage sind zu viele – höchstens 62.`;
+  else info.textContent = `${n} Türchen, ein Türchen pro Tag.`;
+}
+document.querySelectorAll("#settings-form [name=periodMode], #settings-form [name=periodStart], #settings-form [name=periodEnd]").forEach((el) => el.addEventListener("change", syncEditorPeriodUi));
+
 document.getElementById("settings-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
+
+  // Period change: fewer days drop the last doors, so ask first.
+  const wantCustom = fd.get("periodMode") === "custom";
+  const newPeriod = wantCustom ? { start: fd.get("periodStart"), end: fd.get("periodEnd") } : null;
+  const periodChanged = JSON.stringify(newPeriod) !== JSON.stringify(calendar.period || null);
+  if (periodChanged) {
+    const newCount = wantCustom ? periodDays(newPeriod.start, newPeriod.end) : 24;
+    if (wantCustom && (newCount < 2 || newCount > 62)) return UI.toast("Bitte einen Zeitraum von 2 bis 62 Tagen wählen.", { error: true });
+    const current = calendar.dayCount || 24;
+    const lost = calendar.days.filter((d) => d.day <= current && d.day > newCount && d.contentType).length;
+    if (newCount < current) {
+      const ok = await UI.confirm({ title: "Zeitraum verkürzen?", text: `Der Kalender hat dann ${newCount} statt ${current} Türchen. ${lost ? `Die Inhalte von ${lost} Türchen am Ende gehen dabei verloren.` : "Die letzten Türchen entfallen."}`, ok: "Zeitraum ändern", danger: lost > 0 });
+      if (!ok) return;
+    }
+  }
   
   if (fd.get("theme") === "firma") {
     if (!calendar.customConfig) calendar.customConfig = {};
@@ -1633,6 +1673,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     recipientName: fd.get("recipientName"),
     theme: fd.get("theme"),
     year: fd.get("year"),
+    ...(periodChanged ? { period: newPeriod } : {}),
     strictMode: document.getElementById("strictMode").checked,
     randomLayout: document.getElementById("randomLayout").checked,
     syncOpen: document.getElementById("syncOpen").checked,
