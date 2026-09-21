@@ -55,6 +55,7 @@ const api = {
   updateCalendar: (id, data) => request("PUT", `/admin/calendars/${id}`, data),
   deleteCalendar: (id) => request("DELETE", `/admin/calendars/${id}`),
   duplicateCalendar: (id) => request("POST", `/admin/calendars/${id}/duplicate`),
+  applyTemplate: (id, template) => request("POST", `/admin/calendars/${id}/apply-template`, { template }),
   previewCalendar: (id) => request("GET", `/admin/calendars/${id}/preview`),
   addCollaborator: (id, email) => request("POST", `/admin/calendars/${id}/collaborators`, { email }),
   swapDays: (id, dayA, dayB) => request("POST", `/admin/calendars/${id}/swap`, { dayA, dayB }),

@@ -742,6 +742,27 @@ router.get("/calendars/:id/analytics", async (req, res) => {
   res.json({ openings });
 });
 
+// Apply a template later on: every door 1–24 gets the template's content,
+// opened flags stay. The editor asks for confirmation before calling this.
+router.post("/calendars/:id/apply-template", async (req, res) => {
+  const templateId = String(req.body?.template || "");
+  if (!templateId) return res.status(400).json({ error: "Keine Vorlage angegeben." });
+  const calendar = await db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const probe = applyTemplate(makeEmptyDays(), templateId, calendar.year);
+  if (!probe.some((d) => d.contentType)) return res.status(400).json({ error: "Unbekannte Vorlage." });
+  const updated = await db.updateCalendar(req.params.id, (cal) => {
+    const fresh = applyTemplate(makeEmptyDays(), templateId, cal.year);
+    if (cal.swissMode) convertDays(fresh, true);
+    cal.days = cal.days.map((d) => {
+      const t = fresh.find((f) => f.day === d.day);
+      return t ? { ...d, contentType: t.contentType, content: t.content } : d;
+    });
+    return cal;
+  });
+  res.json(toSummary(updated));
+});
+
 // ---------- Day content ----------
 
 router.put("/calendars/:id/days/:day", async (req, res) => {

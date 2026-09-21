@@ -71,6 +71,31 @@
           </div>
 
 
+          <div class="sm:col-span-4">
+            <label class="block text-sm text-slate-300 mb-1">Vorlage anwenden</label>
+            <div class="flex flex-wrap gap-2">
+              <select id="template-select" class="flex-1 min-w-0 rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">– Vorlage wählen –</option>
+                <option value="kids_mix">Kinder – gemischte Inhalte (Spiele, Rätsel, Aufgaben, Gutscheine)</option>
+                <option value="couple_mix">Pärchen – gemischte Inhalte (Liebesbriefe, Dates, Gutscheine, Quiz)</option>
+                <option value="romantic">Romantisch (Texte für Partner)</option>
+                <option value="mindful">Achtsamkeit (24 versch. Aufgaben)</option>
+                <option value="jokes">Witze & Humor</option>
+                <option value="quotes">Inspirierende Zitate</option>
+                <option value="fitness">Fitness-Challenges</option>
+                <option value="trivia">Quiz & Unnützes Wissen</option>
+                <option value="recipes">Back- & Kochrezepte</option>
+                <option value="couples_activities">Pärchen-Aktivitäten</option>
+                <option value="kids_fun">Für Kinder: Rätsel & Spaß</option>
+                <option value="praise">Komplimente & Affirmationen</option>
+                <option value="photo_memories">Fotokalender (Platzhalter für Bilder)</option>
+                <option value="escape_room">Escape Room (Tägliche Rätsel)</option>
+              </select>
+              <button type="button" id="apply-template-btn" class="rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2 text-sm font-semibold text-white whitespace-nowrap">Anwenden</button>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Füllt alle 24 Türchen neu. Bereits eingetragene Inhalte werden dabei ersetzt – du wirst vorher gefragt.</p>
+          </div>
+
           <!-- Funktionen: alle Ein/Aus-Schalter an einem Ort -->
           <div class="sm:col-span-4 mt-4 border-t border-white/10 pt-4 space-y-4" id="feature-toggles">
             <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Funktionen</h3>

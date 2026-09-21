@@ -41,3 +41,25 @@ test("Kalender: the recipient switches the morning e-mail reminder on and off, w
   r = await anon("DELETE", `/api/calendar/${cal.token}/reminder`);
   assert.deepEqual(r.d, { enabled: false, email: null });
 });
+
+test("Kalender: a template can be applied later; it replaces every door's content and keeps opened flags", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/admin", require(path.join(SRC, "routes/admin")));
+  const { call, db } = h;
+  t.after(h.stop);
+  let r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", year: 2026, swissMode: true });
+  const id = r.d.id;
+  await call("PUT", `/api/admin/calendars/${id}/days/3`, { contentType: "text", content: { message: "Eigener Text", sender: "Ich" } });
+  await db.updateCalendar(id, (c) => { c.days[0].opened = true; c.days[0].openedAt = "2026-12-01T07:00:00.000Z"; return c; });
+  r = await call("POST", `/api/admin/calendars/${id}/apply-template`, { template: "bogus" });
+  assert.equal(r.status, 400);
+  r = await call("POST", `/api/admin/calendars/${id}/apply-template`, { template: "kids_mix" });
+  assert.equal(r.status, 200);
+  assert.equal(r.d.filledDoors, 24);
+  const cal = db.calendars[id];
+  assert.notEqual(cal.days[2].content.message, "Eigener Text", "own content replaced");
+  assert.equal(cal.days[0].opened, true, "opened flag kept");
+  assert.equal(cal.days[0].openedAt, "2026-12-01T07:00:00.000Z");
+  assert.match(cal.days[0].content.message, /Christkind/, "Swiss mode applied to the template");
+  assert.equal(cal.days.length, 24);
+});

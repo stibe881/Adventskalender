@@ -94,6 +94,31 @@ function handleSpotifyReturn() {
   }
 }
 
+// Template later on: warn, then replace the content of all 24 doors.
+document.getElementById("apply-template-btn").addEventListener("click", async () => {
+  const sel = document.getElementById("template-select");
+  const template = sel.value;
+  if (!template) return UI.toast("Bitte zuerst eine Vorlage wählen.", { error: true });
+  const filled = calendar.days.filter((d) => d.day <= 24 && d.contentType).length;
+  const ok = await UI.confirm({
+    title: `Vorlage „${sel.options[sel.selectedIndex].text}“ anwenden?`,
+    text: filled
+      ? `Achtung: Alle 24 Türchen werden neu befüllt. Die Inhalte von ${filled} bereits erstellten Türchen werden dabei ersetzt und sind danach weg. Bilder, Texte und Einstellungen der einzelnen Türchen lassen sich nicht wiederherstellen.`
+      : "Alle 24 Türchen werden mit der Vorlage befüllt. Du kannst jedes Türchen danach anpassen.",
+    ok: filled ? "Ja, alle Inhalte ersetzen" : "Vorlage anwenden",
+    danger: Boolean(filled),
+  });
+  if (!ok) return;
+  try {
+    await api.applyTemplate(calendarId, template);
+    sel.value = "";
+    await loadCalendar();
+    UI.toast("Vorlage angewendet – alle Türchen sind befüllt.");
+  } catch (err) {
+    UI.toast(err.message, { error: true });
+  }
+});
+
 async function loadCalendar() {
   calendar = await api.getCalendar(calendarId);
   // Secret door 25 is stored separately (bonusDoor); show it as a 25th tile.
