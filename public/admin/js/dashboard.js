@@ -426,8 +426,14 @@ function periodInfo(start, end) {
   if (n > 62) return `${n} Tage sind zu viele – höchstens 62.`;
   return `${n} Türchen, vom ${start.split("-").reverse().map(Number).join(".")} bis ${end.split("-").reverse().map(Number).join(".")}.`;
 }
+const isoToday = (plus = 0) => { const d = new Date(Date.now() + plus * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 function syncPeriodUi() {
   const custom = createForm.elements.periodMode.value === "custom";
+  // iOS shows an empty date field without any hint, so start with a two-week example.
+  if (custom && !createForm.elements.periodStart.value && !createForm.elements.periodEnd.value) {
+    createForm.elements.periodStart.value = isoToday(1);
+    createForm.elements.periodEnd.value = isoToday(14);
+  }
   document.getElementById("period-fields").classList.toggle("hidden", !custom);
   document.getElementById("year-row").classList.toggle("hidden", custom);
   createForm.elements.periodStart.required = custom;

@@ -1610,6 +1610,11 @@ function periodDays(start, end) {
 function syncEditorPeriodUi() {
   const form = document.getElementById("settings-form");
   const custom = form.elements.periodMode.value === "custom";
+  if (custom && !form.elements.periodStart.value && !form.elements.periodEnd.value) {
+    const iso = (plus) => { const d = new Date(Date.now() + plus * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+    form.elements.periodStart.value = iso(1);
+    form.elements.periodEnd.value = iso(14);
+  }
   document.getElementById("period-fields").classList.toggle("hidden", !custom);
   document.getElementById("year-row").classList.toggle("hidden", custom);
   const n = custom ? periodDays(form.elements.periodStart.value, form.elements.periodEnd.value) : 24;

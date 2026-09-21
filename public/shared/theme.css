@@ -70,3 +70,18 @@ header.sticky { background-color: var(--header) !important; }
 .ui-btn--ghost { border-color: var(--line); background: rgba(255, 255, 255, 0.08); }
 .ui-empty__art { background: rgba(255, 255, 255, 0.08); border-color: var(--line-strong); }
 select option { background: var(--surface-solid); }
+
+/* Date inputs: iOS gives them an intrinsic width and no placeholder – keep them
+ * inside their column, at a tappable height, with the value left-aligned. */
+input[type="date"], input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value { text-align: left; min-height: 1.3em; }
+input[type="date"]:invalid, input[type="date"]:not(:valid) { color: #94a3b8; }
