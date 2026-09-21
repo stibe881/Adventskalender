@@ -648,7 +648,7 @@ function rudiTravel({ mode, extras = [] }) {
   const traveller = document.createElement("div");
   traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
   // Rudi faces left in the artwork but travels to the right: mirror him.
-  traveller.innerHTML = `<span style="display:inline-block;transform:scaleX(-1);">${RudiArt.rudi({ worn: wornItems, extras, cls: "rudi-travel" })}</span>`;
+  traveller.innerHTML = `<span style="display:inline-block;transform:scaleX(-1);">${RudiArt.rudi({ worn: wornItems, extras, cls: "rudi-travel", view: "side" })}</span>`;
   document.body.appendChild(traveller);
   const originalEmoji = petEmoji.innerHTML;
   petEmoji.innerHTML = RudiArt.rudi({ state: "dust" });
