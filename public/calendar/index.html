@@ -59,7 +59,6 @@
           <radialGradient id="lantern-glow" cx="0.5" cy="0.5" r="0.5">
             <stop offset="0" stop-color="#FFD700" stop-opacity="0.8"/><stop offset="1" stop-color="#FF8C00" stop-opacity="0"/>
           </radialGradient>
-          <!-- Keep original star glows in case they are used -->
           <radialGradient id="stable-star-glow" cx="0.5" cy="0.5" r="0.5">
             <stop offset="0" stop-color="#fff3b0" stop-opacity="0.95"/><stop offset="0.55" stop-color="#ffd54a" stop-opacity="0.35"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/>
           </radialGradient>
@@ -67,6 +66,46 @@
             <stop offset="0" stop-color="#fff6c2"/><stop offset="0.5" stop-color="#ffd23f"/><stop offset="1" stop-color="#e0a100"/>
           </linearGradient>
         </defs>
+        
+        <!-- back wall -->
+        <rect x="20" y="50" width="160" height="96" rx="4" fill="url(#wood-dark)"/>
+        <g stroke="#1a0f08" stroke-width="2">
+          <line x1="20" y1="66" x2="180" y2="66"/><line x1="20" y1="82" x2="180" y2="82"/>
+          <line x1="20" y1="98" x2="180" y2="98"/><line x1="20" y1="114" x2="180" y2="114"/>
+          <line x1="20" y1="130" x2="180" y2="130"/>
+        </g>
+        
+        <!-- roof framework -->
+        <path d="M10 50 L100 0 L190 50 L180 56 L100 12 L20 56 Z" fill="url(#wood-light)"/>
+        
+        <!-- snowy roof -->
+        <path d="M6 52 Q 20 48 24 40 L 100 -5 L 176 40 Q 180 48 194 52 Q 196 56 190 58 Q 150 48 100 5 Q 50 48 10 58 Q 4 56 6 52" fill="url(#snow)"/>
+        <path d="M20 56 Q 30 65 40 50 M 160 50 Q 170 65 180 56" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+        
+        <!-- side pillars -->
+        <rect x="20" y="54" width="12" height="92" fill="url(#wood-light)" rx="2"/>
+        <rect x="168" y="54" width="12" height="92" fill="url(#wood-light)" rx="2"/>
+        
+        <!-- lantern -->
+        <circle class="stable-glow" cx="164" cy="74" r="16" fill="url(#lantern-glow)"/>
+        <rect x="160" y="66" width="8" height="12" rx="2" fill="#2a1a0f" stroke="#8B5A2B" stroke-width="1.5"/>
+        <rect x="162" y="70" width="4" height="6" rx="1" fill="#FFD700" class="stable-flame"/>
+        <path d="M164 66 L164 60 L174 60" fill="none" stroke="#2a1a0f" stroke-width="2"/>
+        
+        <!-- Christmas star on the roof (shown once purchased) -->
+        <g id="stable-star" class="stable-star" style="display:none" transform="translate(100 3)">
+          <circle r="22" fill="url(#stable-star-glow)" class="stable-star-glow"/>
+          <g stroke="#ffe680" stroke-width="1.2" stroke-linecap="round" opacity="0.8" class="stable-star-rays">
+            <line x1="0" y1="-19" x2="0" y2="-14"/><line x1="13.4" y1="-13.4" x2="10" y2="-10"/><line x1="19" y1="0" x2="14" y2="0"/>
+            <line x1="-13.4" y1="-13.4" x2="-10" y2="-10"/><line x1="-19" y1="0" x2="-14" y2="0"/>
+          </g>
+          <path d="M0,-11 L2.7,-3.7 L10.5,-3.4 L4.4,1.4 L6.5,8.9 L0,4.6 L-6.5,8.9 L-4.4,1.4 L-10.5,-3.4 L-2.7,-3.7 Z" fill="url(#stable-star-fill)" stroke="#b8860b" stroke-width="1" stroke-linejoin="round"/>
+          <path d="M0,-11 L2.7,-3.7 L0,-1 Z" fill="#fff" opacity="0.55"/>
+        </g>
+        
+        <!-- name sign -->
+        <rect x="66" y="32" width="68" height="18" rx="2" fill="#3a2210" stroke="#8B5A2B" stroke-width="2"/>
+        <text x="100" y="44" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="10" letter-spacing="1" fill="#FFD700">RUDIS STALL</text>
       </svg>
       <div class="stable-rudi"><span id="pet-emoji" class="transition-transform duration-200"></span></div>
     </div>
