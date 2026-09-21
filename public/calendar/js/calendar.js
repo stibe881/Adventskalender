@@ -55,74 +55,12 @@ async function fetchJson(url, opts = {}) {
 
 let effectsEnabled = true;
 
-let userCoins = 0;
-let userInventory = [];
-
-function updateCoinDisplay() {
-  const shown = isPreview ? "∞" : userCoins;
-  const cd = document.getElementById("coin-display");
-  if (cd) cd.textContent = shown;
-  const sb = document.getElementById("shop-balance");
-  if (sb) sb.textContent = shown;
-
-  // Sync to leaderboard if name is set (never from the admin preview)
-  const lbName = localStorage.getItem("lb_name");
-  if (!isPreview && lbName && typeof routeId !== "undefined") {
-    fetchJson(`/api/calendar/${routeId}/score`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: lbName, game: "Gesamt-Münzen", score: userCoins, day: "Alle" })
-    }).catch(() => {});
-  }
-}
-
-// ---------- Economy (coins, purchases, worn items, claimed rewards) ----------
-// localStorage is the working copy. In company mode the server keeps a copy per
-// employee, so the state follows them across devices like the opened doors.
+// ---------- Claimed rewards (solved quizzes) ----------
 let claimedRewards = [];
-let corpUser = null;
-let economySyncTimer = null;
 
-function readLocalEconomy() {
-  userCoins = parseInt(localStorage.getItem(`coins_${routeId}`) || "0", 10) || 0;
-  try { userInventory = JSON.parse(localStorage.getItem(`inventory_${routeId}`) || "[]"); } catch (e) { userInventory = []; }
+function loadClaimed() {
   try { claimedRewards = JSON.parse(localStorage.getItem(`claimed_${routeId}`) || "[]"); } catch (e) { claimedRewards = []; }
-  if (!Array.isArray(userInventory)) userInventory = [];
   if (!Array.isArray(claimedRewards)) claimedRewards = [];
-}
-
-function loadEconomy(meta) {
-  corpUser = meta?.companyMode && !isPreview ? (localStorage.getItem(`adventskalender_user_${routeId}`) || null) : null;
-  if (corpUser) {
-    // The server copy wins, even when it is empty: a shared device must not leak
-    // the previous employee's coins into this account.
-    const eco = meta.economy || {};
-    localStorage.setItem(`coins_${routeId}`, String(eco.coins || 0));
-    localStorage.setItem(`inventory_${routeId}`, JSON.stringify(eco.inventory || []));
-    localStorage.setItem(`worn_${routeId}`, JSON.stringify(eco.worn || []));
-    localStorage.setItem(`claimed_${routeId}`, JSON.stringify(eco.claimed || []));
-  }
-  readLocalEconomy();
-}
-
-function syncEconomy() {
-  if (!corpUser) return;
-  clearTimeout(economySyncTimer);
-  economySyncTimer = setTimeout(() => {
-    let worn = [];
-    try { worn = JSON.parse(localStorage.getItem(`worn_${routeId}`) || "[]"); } catch (e) {}
-    fetchJson(`/api/calendar/${routeId}/economy`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user: corpUser, coins: userCoins, inventory: userInventory, worn, claimed: claimedRewards }),
-    }).catch((e) => console.warn("Economy-Sync fehlgeschlagen:", e.message));
-  }, 300);
-}
-
-function saveUserCoins() {
-  localStorage.setItem(`coins_${routeId}`, userCoins);
-  updateCoinDisplay();
-  syncEconomy();
 }
 
 function hasClaimed(key) {
@@ -132,7 +70,6 @@ function hasClaimed(key) {
 function markClaimed(key) {
   if (!claimedRewards.includes(key)) claimedRewards.push(key);
   localStorage.setItem(`claimed_${routeId}`, JSON.stringify(claimedRewards));
-  syncEconomy();
 }
 
 function updateProgress() {
@@ -157,8 +94,7 @@ function updateProgress() {
 }
 
 async function init() {
-  readLocalEconomy();
-  updateCoinDisplay();
+  loadClaimed();
   try {
     if (isPreview) {
       const data = await fetchJson(`/api/admin/calendars/${routeId}/preview`);
@@ -244,10 +180,6 @@ async function init() {
     document.getElementById("preview-banner").classList.remove("hidden");
   }
 
-  // Load economy (from the server for employees in company mode)
-  loadEconomy(calendarMeta);
-  updateCoinDisplay();
-  
   field = new ParticleField(canvas);
   field.setAmbient(theme.ambient);
   field.start();
@@ -270,10 +202,6 @@ async function init() {
   applyEffects(localStorage.getItem(`effects_${routeId}`) !== "0");
   document.getElementById("toggle-effects-btn").addEventListener("click", () => applyEffects(!effectsEnabled));
 
-  // The shop only makes sense when the calendar hands out coins somewhere.
-  // The Nordpol-Shop only sells gear for Rudi, so it disappears together with him.
-  document.getElementById("shop-btn").classList.toggle("hidden", !calendarMeta.hasCoins || calendarMeta.rudiEnabled === false);
-  
   if (typeof io !== "undefined") {
     socket = io();
     socket.emit("join_calendar", routeId);
@@ -312,7 +240,6 @@ async function init() {
     });
   }
   
-  initPet(calendarMeta.streak || 0);
   // Community canvas is a firma-template feature the owner can switch off.
   document.getElementById("pixel-art-btn").classList.toggle("hidden", !calendarMeta.communityCanvas);
   if (calendarMeta.communityCanvas) initPixelArt();
@@ -476,312 +403,6 @@ function applyEffects(enabled) {
   }
   localStorage.setItem(`effects_${routeId}`, enabled ? "1" : "0");
 }
-
-// ---------- Tamagotchi reindeer ----------
-
-// Shared with the editor (public/shared/shop-items.js); the rider's name follows the Swiss mode.
-const SHOP_ITEMS = (window.RUDI_SHOP_ITEMS || []).map((i) => (i.swissName ? { ...i, get name() { return calendarMeta?.swissMode ? i.swissName : "Weihnachtsmann"; } } : i));
-
-function initPet(streak = calendarMeta?.streak || 0) {
-  const petEl = document.getElementById("digital-pet");
-  const emoji = document.getElementById("pet-emoji");
-  if (!petEl) return;
-  // The owner can switch Rudi off in the calendar settings.
-  if (calendarMeta?.rudiEnabled === false) {
-    petEl.classList.add("hidden");
-    document.body.classList.add("rudi-off");
-    return;
-  }
-  petEl.classList.remove("hidden");
-
-  const openedCount = days.filter((d) => d.opened).length;
-  const activity = Math.max(streak, openedCount);
-  let petState = "sleepy";
-  if (activity > 0) petState = "happy";
-  if (streak > 5 || openedCount >= 10) petState = "glowing";
-  const activityText = streak > 0 ? `${streak} Tage Streak` : `${openedCount} Türchen geöffnet`;
-
-  if (!petEl.dataset.wired) {
-    petEl.dataset.wired = "1";
-    petEl.querySelector(".rudi-stable").addEventListener("click", () => {
-      emoji.style.transform = "translateY(-14px)";
-      setTimeout(() => (emoji.style.transform = "translateY(0)"), 220);
-      // Tapping Rudi while he wears something takes the last piece off;
-      // otherwise he shows off a random trick.
-      if (wornItems.length) {
-        toggleWear(SHOP_ITEMS.find((i) => i.id === wornItems[wornItems.length - 1]));
-        return;
-      }
-      const tricks = SHOP_ITEMS.filter((i) => userInventory.includes(i.id) && !WEARABLES.includes(i.id));
-      if (tricks.length) useItem(tricks[Math.floor(Math.random() * tricks.length)].id);
-      else showLockToast("Rudi hüpft – kauf ihm im Nordpol-Shop etwas, dann zeigt er Kunststücke!");
-    });
-  }
-
-  loadWorn();
-  emoji.style.filter = "";
-  emoji.innerHTML = RudiArt.rudi({ worn: wornItems, state: petState });
-  if (petState === "sleepy") {
-    emoji.style.filter = "grayscale(0.45)";
-    petEl.title = "Rudi schläft – öffne ein Türchen!";
-  } else if (petState === "happy") {
-    petEl.title = `Rudi ist glücklich · ${activityText}`;
-  } else {
-    emoji.style.filter = "drop-shadow(0 0 12px rgba(250,204,21,0.85))";
-    petEl.title = `Rudi: On Fire! ${activityText}`;
-  }
-
-  renderPetItems();
-}
-
-// Purchased items sit under the stable; each one can be used with a tap.
-function renderPetItems() {
-  const bar = document.getElementById("pet-items");
-  if (!bar) return;
-  const owned = SHOP_ITEMS.filter((i) => userInventory.includes(i.id));
-  bar.innerHTML = owned
-    .map((item) => {
-      const action = RUDI_ACTIONS[item.id];
-      const worn = wornItems.includes(item.id);
-      return `<button type="button" class="stable-item${worn ? " is-worn" : ""}" data-item="${item.id}" title="${escapeHtml(item.name)}${action ? " – " + escapeHtml(action.label) : ""}${worn ? " (getragen)" : ""}" aria-label="${escapeHtml(item.name)}">${RudiArt.gear(item.id)}</button>`;
-    })
-    .join("");
-  bar.style.display = owned.length ? "flex" : "none";
-  // The Christmas star crowns the stable roof once it has been bought.
-  const roofStar = document.getElementById("stable-star");
-  if (roofStar) roofStar.style.display = userInventory.includes("star") ? "" : "none";
-  bar.querySelectorAll(".stable-item").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }], { duration: 300 });
-      useItem(btn.dataset.item);
-    });
-  });
-}
-
-// ---------- Shop ----------
-
-function renderShop() {
-  const list = document.getElementById("shop-items");
-  if (!list) return;
-  list.innerHTML = SHOP_ITEMS.map((item) => {
-    const owned = userInventory.includes(item.id);
-    const affordable = isPreview || userCoins >= item.price;
-    const action = RUDI_ACTIONS[item.id];
-    return `
-      <button type="button" onclick="${owned ? `useItem('${item.id}')` : `buyItem('${item.id}')`}"
-        class="w-full text-left bg-white p-3 rounded-xl border shadow-sm flex justify-between items-center gap-3 transition-transform hover:scale-[1.02] active:scale-95 ${owned ? "border-emerald-400 hover:bg-emerald-50" : "border-amber-300 hover:bg-amber-50"}">
-        <span class="flex items-center gap-3 min-w-0">
-          <span class="text-3xl leading-none shop-gear">${RudiArt.gear(item.id)}</span>
-          <span class="min-w-0">
-            <span class="block font-bold">${item.name}</span>
-            <span class="block text-xs text-amber-700/80 truncate">${owned && action ? action.label : item.desc}</span>
-          </span>
-        </span>
-        <span class="shrink-0 px-3 py-1 rounded-full font-bold text-sm ${owned ? "bg-emerald-500 text-white" : affordable ? "bg-amber-500 text-white" : "bg-amber-200 text-amber-800"}">${owned ? `${icon("play")} Benutzen` : `${item.price} ${icon("coins")}`}</span>
-      </button>`;
-  }).join("");
-}
-
-// ---------- Rudi actions (what purchased items do) ----------
-
-// Wearables stay on Rudi until they are taken off again.
-const WEARABLES = ["bow", "scarf", "hat", "glasses", "crown"];
-let wornItems = [];
-
-function loadWorn() {
-  try { wornItems = JSON.parse(localStorage.getItem(`worn_${routeId}`) || "[]"); } catch (e) { wornItems = []; }
-  wornItems = wornItems.filter((id) => WEARABLES.includes(id) && userInventory.includes(id));
-}
-
-
-function toggleWear(item) {
-  if (wornItems.includes(item.id)) {
-    wornItems = wornItems.filter((id) => id !== item.id);
-    showLockToast(`Rudi legt ${item.name} ab.`);
-  } else {
-    // one piece per slot – a crown replaces the top hat and so on
-    wornItems = wornItems.filter((id) => SHOP_ITEMS.find((i) => i.id === id)?.slot !== item.slot);
-    wornItems.push(item.id);
-    showLockToast(`Rudi trägt jetzt ${item.name}.`);
-    if (window.atmosphere) window.atmosphere.playClickSound();
-  }
-  localStorage.setItem(`worn_${routeId}`, JSON.stringify(wornItems));
-  syncEconomy();
-  initPet();
-  const emoji = document.getElementById("pet-emoji");
-  emoji.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 400, easing: "ease-out" });
-}
-
-const RUDI_ACTIONS = {
-  sleigh: { label: "Schlittenfahrt von links oben nach rechts unten", run: () => rudiTravel({ mode: "sleigh", extras: ["sleigh"] }) },
-  skis: { label: "Auf Schlittschuhen über den Bildschirm gleiten", run: () => rudiTravel({ mode: "glide", extras: ["skis"] }) },
-  wings: { label: "Mit Flügeln über den Kalender fliegen", run: () => rudiTravel({ mode: "fly", extras: ["wings"] }) },
-  santahat: { get label() { return `Mit dem ${calendarMeta?.swissMode ? "Christkind" : "Weihnachtsmann"} auf dem Rücken fliegen`; }, run: () => rudiTravel({ mode: "fly", extras: ["santahat"] }) },
-  star: { label: "Sternschnuppen-Flug", run: () => rudiTravel({ mode: "fly", extras: ["star", "lights"] }) },
-  lights: { label: "Lichterkette funkeln lassen", run: () => rudiSparkle(3) },
-  bell: { label: "Glöckchen bimmeln lassen", run: () => rudiJingle() },
-  hat: { label: "Zylinder anziehen / ablegen", run: (item) => toggleWear(item) },
-  crown: { label: "Krone aufsetzen / abnehmen", run: (item) => toggleWear(item) },
-  glasses: { label: "Sonnenbrille aufsetzen / abnehmen", run: (item) => toggleWear(item) },
-  scarf: { label: "Schal umlegen / ablegen", run: (item) => toggleWear(item) },
-  bow: { label: "Schleife anlegen / ablegen", run: (item) => toggleWear(item) },
-};
-
-window.useItem = function(itemId) {
-  const item = SHOP_ITEMS.find((i) => i.id === itemId);
-  if (!item || !userInventory.includes(itemId)) return;
-  const action = RUDI_ACTIONS[itemId];
-  document.getElementById("shop-modal")?.classList.add("hidden");
-  if (action) action.run(item);
-  else rudiPose(item, "Rudi freut sich über sein neues Stück.");
-};
-
-let rudiBusy = false;
-
-// Rudi leaves his stall and crosses the screen. Whatever he wears comes
-// along; a rider sits on his back, wings on his shoulders, skates on his feet.
-function rudiTravel({ mode, extras = [] }) {
-  if (rudiBusy) return;
-  rudiBusy = true;
-  const petEmoji = document.getElementById("pet-emoji");
-  const traveller = document.createElement("div");
-  traveller.style.cssText = "position:fixed;left:0;top:0;z-index:70;pointer-events:none;font-size:clamp(3rem,8vw,5rem);line-height:1;will-change:transform;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.45));";
-  // Rudi faces left in the artwork but travels to the right: mirror him.
-  traveller.innerHTML = `<span style="display:inline-block;transform:scaleX(-1);">${RudiArt.rudi({ worn: wornItems, extras, cls: "rudi-travel", view: "side" })}</span>`;
-  document.body.appendChild(traveller);
-  const originalEmoji = petEmoji.innerHTML;
-  petEmoji.innerHTML = RudiArt.rudi({ state: "dust" });
-
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const frames = {
-    sleigh: [
-      { transform: `translate(${-0.25 * W}px, ${0.05 * H}px) rotate(-12deg)` },
-      { transform: `translate(${0.3 * W}px, ${0.32 * H}px) rotate(-18deg)`, offset: 0.4 },
-      { transform: `translate(${0.6 * W}px, ${0.55 * H}px) rotate(-10deg)`, offset: 0.7 },
-      { transform: `translate(${1.05 * W}px, ${0.82 * H}px) rotate(-14deg)` },
-    ],
-    glide: [
-      { transform: `translate(${-0.25 * W}px, ${0.62 * H}px) rotate(4deg)` },
-      { transform: `translate(${0.2 * W}px, ${0.5 * H}px) rotate(-6deg)`, offset: 0.3 },
-      { transform: `translate(${0.5 * W}px, ${0.66 * H}px) rotate(6deg)`, offset: 0.55 },
-      { transform: `translate(${0.8 * W}px, ${0.52 * H}px) rotate(-5deg)`, offset: 0.8 },
-      { transform: `translate(${1.1 * W}px, ${0.6 * H}px) rotate(3deg)` },
-    ],
-    fly: [
-      { transform: `translate(${-0.25 * W}px, ${0.8 * H}px) rotate(-20deg)` },
-      { transform: `translate(${0.25 * W}px, ${0.35 * H}px) rotate(-8deg)`, offset: 0.35 },
-      { transform: `translate(${0.55 * W}px, ${0.2 * H}px) rotate(0deg)`, offset: 0.55 },
-      { transform: `translate(${0.8 * W}px, ${0.3 * H}px) rotate(8deg)`, offset: 0.75 },
-      { transform: `translate(${1.1 * W}px, ${0.1 * H}px) rotate(-10deg)` },
-    ],
-  }[mode];
-  // Flying and skating are leisurely; the sleigh stays brisk.
-  const duration = { fly: 11000, glide: 7000, sleigh: 3400 }[mode];
-
-  if (window.atmosphere) {
-    if (mode === "sleigh") [0, 350, 700, 1050, 1400].forEach((d) => window.atmosphere.playTone(880 + (d % 700), "sine", 0.15, 0.03, d / 1000));
-    else window.atmosphere.playMagicChime();
-  }
-  const spray = setInterval(() => {
-    if (!effectsEnabled || !field) return;
-    const r = traveller.getBoundingClientRect();
-    const colors = mode === "fly" ? ["#fde68a", "#ffffff", "#fbbf24"] : ["#ffffff", "#e0f2fe", "#bae6fd"];
-    field.burst(r.left + r.width * 0.2, r.top + r.height * 0.9, colors, mode === "fly" ? 3 : 6);
-  }, mode === "fly" ? 260 : 140);
-
-  const anim = traveller.animate(frames, { duration, easing: mode === "sleigh" ? "cubic-bezier(0.45,0,0.85,0.6)" : "ease-in-out", fill: "forwards" });
-  anim.onfinish = () => {
-    clearInterval(spray);
-    traveller.remove();
-    petEmoji.innerHTML = originalEmoji;
-    petEmoji.style.transform = "translateY(-14px)";
-    setTimeout(() => (petEmoji.style.transform = "translateY(0)"), 220);
-    rudiBusy = false;
-  };
-}
-
-function rudiSparkle(rounds) {
-  const petEl = document.getElementById("digital-pet");
-  const emoji = document.getElementById("pet-emoji");
-  let i = 0;
-  const tick = () => {
-    const r = petEl.getBoundingClientRect();
-    if (effectsEnabled && field) field.burst(r.left + r.width / 2, r.top + r.height / 2, ["#fde047", "#fb7185", "#4ade80", "#60a5fa", "#ffffff"], 30);
-    emoji.style.filter = i % 2 ? "" : "drop-shadow(0 0 16px rgba(253,224,71,0.95)) brightness(1.2)";
-    if (++i < rounds * 2) setTimeout(tick, 350);
-    else setTimeout(() => initPet(), 400);
-  };
-  if (window.atmosphere) window.atmosphere.playMagicChime();
-  tick();
-}
-
-function rudiJingle() {
-  const emoji = document.getElementById("pet-emoji");
-  if (window.atmosphere) {
-    window.atmosphere.initAudio();
-    [1318, 1318, 1318, 1318, 1568, 1046, 1174, 1318].forEach((f, i) => window.atmosphere.playTone(f, "triangle", 0.25, 0.05, i * 0.18));
-  }
-  emoji.animate(
-    [{ transform: "rotate(0)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(14deg)" }, { transform: "rotate(-10deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0)" }],
-    { duration: 900, iterations: 2, easing: "ease-in-out" }
-  );
-  showLockToast("Kling, Glöckchen, klingelingeling!");
-}
-
-function rudiPose(item, message) {
-  const petEl = document.getElementById("digital-pet");
-  const emoji = document.getElementById("pet-emoji");
-  if (rudiBusy) return;
-  rudiBusy = true;
-  emoji.innerHTML = RudiArt.rudi({ worn: wornItems, extras: [item.id] });
-  emoji.style.filter = "";
-  setTimeout(() => { rudiBusy = false; initPet(); }, 2600);
-  emoji.animate(
-    [{ transform: "scale(1) rotate(0)" }, { transform: "scale(1.35) rotate(-8deg)" }, { transform: "scale(1.35) rotate(8deg)" }, { transform: "scale(1) rotate(0)" }],
-    { duration: 900, easing: "ease-in-out" }
-  );
-  const r = petEl.getBoundingClientRect();
-  if (effectsEnabled && field) field.burst(r.left + r.width / 2, r.top + r.height / 2, ["#f59e0b", "#fbbf24", "#ffffff", "#f472b6"], 36);
-  if (window.atmosphere) window.atmosphere.playClickSound();
-  showLockToast(message);
-}
-
-document.getElementById("shop-btn").onclick = () => {
-  document.getElementById("shop-modal").classList.remove("hidden");
-  updateCoinDisplay();
-  renderShop();
-};
-
-document.getElementById("shop-close").onclick = () => {
-  document.getElementById("shop-modal").classList.add("hidden");
-};
-
-window.buyItem = function(itemId) {
-  const item = SHOP_ITEMS.find((i) => i.id === itemId);
-  if (!item) return;
-  if (userInventory.includes(item.id)) {
-    alert("Du besitzt dieses Item bereits!");
-    return;
-  }
-  // The admin preview has unlimited coins so every item can be tried out.
-  if (!isPreview) {
-    if (userCoins < item.price) {
-      alert(`Nicht genug Münzen – dir fehlen noch ${item.price - userCoins} Münzen.`);
-      return;
-    }
-    userCoins -= item.price;
-  }
-  userInventory.push(item.id);
-  localStorage.setItem(`inventory_${routeId}`, JSON.stringify(userInventory));
-  saveUserCoins();
-  updateCoinDisplay();
-  renderShop();
-  initPet(calendarMeta?.streak || 0);
-  // Show the new purchase in action right away.
-  useItem(item.id);
-};
 
 // ---------- Pixel Art ----------
 
@@ -1628,19 +1249,7 @@ async function tryOpenDoor(dayNum, sceneEl, body = {}) {
   }
 
   const updatedDoor = days.find((d) => d.day === dayNum) || door;
-  awardDoorCoins(dayNum);
   openDoorAnimation(sceneEl, updatedDoor);
-}
-
-// Rudi's pocket money: the owner can put coins behind every door, on top of its content.
-function awardDoorCoins(dayNum) {
-  const n = parseInt(calendarMeta?.rudiCoinsPerDoor, 10) || 0;
-  if (!n || isPreview || calendarMeta?.rudiEnabled === false || hasClaimed(`door:${dayNum}`)) return;
-  markClaimed(`door:${dayNum}`);
-  userCoins += n;
-  saveUserCoins();
-  updateCoinDisplay();
-  setTimeout(() => showLockToast(`+${n} Münzen für Rudi`), 900);
 }
 
 function shakeDoor(sceneEl) {
@@ -1668,7 +1277,6 @@ function openDoorAnimation(sceneEl, door) {
   requestAnimationFrame(() => {
     applyDoorState(sceneEl, door);
     updateProgress();
-    initPet();
     updateNextDoorCountdown();
 
     if (window.atmosphere) window.atmosphere.playMagicChime();
@@ -1831,7 +1439,7 @@ function openLeaderboardModal() {
               <div class="text-xs text-slate-400">${escapeHtml(entry.game)}</div>
             </div>
           </div>
-          <div class="font-bold text-lg text-emerald-400">${entry.score} ${icon("coins")}</div>
+          <div class="font-bold text-lg text-emerald-400">${entry.score} Punkte</div>
         </div>
       `).join("")}
     </div>`;
@@ -1841,7 +1449,7 @@ function openLeaderboardModal() {
   const nameForm = `
     <div class="mt-6 bg-slate-800 p-4 rounded-xl border border-white/10 text-left">
       <h4 class="font-bold text-white mb-2">Trage dich ein!</h4>
-      <p class="text-xs text-slate-400 mb-3">Du hast aktuell ${userCoins} Münzen. Speichere deinen Namen, um auf der Rangliste zu erscheinen.</p>
+      <p class="text-xs text-slate-400 mb-3">Speichere deinen Namen, damit deine Spiel-Ergebnisse auf der Rangliste erscheinen.</p>
       <div class="flex gap-2">
         <input type="text" id="lb-name-input" placeholder="Dein Spielername..." value="${escapeHtml(lbName)}" class="flex-1 bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
         <button id="lb-submit-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">Speichern</button>
@@ -1850,7 +1458,7 @@ function openLeaderboardModal() {
   `;
 
   modalBody.innerHTML = cardWrap(
-    "coins",
+    "catcher",
     "Top 10 Rangliste",
     `${rows}
      ${nameForm}
@@ -1868,19 +1476,7 @@ function openLeaderboardModal() {
     if (!name) return alert("Bitte gib einen Namen ein!");
     
     localStorage.setItem("lb_name", name);
-    try {
-      await fetchJson(`/api/calendar/${routeId}/score`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, game: "Gesamt-Münzen", score: userCoins, day: "Alle" })
-      });
-      // Refresh calendarMeta leaderboard by fetching again
-      const data = await fetchJson(isPreview ? `/api/admin/calendars/${routeId}/preview` : `/api/calendar/${routeId}`);
-      calendarMeta.leaderboard = data.leaderboard || data.calendar?.leaderboard || [];
-      openLeaderboardModal(); // Re-render modal
-    } catch(err) {
-      alert("Fehler beim Speichern: " + err.message);
-    }
+    openLeaderboardModal(); // Re-render modal
   });
 
   document.getElementById("global-stats-btn").addEventListener("click", async () => {
@@ -2008,7 +1604,6 @@ function renderContent(type, c, dayNum) {
         <div id="quiz-prize" class="quiz-prize hidden">
           <div class="quiz-prize-icon"><i data-icon="trophy"></i></div>
           <div class="quiz-prize-text">${escapeHtml(c.prizeText)}</div>
-          ${c.prizeCoins ? `<div class="quiz-prize-coins">+${c.prizeCoins} Münzen</div>` : ''}
         </div>` : ''}`
       );
 
@@ -2139,24 +1734,6 @@ function renderContent(type, c, dayNum) {
       );
     }
 
-    case "coins": {
-      if (!isPreview && !hasClaimed(`coins:${dayNum}`)) {
-        markClaimed(`coins:${dayNum}`);
-        userCoins += (c.coinAmount || 50);
-        saveUserCoins();
-      }
-      updateCoinDisplay();
-      return cardWrap(
-        "coins",
-        "Münz-Schatz gefunden!",
-        `<div style="text-align: center; padding: 32px; background: rgba(245, 158, 11, 0.1); border-radius: 16px; border: 1px solid rgba(245, 158, 11, 0.3);">
-          <div style="font-size: 3.75rem; margin-bottom: 16px;"><i data-icon="coins"></i></div>
-          <h3 style="font-size: 1.5rem; font-weight: 900; color: #f59e0b; margin-bottom: 8px;">+${escapeHtml(c.coinAmount || 50)} Münzen</h3>
-          <p class="modal-muted">Du kannst diese Münzen oben rechts im Nordpol-Shop ausgeben!</p>
-         </div>`
-      );
-    }
-    
     case "diary": {
       const savedAns = localStorage.getItem(`diary_${routeId}_${dayNum}`) || "";
       let html = `<p class="modal-muted mb-4" style="text-align: center; margin-bottom: 24px; font-size: 1.1rem; font-style: italic;">${escapeHtml(c.diaryQuestion)}</p>
@@ -2410,7 +1987,7 @@ function setupQuiz(c, door) {
   const resultEl = document.getElementById("quiz-result");
   const prizeEl = document.getElementById("quiz-prize");
   
-  // Check if coins were already awarded for this door
+  // A solved quiz stays solved.
   const prizeKey = door ? `quiz:${door.day}` : null;
   const alreadyAwarded = prizeKey && (hasClaimed(prizeKey) || localStorage.getItem(`quiz_prize_${routeId}_${door.day}`) === "true");
 
@@ -2441,15 +2018,7 @@ function setupQuiz(c, door) {
           prizeEl.classList.remove("hidden");
         }
         
-        if (c.prizeCoins && !alreadyAwarded) {
-          const coins = parseInt(c.prizeCoins, 10);
-          if (!isNaN(coins) && coins > 0) {
-            userCoins += coins;
-            saveUserCoins();
-            updateCoinDisplay();
-          }
-          if (prizeKey) markClaimed(prizeKey);
-        }
+        if (prizeKey && !alreadyAwarded) markClaimed(prizeKey);
       }
     });
   });
@@ -2896,7 +2465,7 @@ window.startDuelSearch = function(day) {
           if (myScore > oppScore) {
             ui.innerHTML = `<h3 class="text-3xl font-black text-emerald-400 mb-4">GEWONNEN! <i data-icon="trophy"></i></h3><p class="text-white mb-4">Du hast deinen Gegner besiegt.</p><button onclick="alert('Inhalt freigeschaltet! (Dies ist eine Simulation)')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg w-full">Geschenk öffnen</button>`;
           } else if (myScore < oppScore) {
-            ui.innerHTML = `<h3 class="text-3xl font-black text-rose-400 mb-4">VERLOREN! <i data-icon="snowflake"></i></h3><p class="text-white">Dein Gegner war schneller. Komm morgen wieder oder nutze den Shop.</p>`;
+            ui.innerHTML = `<h3 class="text-3xl font-black text-rose-400 mb-4">VERLOREN! <i data-icon="snowflake"></i></h3><p class="text-white">Dein Gegner war schneller. Komm morgen wieder.</p>`;
           } else {
             ui.innerHTML = `<h3 class="text-3xl font-black text-amber-400 mb-4">UNENTSCHIEDEN! <i data-icon="handshake"></i></h3><p class="text-white">Beide waren gleich schnell.</p>`;
           }

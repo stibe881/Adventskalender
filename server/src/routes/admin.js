@@ -218,7 +218,7 @@ function applyTemplate(days, templateId, year) {
     days.forEach(d => {
       d.contentType = "quiz";
       const q = triviaQuestions[(d.day - 1) % triviaQuestions.length];
-      d.content = { question: `Quizfrage #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Richtig! Klasse gemacht.", failureMessage: "Leider falsch.", prizeText: "10 Punkte", prizeCoins: 10 };
+      d.content = { question: `Quizfrage #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Richtig! Klasse gemacht.", failureMessage: "Leider falsch.", prizeText: "10 Punkte" };
     });
   } else if (templateId === "recipes") {
     const recipes = [
@@ -383,7 +383,7 @@ function applyTemplate(days, templateId, year) {
     days.forEach(d => {
       d.contentType = "quiz";
       const q = escapeRiddles[(d.day - 1) % escapeRiddles.length];
-      d.content = { question: `Rätsel #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Code geknackt! Tür geöffnet.", failureMessage: "Falsche Antwort. Das Schloss klemmt...", prizeText: "Nächster Hinweis", prizeCoins: 10 };
+      d.content = { question: `Rätsel #${d.day}:\n${q.q}`, options: q.o, correctIndex: q.a, successMessage: "Code geknackt! Tür geöffnet.", failureMessage: "Falsche Antwort. Das Schloss klemmt...", prizeText: "Nächster Hinweis" };
     });
   }
   return days;
@@ -532,7 +532,7 @@ router.get("/calendars/:id", async (req, res) => {
 });
 
 router.put("/calendars/:id", async (req, res) => {
-  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, rudiEnabled, rudiCoinsPerDoor, swissMode } = req.body || {};
+  const { recipientName, recipientEmail, theme, year, customConfig, strictMode, randomLayout, syncOpen, metaPuzzle, metaPassword, companyMode, communityCanvas, swissMode } = req.body || {};
   const calendar = await db.getCalendarById(req.params.id);
   if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
   // period: undefined = untouched, null = back to Advent, { start, end } = custom days
@@ -547,8 +547,6 @@ router.put("/calendars/:id", async (req, res) => {
     if (syncOpen !== undefined) cal.syncOpen = Boolean(syncOpen);
     if (companyMode !== undefined) cal.companyMode = Boolean(companyMode);
     if (communityCanvas !== undefined) cal.communityCanvas = Boolean(communityCanvas);
-    if (rudiEnabled !== undefined) cal.rudiEnabled = Boolean(rudiEnabled);
-    if (rudiCoinsPerDoor !== undefined) { const n = parseInt(rudiCoinsPerDoor, 10); cal.rudiCoinsPerDoor = Number.isInteger(n) && n > 0 ? Math.min(n, 500) : 0; }
     // Swiss mode: Christkind instead of Weihnachtsmann, Samichlaus instead of Nikolaus.
     // Switching converts the texts of all doors (and back again).
     if (swissMode !== undefined && Boolean(swissMode) !== Boolean(cal.swissMode)) {
@@ -730,11 +728,8 @@ router.get("/calendars/:id/preview", async (req, res) => {
     companyMode: calendar.companyMode || false,
     companyName: await resolveCompanyName(calendar),
     communityCanvas: communityCanvasEnabled(calendar),
-    rudiEnabled: calendar.rudiEnabled !== false,
-    rudiCoinsPerDoor: calendar.rudiCoinsPerDoor || 0,
     playlist: calendar.playlist || [],
     spotifyConnected: Boolean(calendar.spotify?.refreshToken),
-    hasCoins: calendar.days.some((d) => d.contentType === "coins") || Boolean(calendar.rudiCoinsPerDoor),
     year: calendar.year,
     period: calendar.period || null,
     dayCount: dayCount(calendar),

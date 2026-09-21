@@ -121,23 +121,3 @@ test("Kalender: a self-chosen period gives one door per day, unlocks by date, an
   assert.equal(T.doorDateISO({ year: 2026 }, 24), "2026-12-24");
 });
 
-test("Kalender: Rudi's coins per door are a setting, capped and shown to the recipient", async (t) => {
-  const h = await startApp();
-  h.app.use("/api/admin", require(path.join(SRC, "routes/admin")));
-  h.app.use("/api/calendar", require(path.join(SRC, "routes/calendar")));
-  const { call, anon } = h;
-  t.after(h.stop);
-  let r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", year: 2026 });
-  const cal = r.d;
-  r = await anon("GET", `/api/calendar/${cal.token}`);
-  assert.equal(r.d.rudiCoinsPerDoor, 0);
-  assert.equal(r.d.hasCoins, false);
-  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { rudiCoinsPerDoor: "15" });
-  r = await anon("GET", `/api/calendar/${cal.token}`);
-  assert.equal(r.d.rudiCoinsPerDoor, 15);
-  assert.equal(r.d.hasCoins, true, "the shop shows up once there are coins to earn");
-  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { rudiCoinsPerDoor: 9999 });
-  assert.equal((await anon("GET", `/api/calendar/${cal.token}`)).d.rudiCoinsPerDoor, 500, "capped");
-  r = await call("PUT", `/api/admin/calendars/${cal.id}`, { rudiCoinsPerDoor: 0 });
-  assert.equal((await anon("GET", `/api/calendar/${cal.token}`)).d.rudiCoinsPerDoor, 0);
-});

@@ -31,124 +31,12 @@
   <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-0 transition-opacity duration-1000" aria-hidden="true"></canvas>
 
   <div id="controls" class="fixed top-4 right-4 z-50 flex gap-2">
-    <button id="shop-btn" class="bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-full p-2 px-4 backdrop-blur transition-colors" title="Nordpol-Shop">
-      <i data-icon="coins"></i> <span id="coin-display">0</span>
-    </button>
     <button id="pixel-art-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-2 backdrop-blur transition-colors" title="Community Leinwand">
       <i data-icon="palette"></i>
     </button>
     <button id="toggle-effects-btn" class="bg-black/40 hover:bg-black/60 text-white rounded-full p-2 backdrop-blur transition-colors" title="Effekte an/ausschalten (Batterie sparen)">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/><path d="m4.93 19.07 14.14-14.14"/></svg>
     </button>
-  </div>
-
-  <!-- Digital Pet -->
-  <div id="digital-pet" class="fixed bottom-4 left-4 z-40 hidden cursor-pointer select-none" title="Rudis Stall – klick auf Rudi für ein Kunststück">
-    <div class="rudi-stable">
-      <svg class="stable-art" viewBox="0 -16 200 166" aria-hidden="true" style="overflow:visible;">
-        <defs>
-          <linearGradient id="wood-dark" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#3E2723"/><stop offset="1" stop-color="#211412"/>
-          </linearGradient>
-          <linearGradient id="wood-light" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#795548"/><stop offset="1" stop-color="#4E342E"/>
-          </linearGradient>
-          <linearGradient id="wood-pillar" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#5D4037"/><stop offset="0.5" stop-color="#795548"/><stop offset="1" stop-color="#4E342E"/>
-          </linearGradient>
-          <linearGradient id="snow" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#FFFFFF"/><stop offset="0.8" stop-color="#F1F5F9"/><stop offset="1" stop-color="#E2E8F0"/>
-          </linearGradient>
-          <radialGradient id="lantern-glow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#FFD54F" stop-opacity="0.9"/><stop offset="0.4" stop-color="#FFB300" stop-opacity="0.4"/><stop offset="1" stop-color="#FF8C00" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="stable-star-glow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stop-color="#fff3b0" stop-opacity="0.95"/><stop offset="0.55" stop-color="#ffd54a" stop-opacity="0.35"/><stop offset="1" stop-color="#ffd54a" stop-opacity="0"/>
-          </radialGradient>
-          <linearGradient id="stable-star-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#fff6c2"/><stop offset="0.5" stop-color="#ffd23f"/><stop offset="1" stop-color="#e0a100"/>
-          </linearGradient>
-          <filter id="shadow">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
-          </filter>
-        </defs>
-        
-        <!-- Deep dark wood inside -->
-        <rect x="15" y="45" width="170" height="105" rx="5" fill="url(#wood-dark)"/>
-        
-        <!-- Back wall planks -->
-        <path d="M25 45 V150 M45 45 V150 M65 45 V150 M85 45 V150 M105 45 V150 M125 45 V150 M145 45 V150 M165 45 V150" stroke="#1A100B" stroke-width="2"/>
-        <path d="M15 65 H185 M15 95 H185 M15 125 H185" stroke="#1A100B" stroke-width="1.5" opacity="0.4"/>
-        
-        <!-- Straw/Hay on the floor -->
-        <path d="M20 145 Q40 135 60 145 Q80 140 100 145 Q120 138 140 145 Q160 142 180 145 Z" fill="#D4AF37" opacity="0.6"/>
-        <g stroke="#DAA520" stroke-width="1.5" stroke-linecap="round">
-          <path d="M30 140 L25 130 M45 142 L50 132 M150 140 L155 130 M170 142 L165 135 M100 140 L105 133"/>
-        </g>
-        
-        <!-- Trough with Carrots -->
-        <rect x="25" y="130" width="30" height="15" rx="2" fill="#5D4037" stroke="#3E2723" stroke-width="1.5"/>
-        <path d="M30 130 L35 120 L40 130 Z" fill="#E65100"/>
-        <path d="M35 120 L37 115 L33 115 Z" fill="#4CAF50"/>
-        <path d="M40 130 L45 118 L50 130 Z" fill="#F57C00"/>
-        <path d="M45 118 L47 113 L43 113 Z" fill="#4CAF50"/>
-        
-        <!-- Thick wooden pillars -->
-        <rect x="10" y="45" width="16" height="105" rx="3" fill="url(#wood-pillar)" stroke="#3E2723" stroke-width="1.5" filter="url(#shadow)"/>
-        <rect x="174" y="45" width="16" height="105" rx="3" fill="url(#wood-pillar)" stroke="#3E2723" stroke-width="1.5" filter="url(#shadow)"/>
-        
-        <!-- Roof beams (Trusses) -->
-        <path d="M0 50 L100 -5 L200 50 L185 55 L100 5 L15 55 Z" fill="url(#wood-light)" stroke="#3E2723" stroke-width="2"/>
-        
-        <!-- Heavy Snowy Roof -->
-        <path d="M-5 52 Q 10 40 20 45 Q 60 -5 100 -12 Q 140 -5 180 45 Q 190 40 205 52 Q 210 56 200 60 Q 185 50 170 58 Q 155 50 140 58 Q 120 48 100 55 Q 80 48 60 58 Q 45 50 30 58 Q 15 50 0 60 Z" fill="url(#snow)" filter="url(#shadow)"/>
-        <!-- Icicles hanging from roof -->
-        <path d="M20 50 L22 65 L24 50 M40 54 L41 62 L42 54 M60 58 L62 70 L64 58 M140 58 L142 66 L144 58 M160 54 L161 62 L162 54 M180 50 L182 65 L184 50" fill="#E0F7FA" opacity="0.8"/>
-        
-        <!-- Warm Lantern -->
-        <circle class="stable-glow" cx="100" cy="25" r="25" fill="url(#lantern-glow)"/>
-        <!-- Lantern chain -->
-        <path d="M100 5 L100 15" stroke="#222" stroke-width="2"/>
-        <!-- Lantern body -->
-        <path d="M92 15 H108 L110 30 H90 Z" fill="#FFB300" opacity="0.8"/>
-        <path d="M90 15 H110 L105 10 H95 Z" fill="#424242"/>
-        <rect x="88" y="30" width="24" height="4" rx="1" fill="#424242"/>
-        <rect x="98" y="20" width="4" height="8" rx="2" fill="#FFF8E1" class="stable-flame"/>
-        <path d="M96 15 V30 M104 15 V30 M92 22 H108" stroke="#222" stroke-width="1.5"/>
-        
-        <!-- Holly & Berries on pillars -->
-        <g filter="url(#shadow)">
-          <path d="M15 50 Q25 55 10 65 Q5 55 15 50 Z" fill="#2E7D32"/>
-          <path d="M15 50 Q30 45 25 55 Q15 60 15 50 Z" fill="#388E3C"/>
-          <circle cx="16" cy="54" r="2.5" fill="#D32F2F"/>
-          <circle cx="21" cy="51" r="2.5" fill="#C62828"/>
-          <circle cx="19" cy="56" r="2.5" fill="#B71C1C"/>
-        </g>
-        
-        <!-- Christmas star on the roof (shown once purchased) -->
-        <g id="stable-star" class="stable-star" style="display:none" transform="translate(100 -12)">
-          <circle r="22" fill="url(#stable-star-glow)" class="stable-star-glow"/>
-          <g stroke="#ffe680" stroke-width="1.2" stroke-linecap="round" opacity="0.8" class="stable-star-rays">
-            <line x1="0" y1="-19" x2="0" y2="-14"/><line x1="13.4" y1="-13.4" x2="10" y2="-10"/><line x1="19" y1="0" x2="14" y2="0"/>
-            <line x1="-13.4" y1="-13.4" x2="-10" y2="-10"/><line x1="-19" y1="0" x2="-14" y2="0"/>
-          </g>
-          <path d="M0,-11 L2.7,-3.7 L10.5,-3.4 L4.4,1.4 L6.5,8.9 L0,4.6 L-6.5,8.9 L-4.4,1.4 L-10.5,-3.4 L-2.7,-3.7 Z" fill="url(#stable-star-fill)" stroke="#b8860b" stroke-width="1" stroke-linejoin="round"/>
-          <path d="M0,-11 L2.7,-3.7 L0,-1 Z" fill="#fff" opacity="0.55"/>
-        </g>
-        
-        <!-- Fancy Name Sign -->
-        <g transform="translate(62, 35)">
-          <!-- Sign ropes -->
-          <line x1="15" y1="-20" x2="10" y2="0" stroke="#4E342E" stroke-width="2"/>
-          <line x1="61" y1="-20" x2="66" y2="0" stroke="#4E342E" stroke-width="2"/>
-          <rect x="0" y="0" width="76" height="22" rx="3" fill="#4E342E" stroke="#211412" stroke-width="2" filter="url(#shadow)"/>
-          <rect x="2" y="2" width="72" height="18" rx="2" fill="#795548"/>
-          <text x="38" y="15" text-anchor="middle" font-family="'Comic Sans MS', 'Chalkboard SE', sans-serif" font-weight="bold" font-size="11" letter-spacing="1" fill="#FFD54F">RUDIS STALL</text>
-        </g>
-      </svg>
-      <div class="stable-rudi"><span id="pet-emoji" class="transition-transform duration-200"></span></div>
-    </div>
-    <div id="pet-items" class="stable-items" style="display:none"></div>
   </div>
 
   <div id="app-root">
@@ -209,20 +97,6 @@
     </div>
   </div>
 
-  <!-- Shop Modal -->
-  <div id="shop-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true">
-    <div class="bg-amber-100 border border-amber-500/50 rounded-2xl w-full max-w-md relative text-amber-900" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
-      <div class="p-6" style="display:flex;flex-direction:column;min-height:0;">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-black">Nordpol-Shop</h2>
-          <button id="shop-close" class="text-amber-700 hover:text-amber-900 text-xl font-bold"><i data-icon="x"></i></button>
-        </div>
-        <p class="text-sm mb-4">Kaufe Ausrüstung für Rudi, dein Rentier! Gekauftes erscheint unter seinem Stall – antippen, und Rudi benutzt es: Der Schlitten fährt, die Skier machen Slalom, die Flügel tragen ihn über den Kalender. Dein Guthaben: <b id="shop-balance">0</b> <i data-icon="coins"></i></p>
-        <div id="shop-items" class="slim-scroll flex flex-col gap-2 pr-1" style="overflow-y:auto;min-height:0;max-height:55vh;"></div>
-      </div>
-    </div>
-  </div>
-
   <div id="content-modal" class="hidden" role="dialog" aria-modal="true">
     <div id="modal-card">
       <button id="modal-close" aria-label="Schließen"><i data-icon="x"></i></button>
@@ -250,8 +124,6 @@
   <script src="/calendar/js/themes.js"></script>
   <script src="/calendar/js/art.js"></script>
   <script src="/calendar/js/particles.js"></script>
-  <script src="/shared/shop-items.js"></script>
-  <script src="/calendar/js/rudi.js"></script>
   <script src="/calendar/js/scenes.js"></script>
   <script src="/shared/app-links.js"></script>
   <script src="/shared/welcome.js"></script>

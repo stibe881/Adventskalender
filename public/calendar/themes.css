@@ -422,7 +422,6 @@ body {
 .quiz-prize { margin-top: 20px; padding: 16px; background: rgba(245, 158, 11, 0.1); border: 2px solid rgba(245, 158, 11, 0.5); border-radius: 12px; text-align: center; color: #b45309; }
 .quiz-prize-icon { font-size: 2rem; margin-bottom: 8px; }
 .quiz-prize-text { font-weight: 800; font-size: 1.1rem; }
-.quiz-prize-coins { font-size: 0.9rem; margin-top: 4px; font-weight: 600; opacity: 0.8; }
 .countdown-num { text-align: center; font-family: monospace; font-size: 2.5rem; font-weight: 800; letter-spacing: 0.05em; }
 .audio-player { width: 100%; border-radius: 30px; }
 
@@ -831,82 +830,7 @@ body {
   background: rgba(255, 255, 255, 0.45);
 }
 
-/* ---------- Rudi's stable (tamagotchi reindeer) ---------- */
-.rudi-stable {
-  position: relative;
-  width: 190px;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
-  transition: transform 0.25s ease;
-}
-#digital-pet:hover .rudi-stable { transform: translateY(-3px) scale(1.03); }
-.stable-art,
-.stable-gate {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.stable-gate {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.stable-rudi {
-  position: absolute;
-  left: 50%;
-  top: 69%;
-  transform: translate(-50%, -50%);
-  font-size: 2.5rem;
-  line-height: 1;
-  white-space: nowrap;
-  z-index: 1;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
-}
-.rudi-svg { width: 2.4em; height: 2.4em; display: block; }
-.rudi-travel { width: 1.7em; height: 1.7em; }
-.rudi-gear { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; }
-.stable-item .rudi-gear { width: 1.3em; height: 1.3em; }
-.shop-gear .rudi-gear { width: 1.15em; height: 1.15em; }
-.stable-status {
-  margin-top: 6px;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #fff;
-  background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  padding: 4px 10px;
-  max-width: 190px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  backdrop-filter: blur(6px);
-}
-.stable-glow { animation: stable-flicker 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.stable-flame { animation: stable-flicker 1.3s ease-in-out infinite; }
-.stable-smoke circle { animation: stable-smoke 4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-.stable-smoke circle:nth-child(2) { animation-delay: 2s; }
-@keyframes stable-flicker {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.92); }
-}
-@keyframes stable-smoke {
-  0% { transform: translateY(0) scale(1); opacity: 0.7; }
-  100% { transform: translateY(-14px) scale(1.6); opacity: 0; }
-}
-@media (max-width: 640px) {
-  .rudi-stable { width: 140px; }
-  .stable-rudi { font-size: 1.9rem; }
-  .stable-status { max-width: 140px; font-size: 0.68rem; }
-}
-#pet-emoji { display: inline-block; }
-
-/* Keep the footer (referral hint, closing line) clear of Rudi's fixed stable. */
-.calendar-footer { padding-bottom: 60px; }
-@media (max-width: 900px) {
-  .calendar-footer { padding-bottom: 230px; }
-}
-/* No stable on the page -> no extra clearance needed. */
-body.rudi-off .calendar-footer { padding-bottom: 24px; }
+.calendar-footer { padding-bottom: 24px; }
 
 /* Secret door 25 (unlocked by inviting friends) gets a golden glow. */
 .door-scene[data-day="25"] .leaf-front {

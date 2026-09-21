@@ -25,7 +25,6 @@ const ICON_PATHS = {
   product: `<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>`,
   choice: `<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>`,
   diary: `<path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M8 10h8M8 14h5"/>`,
-  coins: `<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5c0-1 .9-1.5 3-1.5s3 .7 3 2-1 1.8-3 2c-2 .2-3 1-3 2.2S10.5 15.5 12 15.5s3-.5 3-1.5"/>`,
   challenge: `<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>`,
   location: `<path d="M12 2a7 7 0 0 1 7 7c0 4.9-7 13-7 13S5 13.9 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/>`,
   ar: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12H4M20 12h2"/>`,

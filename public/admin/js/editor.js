@@ -94,30 +94,6 @@ function handleSpotifyReturn() {
   }
 }
 
-// Rudi's coins per door: the sub-option only makes sense while Rudi is on.
-function syncRudiCoinsUi() {
-  const rudiOn = document.getElementById("rudiEnabled").checked;
-  document.getElementById("rudi-coins-block").classList.toggle("opacity-50", !rudiOn);
-  document.getElementById("rudiCoinsEnabled").disabled = !rudiOn;
-  document.getElementById("rudi-coins-row").classList.toggle("hidden", !(rudiOn && document.getElementById("rudiCoinsEnabled").checked));
-}
-document.getElementById("rudiEnabled").addEventListener("change", syncRudiCoinsUi);
-document.getElementById("rudiCoinsEnabled").addEventListener("change", syncRudiCoinsUi);
-document.getElementById("shop-info-btn").addEventListener("click", () => {
-  const swiss = document.getElementById("swissMode").checked;
-  const items = (window.RUDI_SHOP_ITEMS || []).map((i) => ({ ...i, name: swiss && i.swissName ? i.swissName : i.name }));
-  const per = parseInt(document.getElementById("rudiCoinsPerDoor").value, 10) || 0;
-  const n = calendar?.dayCount || 24;
-  const rows = items.map((i) => `<tr><td class="py-1 pr-3 text-white">${UI.esc(i.name)}</td><td class="py-1 pr-3 text-slate-400 text-xs">${UI.esc(i.desc)}</td><td class="py-1 text-right whitespace-nowrap text-amber-300 font-semibold">${i.price} <i data-icon="coins"></i></td></tr>`).join("");
-  UI.alert({
-    title: "Rudis Nordpol-Shop",
-    body: `<p class="ui-dialog__text">Mit den Münzen aus den Türchen kauft der Beschenkte Rudi Ausstattung. Die Artikel und ihre Preise:</p>
-      <table class="w-full text-sm"><tbody>${rows}</tbody></table>
-      <p class="ui-field__hint mt-3">Summe aller Artikel: ${items.reduce((s, i) => s + i.price, 0)} Münzen.${per ? ` Mit ${per} Münzen pro Türchen kommen über ${n} Türchen ${per * n} Münzen zusammen – zusätzlich zu Münz-Türchen und Quiz-Preisen.` : ""}</p>`,
-    ok: "Schließen",
-  });
-});
-
 // Template later on: warn, then replace the content of all 24 doors.
 document.getElementById("apply-template-btn").addEventListener("click", async () => {
   const sel = document.getElementById("template-select");
@@ -199,10 +175,6 @@ async function loadCalendar() {
   document.getElementById("syncOpen").checked = calendar.syncOpen || false;
   document.getElementById("companyMode").checked = calendar.companyMode || false;
   document.getElementById("communityCanvas").checked = calendar.communityCanvas !== false;
-  document.getElementById("rudiEnabled").checked = calendar.rudiEnabled !== false;
-  document.getElementById("rudiCoinsEnabled").checked = Boolean(calendar.rudiCoinsPerDoor);
-  document.getElementById("rudiCoinsPerDoor").value = calendar.rudiCoinsPerDoor || 10;
-  syncRudiCoinsUi();
   document.getElementById("swissMode").checked = Boolean(calendar.swissMode);
   
   const metaCheckbox = document.getElementById("metaPuzzle");
@@ -624,13 +596,6 @@ function getSpecificPreviewMockup(type) {
         <div class="w-full h-10 bg-white/20 rounded-lg mb-2 flex items-center px-3"><div class="w-1/2 h-3 bg-white/40 rounded"></div></div>
         <div class="w-full h-10 bg-white rounded-lg text-indigo-800 font-bold flex items-center justify-center">Jetzt teilnehmen</div>
       </div>`;
-    case "coins":
-      return `<div class="w-full h-32 bg-yellow-100 rounded-xl border border-yellow-300 flex flex-col items-center justify-center relative shadow-inner">
-        <div class="absolute top-2 right-2 text-xl animate-bounce" style="animation-delay: 0.1s"><i data-icon="coins"></i></div>
-        <div class="absolute bottom-4 left-4 text-2xl animate-bounce" style="animation-delay: 0.3s"><i data-icon="coins"></i></div>
-        <div class="text-5xl drop-shadow-lg z-10"><i data-icon="wallet"></i></div>
-        <div class="font-black text-yellow-700 text-lg mt-2">+50 Münzen</div>
-      </div>`;
     case "diary":
       return `<div class="w-full bg-amber-50 p-6 rounded-xl shadow-md border-l-8 border-amber-700 flex flex-col">
         <div class="w-2/3 h-5 bg-amber-200 rounded mb-4"></div>
@@ -890,7 +855,6 @@ function renderTypeFields(type, content) {
     catcher: renderCatcherFields,
     product: renderProductFields,
     choice: renderChoiceFields,
-    coins: renderCoinsFields,
     diary: renderDiaryFields,
     duel: renderDuelFields,
     timecapsule: renderTimeCapsuleFields,
@@ -1051,10 +1015,6 @@ function renderWichtelnFields(c) {
 
 function renderIotBoxFields(c) {
   typeFields.innerHTML = `<p class="text-sm text-slate-300">Dieser Inhalt verbindet sich über Web-Bluetooth mit einer physischen Schatztruhe.</p>`;
-}
-
-function renderCoinsFields(c) {
-  typeFields.innerHTML = fieldWrap("Münz-Anzahl", `<input type="number" id="f-coinAmount" value="${c.coinAmount || 50}" class="${inputClass}" />`);
 }
 
 function renderDiaryFields(c) {
@@ -1421,7 +1381,6 @@ function renderQuizFields(c) {
     `<div class="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3">
       <p class="text-sm font-semibold text-amber-300"><i data-icon="trophy"></i> Preis für die richtige Antwort (optional)</p>
       ${fieldWrap('Preis-Beschreibung (z. B. "Ein Glas selbstgemachte Marmelade!")', `<input id="f-prizeText" value="${escapeHtml(c.prizeText)}" class="${inputClass}" placeholder="Leer lassen = kein Preis anzeigen" />`)}
-      ${fieldWrap("Bonus-Münzen bei richtiger Antwort (0 = keine)", `<input id="f-prizeCoins" type="number" min="0" max="1000" value="${c.prizeCoins ?? 0}" class="${inputClass}" />`)}
     </div>`;
 }
 
@@ -1518,7 +1477,6 @@ function collectFieldsData(type) {
         successMessage: val("f-successMessage"),
         failMessage: val("f-failMessage"),
         prizeText: val("f-prizeText") || "",
-        prizeCoins: parseInt(val("f-prizeCoins") || "0", 10) || 0,
       };
     }
     case "countdown":
@@ -1552,7 +1510,6 @@ function collectFieldsData(type) {
         optionA: val("f-optionA"),
         optionB: val("f-optionB")
       };
-    case "coins": return { coinAmount: parseInt(val("f-coinAmount"), 10) || 50 };
     case "diary": return { diaryQuestion: val("f-diaryQuestion") };
     case "printplay": return { ppTitle: val("f-ppTitle"), ppImage: currentContent.ppImage || null };
     case "spotify-collab": return { playlistUrl: val("f-playlistUrl") };
@@ -1716,8 +1673,6 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     metaPassword: document.getElementById("metaPassword").value,
     companyMode: document.getElementById("companyMode").checked,
     communityCanvas: document.getElementById("communityCanvas").checked,
-    rudiEnabled: document.getElementById("rudiEnabled").checked,
-    rudiCoinsPerDoor: document.getElementById("rudiCoinsEnabled").checked ? document.getElementById("rudiCoinsPerDoor").value : 0,
     swissMode: document.getElementById("swissMode").checked,
     customConfig: calendar.customConfig,
   });

@@ -147,26 +147,6 @@
 
             <div>
               <div class="flex items-center gap-2">
-                <input type="checkbox" id="rudiEnabled" name="rudiEnabled" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                <label for="rudiEnabled" class="text-sm text-slate-300"><i data-icon="reindeer"></i> Rudi, das Rentier</label>
-              </div>
-              <p class="text-xs text-slate-500 mt-1 ml-6">Zeigt Rudi in seinem Rentierstall unter dem Kalender. Er wacht mit jedem geöffneten Türchen weiter auf und lässt sich mit Artikeln aus dem Nordpol-Shop ausstatten. Deaktiviert verschwinden Stall und Shop.</p>
-              <div id="rudi-coins-block" class="ml-6 mt-3">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" id="rudiCoinsEnabled" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
-                  <label for="rudiCoinsEnabled" class="text-sm text-slate-300"><i data-icon="coins"></i> Münzen bei jedem Türchen</label>
-                  <button type="button" id="shop-info-btn" class="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full border border-slate-400 text-slate-300 text-[11px] font-bold hover:bg-white/10" title="Was kosten die Artikel im Nordpol-Shop?" aria-label="Preise im Nordpol-Shop anzeigen">i</button>
-                </div>
-                <div id="rudi-coins-row" class="hidden flex items-center gap-2 mt-2 ml-6 text-sm text-slate-300">
-                  <input type="number" id="rudiCoinsPerDoor" min="1" max="500" value="10" class="w-24 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <span>Münzen pro geöffnetem Türchen, zusätzlich zum Inhalt</span>
-                </div>
-                <p class="text-xs text-slate-500 mt-1 ml-6">Jedes geöffnete Türchen bringt Münzen für Rudis Nordpol-Shop – auch wenn im Türchen selbst keine liegen.</p>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex items-center gap-2">
                 <input type="checkbox" id="syncOpen" name="syncOpen" class="w-4 h-4 text-emerald-600 rounded bg-slate-900 border-white/10 focus:ring-emerald-500 focus:ring-2">
                 <label for="syncOpen" class="text-sm text-slate-300"><i data-icon="users"></i> Multiplayer: Synchronisiertes Öffnen</label>
               </div>
@@ -487,7 +467,6 @@
   </div>
 
   <script src="/shared/ui.js"></script>
-  <script src="/shared/shop-items.js"></script>
   <script src="/admin/js/api.js"></script>
   <script src="/admin/js/contentTypes.js"></script>
   <script src="/admin/js/editor.js"></script>

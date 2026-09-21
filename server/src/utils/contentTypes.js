@@ -21,7 +21,6 @@ const CONTENT_TYPES = [
   "catcher",
   "product",
   "choice",
-  "coins",
   "diary",
   "duel",
   "timecapsule",

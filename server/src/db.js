@@ -141,9 +141,18 @@ async function deleteWichtelGroup(id) {
   return result.affectedRows > 0;
 }
 
+// The "coins" door type was retired: such doors read as empty so nothing
+// references the removed shop.
+function withoutCoinDoors(cal) {
+  if (cal && Array.isArray(cal.days)) {
+    for (const d of cal.days) if (d && d.contentType === "coins") { d.contentType = null; d.content = {}; }
+  }
+  return cal;
+}
+
 async function getAllCalendars() {
   const [rows] = await pool.query("SELECT * FROM calendars");
-  return rows.map(r => r.data);
+  return rows.map(r => withoutCoinDoors(r.data));
 }
 
 async function getCalendarsByOwnerOrCollaborator(ownerId, email) {
@@ -157,18 +166,18 @@ async function getCalendarsByOwnerOrCollaborator(ownerId, email) {
 
 async function getCalendarById(id) {
   const [rows] = await pool.query("SELECT * FROM calendars WHERE id = ?", [id]);
-  return rows.length ? rows[0].data : null;
+  return rows.length ? withoutCoinDoors(rows[0].data) : null;
 }
 
 async function getCalendarByToken(token) {
   const [rows] = await pool.query("SELECT * FROM calendars WHERE token = ?", [token]);
-  return rows.length ? rows[0].data : null;
+  return rows.length ? withoutCoinDoors(rows[0].data) : null;
 }
 
 async function getCalendarBySubdomain(subdomain) {
   if (!subdomain) return null;
   const [rows] = await pool.query("SELECT * FROM calendars WHERE subdomain = ?", [subdomain.toLowerCase().trim()]);
-  return rows.length ? rows[0].data : null;
+  return rows.length ? withoutCoinDoors(rows[0].data) : null;
 }
 
 async function createCalendar(calendar) {
