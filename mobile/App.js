@@ -9,7 +9,6 @@ import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
-import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import * as SplashScreen from "expo-splash-screen";
 import Constants from "expo-constants";
@@ -21,9 +20,22 @@ const SERVER_URL = String(Constants.expoConfig?.extra?.serverUrl || "https://adv
 const SERVER_ORIGIN = new URL(SERVER_URL).origin;
 const BG = "#0b1120";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
-});
+// Expo Go (SDK 53+) throws as soon as expo-notifications is loaded on Android,
+// because remote push was removed from Expo Go. So the module is only required
+// in real builds (development, preview, production); in Expo Go push is off.
+const IN_EXPO_GO = Constants.executionEnvironment === "storeClient" || Constants.appOwnership === "expo";
+let Notifications = null;
+if (!IN_EXPO_GO) {
+  try {
+    Notifications = require("expo-notifications");
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
+    });
+  } catch (err) {
+    console.warn("Push nicht verfügbar:", err?.message);
+    Notifications = null;
+  }
+}
 
 // Runs inside the page before anything else: tells native.js it lives in the app.
 const INJECTED_BEFORE_LOAD = `
@@ -51,7 +63,7 @@ function pathFromDeepLink(url) {
 }
 
 async function registerForPush() {
-  if (!Device.isDevice) return null;
+  if (!Device.isDevice || !Notifications) return null;
   try {
     if (Platform.OS === "android") {
       await Notifications.setNotificationChannelAsync("default", { name: "Erinnerungen", importance: Notifications.AndroidImportance.DEFAULT, sound: "default" });
@@ -91,7 +103,7 @@ function Shell() {
   useEffect(() => {
     (async () => {
       const launchUrl = await Linking.getInitialURL();
-      const lastNotification = await Notifications.getLastNotificationResponseAsync();
+      const lastNotification = Notifications ? await Notifications.getLastNotificationResponseAsync().catch(() => null) : null;
       const fromNotification = lastNotification?.notification?.request?.content?.data?.url;
       setInitialPath(pathFromDeepLink(launchUrl) || (typeof fromNotification === "string" ? fromNotification : null) || "/");
     })();
@@ -108,6 +120,7 @@ function Shell() {
 
   // Tapping a notification opens the page it points to.
   useEffect(() => {
+    if (!Notifications) return undefined;
     const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
       const url = resp.notification.request.content.data?.url;
       if (typeof url === "string") navigateTo(url);
