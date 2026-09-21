@@ -34,6 +34,17 @@ body {
   background-size: cover;
   background-position: center;
   z-index: -1;
+  /* Own compositing layer: the image is painted once, not on every scroll or animation frame. */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* Doors that do blur their backdrop get their own layer too. */
+.leaf-front {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 #particle-canvas {
@@ -651,10 +662,10 @@ body {
   --ready-shadow: 0 10px 25px rgba(0,0,0,0.1);
   --ready-shadow-active: 0 15px 35px rgba(0,0,0,0.15);
 }
+/* No backdrop blur here: over a custom background image iOS re-samples the
+ * blur on every animation frame (snow, floating door) and the doors flicker. */
 [data-theme="firma"] .leaf-front {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(0,0,0,0.08);
   box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }

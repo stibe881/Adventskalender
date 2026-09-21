@@ -35,9 +35,11 @@ function buildScene(themeKey, meta) {
         <div class="theme-bg" style="background-image: url('/calendar/img/modern.png');"></div>
         ${timeOverlay}
       `;
-    case "firma": // Corporate
+    case "firma": { // Corporate
       const bg = meta?.customConfig?.bgUrl || "";
-      return (bg ? `<div class="theme-bg" style="background-image: url('${escapeText(bg)}');"></div>` : `<div class="theme-bg" style="background-color: #f8fafc;"></div>`) + timeOverlay;
+      // A company photo stays as it is: no blend-mode tint (blend modes over a fixed image flicker on iOS).
+      return bg ? `<div class="theme-bg" style="background-image: url('${escapeText(bg)}');"></div>` : `<div class="theme-bg" style="background-color: #f8fafc;"></div>${timeOverlay}`;
+    }
     default:
       return "";
   }

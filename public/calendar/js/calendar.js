@@ -1115,10 +1115,10 @@ function renderDoorGrid() {
           leafFrontStyle = `background: ${c}; border-color: ${c}; --number-color: #ffffff; --lock-color: rgba(255,255,255,0.7);`;
           break;
         case "outline":
-          leafFrontStyle = `background: rgba(255,255,255,0.05); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); border: 2px solid ${c}; --number-color: ${c}; --lock-color: ${c};`;
+          leafFrontStyle = `background: rgba(255,255,255,0.35); border: 2px solid ${c}; --number-color: ${c}; --lock-color: ${c};`;
           break;
         case "glass":
-          leafFrontStyle = `background: rgba(255,255,255,0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 4px 15px rgba(0,0,0,0.1); --number-color: ${c}; --lock-color: ${c};`;
+          leafFrontStyle = `background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 4px 15px rgba(0,0,0,0.1); --number-color: ${c}; --lock-color: ${c};`;
           break;
         case "dark":
           leafFrontStyle = `background: #0f172a; border: 1px solid ${c}; --number-color: ${c}; --lock-color: rgba(255,255,255,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.3);`;
