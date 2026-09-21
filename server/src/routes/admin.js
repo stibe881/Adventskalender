@@ -513,6 +513,7 @@ router.post("/calendars", async (req, res) => {
     strictMode: Boolean(req.body.strictMode),
     randomLayout: Boolean(randomLayout),
     swissMode: Boolean(swissMode),
+    template: template || null,
     year: parsedYear,
     period,
     createdAt: new Date().toISOString(),
@@ -783,6 +784,7 @@ router.post("/calendars/:id/apply-template", async (req, res) => {
   const updated = await db.updateCalendar(req.params.id, (cal) => {
     const fresh = applyTemplate(makeEmptyDays(dayCount(cal)), templateId, cal.year);
     if (cal.swissMode) convertDays(fresh, true);
+    cal.template = templateId;
     cal.days = cal.days.map((d) => {
       const t = fresh.find((f) => f.day === d.day);
       return t ? { ...d, contentType: t.contentType, content: t.content } : d;

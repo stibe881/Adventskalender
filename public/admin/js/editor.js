@@ -136,7 +136,6 @@ document.getElementById("apply-template-btn").addEventListener("click", async ()
   if (!ok) return;
   try {
     await api.applyTemplate(calendarId, template);
-    sel.value = "";
     await loadCalendar();
     UI.toast("Vorlage angewendet – alle Türchen sind befüllt.");
   } catch (err) {
@@ -154,6 +153,10 @@ async function loadCalendar() {
   document.getElementById("cal-title").textContent = `Für ${calendar.recipientName}`;
   document.getElementById("cal-subtitle").textContent = `${calendar.period ? calendar.periodLabel : `Dezember ${calendar.year}`} · ${THEME_META[calendar.theme]?.label || calendar.theme}`;
   document.getElementById("door-count").textContent = calendar.dayCount || 24;
+  // The template the calendar was built from stays selected.
+  const tsel = document.getElementById("template-select");
+  tsel.value = calendar.template && [...tsel.options].some((o) => o.value === calendar.template) ? calendar.template : "";
+  document.getElementById("template-current").textContent = tsel.value ? `Aktuelle Vorlage: ${tsel.options[tsel.selectedIndex].text}` : "Bisher keine Vorlage verwendet.";
   const sform = document.getElementById("settings-form");
   sform.elements.periodMode.value = calendar.period ? "custom" : "advent";
   sform.elements.periodStart.value = calendar.period?.start || "";
