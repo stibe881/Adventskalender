@@ -7,15 +7,121 @@
     <style>
       @keyframes rudi-breathe {
         0%, 100% { transform: scaleY(1) translateY(0); }
-        50% { transform: scaleY(0.97) translateY(1.5px); }
+        50% { transform: scaleY(0.98) translateY(1px); }
       }
-      .rudi-base-img {
-        transform-origin: 32px 60px;
-        animation: rudi-breathe 3s ease-in-out infinite;
+      @keyframes rudi-head-bob {
+        0%, 100% { transform: rotate(0deg) translateY(0); }
+        50% { transform: rotate(-2deg) translateY(1px); }
       }
+      @keyframes rudi-ear-twitch {
+        0%, 90%, 100% { transform: rotate(0deg); }
+        93% { transform: rotate(-15deg); }
+        96% { transform: rotate(10deg); }
+      }
+      @keyframes rudi-blink {
+        0%, 92%, 96%, 100% { transform: scaleY(1); }
+        94% { transform: scaleY(0.1); }
+      }
+      @keyframes rudi-tail-wag {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-15deg); }
+        75% { transform: rotate(10deg); }
+      }
+
+      .rudi-anim-body { transform-origin: 32px 50px; animation: rudi-breathe 3s ease-in-out infinite; }
+      .rudi-anim-head { transform-origin: 22px 28px; animation: rudi-head-bob 3s ease-in-out infinite; }
+      .rudi-anim-ear { transform-origin: 26px 8px; animation: rudi-ear-twitch 6s infinite; }
+      .rudi-anim-eye { transform-origin: 19px 15px; animation: rudi-blink 5s infinite; }
+      .rudi-anim-tail { transform-origin: 44px 34px; animation: rudi-tail-wag 4s ease-in-out infinite; }
     </style>
-    <!-- 46x64 image centered at x=9 -->
-    <image href="/calendar/img/rudi_base.png" x="9" y="0" width="46" height="64" class="rudi-base-img" />
+    
+    <g class="rudi-anim-body">
+      <!-- Tail -->
+      <g class="rudi-anim-tail">
+        <path d="M44,34 Q48,22 52,24 Q48,32 46,36 Z" fill="#9B6C55"/>
+        <path d="M47,33 Q50,25 51,26 Q49,32 47,34 Z" fill="#BB8B6F"/>
+      </g>
+      
+      <!-- Far Back Leg -->
+      <path d="M42,42 Q40,54 39,58" fill="none" stroke="#875841" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M37,58 H41 L40,61 H37 Z" fill="#222"/>
+
+      <!-- Far Front Leg -->
+      <path d="M28,42 Q26,54 25,58" fill="none" stroke="#875841" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M23,58 H27 L26,61 H23 Z" fill="#222"/>
+      
+      <!-- Main Body -->
+      <path d="M24,34 Q34,26 44,32 Q48,38 46,44 Q36,46 26,42 Z" fill="#A5745A"/>
+      
+      <!-- Lighter Underbelly -->
+      <path d="M25,38 Q34,36 44,40 Q45,43 40,44 Q32,44 26,42 Z" fill="#D2A684"/>
+
+      <!-- Near Back Leg -->
+      <path d="M46,40 Q44,54 44,60" fill="none" stroke="#A5745A" stroke-width="5" stroke-linecap="round"/>
+      <path d="M42,59 H47 Q47,63 45,63 H42 Q41,63 42,59 Z" fill="#111"/>
+
+      <!-- Near Front Leg -->
+      <path d="M30,40 Q28,54 29,60" fill="none" stroke="#A5745A" stroke-width="5" stroke-linecap="round"/>
+      <path d="M26,59 H31 Q31,63 29,63 H27 Q25,63 26,59 Z" fill="#111"/>
+      
+      <!-- Neck -->
+      <path d="M25,28 Q24,36 29,40 L34,36 Q28,26 28,24 Z" fill="#A5745A"/>
+    </g>
+
+    <!-- Head Group (animates independently) -->
+    <g class="rudi-anim-head">
+      <!-- Far Antler -->
+      <path d="M20,6 L18,1 L20,0 L22,4" fill="#5F432B"/>
+      <!-- Near Antler -->
+      <path d="M25,8 L24,2 L26,1 L27,6" fill="#4A3421"/>
+
+      <!-- Far Ear -->
+      <path d="M22,12 Q32,4 32,8 Q28,12 24,14 Z" fill="#875841"/>
+
+      <!-- Head Base -->
+      <ellipse cx="21" cy="16" rx="9" ry="11" fill="#A5745A" transform="rotate(-15 21 16)"/>
+      
+      <!-- Near Ear (twitches) -->
+      <g class="rudi-anim-ear">
+        <path d="M26,14 Q36,8 35,12 Q30,16 26,16 Z" fill="#A5745A"/>
+        <path d="M27,15 Q34,10 34,12 Q30,15 27,15 Z" fill="#D2A684"/>
+      </g>
+
+      <!-- Snout (Lighter) -->
+      <path d="M14,14 C8,14 6,20 6,24 C6,28 14,26 20,24 Z" fill="#D2A684"/>
+      
+      <!-- Red Nose -->
+      <circle cx="6" cy="20" r="3.5" fill="#DC2626"/>
+      <circle cx="5" cy="19" r="1" fill="#FECACA"/>
+      
+      <!-- Mouth -->
+      <path d="M8,24 Q11,26 14,24" fill="none" stroke="#991B1B" stroke-width="1"/>
+
+      <!-- Scarf (built-in, accurately drawn) -->
+      <g transform="translate(24, 28)">
+        <!-- Back wrap -->
+        <path d="M-4 -4 Q 4 -8 10 -2 C 12 2 4 6 -4 2 C -8 0 -8 -6 -4 -4 Z" fill="#FFF"/>
+        <!-- Red Stripes -->
+        <path d="M -2 -5 L 0 3 M 4 -4 L 6 3 M 10 0 L 8 1" stroke="#DC2626" stroke-width="3"/>
+        <!-- Dangling part -->
+        <path d="M 0 3 L 2 16 L -6 14 Z" fill="#FFF"/>
+        <!-- Red Stripes on dangle -->
+        <path d="M -1 8 L 3 9 M -2 12 L 2 13" stroke="#DC2626" stroke-width="3"/>
+        <!-- Fringes -->
+        <path d="M -6 14 L -6 16 M -4 14.5 L -4 16.5 M -2 15 L -2 17 M 0 15.5 L 0 17.5" stroke="#FFF" stroke-width="1.5"/>
+      </g>
+
+      <!-- Big Cute Eye -->
+      <g id="rudi-eyes" class="rudi-anim-eye">
+        <ellipse cx="18" cy="15" rx="4" ry="5.5" fill="#FFF" transform="rotate(10 18 15)"/>
+        <ellipse cx="17.5" cy="15.5" rx="2.5" ry="4" fill="#111" transform="rotate(10 17.5 15.5)"/>
+        <circle cx="16.5" cy="13.5" r="1.2" fill="#FFF"/>
+      </g>
+      <!-- Sleepy eye (hidden by default) -->
+      <g id="rudi-eyes-sleepy" style="display:none" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round">
+        <path d="M15,16 Q18,18 21,16"/>
+      </g>
+    </g>
   `;
 
   // Perfectly calibrated to the new image. `box` is always square (width=height) for perfect shop tiles.
@@ -79,9 +185,10 @@
   const ZZZ = `<g font-family="Inter, system-ui, sans-serif" font-weight="800" fill="#cbd5e1"><text x="10" y="6" font-size="7">z</text><text x="16" y="-2" font-size="9">z</text><text x="24" y="-10" font-size="11">Z</text></g>`;
   const SPARKLES = `<g fill="#fde047"><path d="M8 8 L9.2 11 L12 12 L9.2 13 L8 16 L6.8 13 L4 12 L6.8 11 Z"/><path d="M56 26 L57 28.5 L59.5 29.5 L57 30.5 L56 33 L55 30.5 L52.5 29.5 L55 28.5 Z"/><path d="M6 44 L6.8 46 L8.8 46.8 L6.8 47.6 L6 49.6 L5.2 47.6 L3.2 46.8 L5.2 46 Z"/></g>`;
 
-  // Layer order: things behind Rudi first, then Rudi, then things in front.
-  const BACK_SLOTS = ["wings", "sleigh", "lights"];
-  const FRONT_SLOTS = ["scarf", "bow", "bell", "glasses", "hat", "crown", "santahat", "skis", "star"];
+  // Items that attach to the head (will bob with the head)
+  const HEAD_ITEMS = ["bow", "bell", "glasses", "hat", "crown", "scarf"];
+  // Items that attach to the body (will breathe with the body)
+  const BODY_ITEMS = ["wings", "sleigh", "lights", "skis", "star", "santahat"];
 
   function open(cls, box) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box}" class="${cls}" aria-hidden="true" focusable="false" style="overflow:visible">`;
@@ -92,7 +199,22 @@
     if (state === "dust") return `${open("rudi-svg " + cls, "0 0 64 64")}${DUST}</svg>`;
     const items = new Set([...worn, ...extras]);
     const layer = (ids) => ids.filter((id) => items.has(id) && GEAR[id]).map((id) => GEAR[id].wornSvg || GEAR[id].svg).join("");
-    return `${open("rudi-svg " + cls, "0 0 64 64")}${layer(BACK_SLOTS)}${BODY}${layer(FRONT_SLOTS)}${state === "sleepy" ? ZZZ : ""}${state === "glowing" ? SPARKLES : ""}</svg>`;
+    
+    let headGear = layer(HEAD_ITEMS);
+    let bodyGear = layer(BODY_ITEMS);
+
+    let bodyStr = BODY;
+    // Inject head items right after the eye group
+    bodyStr = bodyStr.replace('</g>\n      <!-- Sleepy eye (hidden by default) -->', `</g>${headGear}\n      <!-- Sleepy eye (hidden by default) -->`);
+    // Inject body items right before the Neck
+    bodyStr = bodyStr.replace('<!-- Neck -->', `${bodyGear}\n      <!-- Neck -->`);
+
+    if (state === "sleepy") {
+      bodyStr = bodyStr.replace('<g id="rudi-eyes"', '<g id="rudi-eyes" style="display:none"');
+      bodyStr = bodyStr.replace('<g id="rudi-eyes-sleepy" style="display:none"', '<g id="rudi-eyes-sleepy"');
+    }
+
+    return `${open("rudi-svg " + cls, "0 0 64 64")}${bodyStr}${state === "sleepy" ? ZZZ : ""}${state === "glowing" ? SPARKLES : ""}</svg>`;
   }
 
   /** A single gear item as an icon. */
