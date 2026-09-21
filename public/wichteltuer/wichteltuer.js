@@ -1082,6 +1082,7 @@ async function onSettingsSubmit(e) {
     render();
     if (feat().ideas) loadLibrary().then(renderIdeasOnly).catch(() => {});
     setupPush();
+    if (window.Welcome) setTimeout(() => window.Welcome.maybeShow("wichteltuer"), 800);
     const payment = params.get("payment");
     if (payment || doneDate) window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
     if (payment === "success") UI.alert({ title: "Danke!", text: data.isPro ? "Diese Wichteltür ist jetzt PRO: Ideen-Bibliothek, Briefe und Einkaufsliste sind für alle mit dem Link freigeschaltet." : "Die Zahlung ist eingegangen. Die Freischaltung kann einen Moment dauern – lade die Seite gleich noch einmal.", ok: "Super" });

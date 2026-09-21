@@ -971,6 +971,7 @@ document.addEventListener("visibilitychange", async () => {
       await load();
       startPolling();
     }
+    if (window.Welcome) setTimeout(() => window.Welcome.maybeShow("wichteln"), 800);
   } catch (err) {
     app.innerHTML = `<div class="w-card text-center"><div class="ui-empty__art"><i data-icon="eye-off"></i></div><h1 class="w-title text-xl mb-2">Link ungültig</h1><p class="text-slate-400">${esc(err.message)}</p></div>`;
   }

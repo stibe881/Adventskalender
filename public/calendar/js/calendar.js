@@ -238,6 +238,7 @@ async function init() {
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
+  if (!isPreview && window.Welcome) setTimeout(() => window.Welcome.maybeShow("calendar"), 1200);
   initNextDoorCountdown();
   if (isPreview) {
     document.getElementById("preview-banner").classList.remove("hidden");

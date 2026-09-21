@@ -1,3 +1,7 @@
+// A shared link sends people here with ?next=/c/… – afterwards they go back to it.
+const nextTarget = (() => { const n = new URLSearchParams(window.location.search).get("next") || ""; return n.startsWith("/") && !n.startsWith("//") ? n : null; })();
+const afterLogin = (me) => nextTarget || { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me?.defaultApp] || "/admin/dashboard.html";
+
 (async function init() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("verified") === "1") {
@@ -19,7 +23,7 @@
   // Already logged in? Skip straight to dashboard.
   try {
     const me = await api.me();
-    window.location.href = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
+    window.location.href = afterLogin(me);
   } catch (_) {
     /* not logged in, stay on this page */
   }
@@ -123,7 +127,7 @@ form.addEventListener("submit", async (e) => {
     } else {
       await api.login(email, password, document.getElementById("remember-me").checked);
       const me = await api.me().catch(() => ({}));
-      window.location.href = { wichteln: "/admin/wichteln.html", wichteltuer: "/admin/wichteltuer.html" }[me.defaultApp] || "/admin/dashboard.html";
+      window.location.href = afterLogin(me);
     }
   } catch (err) {
     errorMsg.textContent = err.message || "Aktion fehlgeschlagen.";
