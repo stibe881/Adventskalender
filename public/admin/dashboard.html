@@ -46,8 +46,14 @@
   <main class="max-w-5xl mx-auto px-4 py-8 space-y-10">
     <section>
       <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h2 class="font-display text-2xl font-semibold">Deine Kalender</h2>
-        <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-4 flex-wrap">
+          <h2 class="font-display text-2xl font-semibold">Deine Kalender</h2>
+          <div id="tab-switch" class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10 text-sm">
+            <button type="button" data-tab="own" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow font-semibold">Selbst erstellt</button>
+            <button type="button" data-tab="received" class="px-3 py-1.5 rounded-md hover:bg-slate-700 text-slate-400 font-semibold">Erhalten <span id="received-count" class="hidden ml-1 text-[11px] px-1.5 py-0.5 rounded-full bg-white/15"></span></button>
+          </div>
+        </div>
+        <div id="own-actions" class="flex items-center gap-3 flex-wrap">
           <div class="bg-slate-800 rounded-lg p-1 flex gap-1 border border-white/10">
             <button id="view-grid-btn" class="p-1.5 rounded-md bg-emerald-600 text-white shadow" title="Kachel-Ansicht">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
@@ -62,6 +68,7 @@
         </div>
       </div>
       
+      <div id="own-section">
       <div id="calendar-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
       <div id="calendar-table-container" class="hidden bg-white/5 border border-white/10 rounded-xl">
         <table class="w-full text-left text-sm text-slate-300" style="table-layout:auto">
@@ -84,6 +91,20 @@
         <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors">
           Jetzt erstellen
         </button>
+      </div>
+      </div>
+
+      <div id="received-section" class="hidden">
+        <form id="received-add-form" class="flex flex-col sm:flex-row gap-2 mb-6">
+          <input id="received-link" type="text" inputmode="url" autocomplete="off" placeholder="Kalender-Link einfügen, z. B. https://mein-adventskalender.ch/c/…" class="flex-1 rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors text-sm whitespace-nowrap">+ Link hinzufügen</button>
+        </form>
+        <div id="received-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        <div id="received-empty" class="hidden text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
+          <div class="text-4xl mb-3 text-emerald-400"><i data-icon="mail"></i></div>
+          <h3 class="text-lg font-semibold text-white mb-1">Noch keine erhaltenen Kalender</h3>
+          <p class="text-slate-400 text-sm max-w-md mx-auto">Kalender, die jemand an deine E-Mail-Adresse schickt, erscheinen hier automatisch. Einen Link, den du anders bekommen hast, fügst du oben ein.</p>
+        </div>
       </div>
     </section>
   </main>

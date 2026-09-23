@@ -121,3 +121,49 @@ test("Kalender: a self-chosen period gives one door per day, unlocks by date, an
   assert.equal(T.doorDateISO({ year: 2026 }, 24), "2026-12-24");
 });
 
+
+test("Kalender: erhaltene Kalender – per Link, per E-Mail-Versand, Entfernen", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/admin", require(path.join(SRC, "routes/admin")));
+  const { call, anon, mails, db } = h;
+  t.after(h.stop);
+  let r = await call("POST", "/api/admin/calendars", { recipientName: "Lian", theme: "kid", year: 2026 });
+  const own = r.d;
+  // A calendar made by somebody else
+  db.calendars.other = { id: "other", token: "tok_other_1", ownerId: "u2", ownerName: "Anna", recipientName: "Stefan", theme: "partner", year: 2026, days: Array.from({ length: 24 }, (_, i) => ({ day: i + 1, contentType: i < 3 ? "text" : null, content: {}, opened: i === 0 })), collaborators: [], createdAt: new Date().toISOString() };
+  db.calendars.sent = { id: "sent", token: "tok_sent_1", ownerId: "u2", ownerName: "Ben", recipientName: "Stefan G.", theme: "modern", year: 2026, sentTo: ["orga@example.ch"], days: Array.from({ length: 24 }, (_, i) => ({ day: i + 1, contentType: null, content: {}, opened: false })), collaborators: [], createdAt: new Date().toISOString() };
+  r = await call("GET", "/api/admin/received");
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.d.map((c) => c.token), ["tok_sent_1"], "sent-to-my-address shows up without doing anything");
+  assert.equal(r.d[0].source.kind, "email");
+  // Add by link (full URL and bare token), own calendar rejected, unknown rejected
+  r = await call("POST", "/api/admin/received", { link: "https://mein-adventskalender.ch/c/tok_other_1?ref=1" });
+  assert.equal(r.status, 200); assert.equal(r.d.recipientName, "Stefan"); assert.equal(r.d.source.kind, "link");
+  assert.equal((await call("POST", "/api/admin/received", { link: own.token })).status, 400, "own calendar");
+  assert.equal((await call("POST", "/api/admin/received", { link: "https://example.com/c/doesnotexist" })).status, 404);
+  assert.equal((await call("POST", "/api/admin/received", { link: "hallo welt" })).status, 400);
+  r = await call("GET", "/api/admin/received");
+  assert.deepEqual(r.d.map((c) => c.token).sort(), ["tok_other_1", "tok_sent_1"]);
+  assert.equal(r.d.find((c) => c.token === "tok_other_1").openedDoors, 1);
+  // Status for the calendar page
+  r = await call("GET", "/api/admin/received/status/tok_other_1"); assert.deepEqual(r.d, { own: false, saved: true });
+  r = await call("GET", `/api/admin/received/status/${own.token}`); assert.equal(r.d.own, true);
+  assert.equal((await anon("GET", "/api/admin/received/status/tok_other_1")).status, 401, "needs a login");
+  // Remove hides even the e-mailed one
+  assert.equal((await call("DELETE", "/api/admin/received/tok_sent_1")).status, 200);
+  r = await call("GET", "/api/admin/received");
+  assert.deepEqual(r.d.map((c) => c.token), ["tok_other_1"]);
+  // Adding the link again un-hides it
+  await call("POST", "/api/admin/received", { link: "/c/tok_sent_1" });
+  assert.equal((await call("GET", "/api/admin/received")).d.length, 2);
+  // Owner sends own calendar by e-mail
+  const before = mails.length;
+  r = await call("POST", `/api/admin/calendars/${own.id}/send`, { email: "Lian@Example.ch", message: "Für dich!" });
+  assert.equal(r.status, 200); assert.equal(r.d.sent, true); assert.deepEqual(r.d.sentTo, ["lian@example.ch"]);
+  assert.equal(mails.length, before + 1);
+  assert.equal(mails[before].to, "lian@example.ch");
+  assert.ok(mails[before].text.includes(`/c/${own.token}`) && mails[before].text.includes("Für dich!"));
+  assert.equal((await call("POST", `/api/admin/calendars/${own.id}/send`, { email: "nope" })).status, 400);
+  assert.equal((await call("POST", `/api/admin/calendars/${own.id}/send`, { email: "orga@example.ch" })).status, 400, "own address");
+  assert.deepEqual((await call("GET", `/api/admin/calendars`)).d.find((c) => c.id === own.id).sentTo, ["lian@example.ch"]);
+});

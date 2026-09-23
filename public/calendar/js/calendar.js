@@ -174,6 +174,7 @@ async function init() {
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
+  if (!isPreview) offerSaveToOverview();
   if (!isPreview && window.Welcome) setTimeout(() => window.Welcome.maybeShow("calendar"), 1200);
   initNextDoorCountdown();
   if (isPreview) {
@@ -1250,6 +1251,39 @@ async function tryOpenDoor(dayNum, sceneEl, body = {}) {
 
   const updatedDoor = days.find((d) => d.day === dayNum) || door;
   openDoorAnimation(sceneEl, updatedDoor);
+}
+
+// Logged-in visitors can keep a calendar somebody made for them under "Erhalten".
+async function offerSaveToOverview() {
+  const footer = document.getElementById("calendar-footer");
+  if (!footer) return;
+  let status;
+  try {
+    const r = await fetch(`/api/admin/received/status/${encodeURIComponent(routeId)}`, { credentials: "same-origin" });
+    if (!r.ok) return; // not logged in (401) or unknown
+    status = await r.json();
+  } catch (_) { return; }
+  if (status.own) return;
+  const box = document.createElement("div");
+  box.className = "mt-3 text-sm";
+  const render = (saved) => {
+    box.innerHTML = saved
+      ? `<span class="opacity-80"><i data-icon="circle-check"></i> In deiner Übersicht gespeichert</span> · <a href="/admin/dashboard.html?tab=received" class="underline opacity-80 hover:opacity-100">Zur Übersicht</a>`
+      : `<button type="button" data-save-calendar class="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur transition-colors"><i data-icon="star"></i> In meiner Übersicht speichern</button>`;
+    const btn = box.querySelector("[data-save-calendar]");
+    if (btn) btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const r = await fetch("/api/admin/received", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ link: `/c/${routeId}` }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || "Konnte nicht speichern");
+        render(true);
+        showLockToast("Gespeichert – du findest den Kalender unter „Erhalten“.");
+      } catch (err) { btn.disabled = false; showLockToast(err.message); }
+    });
+  };
+  render(Boolean(status.saved));
+  footer.appendChild(box);
 }
 
 function shakeDoor(sceneEl) {

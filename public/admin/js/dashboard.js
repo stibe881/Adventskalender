@@ -78,7 +78,9 @@ async function init() {
       });
     }
 
+    initTabs();
     await loadCalendars();
+    await loadReceived();
   } catch (err) {
     console.error("Dashboard Init Error:", err);
     alert("Ein Fehler ist aufgetreten: " + err.message);
@@ -86,6 +88,86 @@ async function init() {
 }
 
 let currentView = localStorage.getItem("dashboardView") || "grid";
+
+// ---------- Own vs. received calendars ----------
+let currentTab = "own";
+function showTab(tab) {
+  currentTab = tab === "received" ? "received" : "own";
+  try { localStorage.setItem("dashboardTab", currentTab); } catch (_) {}
+  document.getElementById("own-section").classList.toggle("hidden", currentTab !== "own");
+  document.getElementById("own-actions").classList.toggle("hidden", currentTab !== "own");
+  document.getElementById("received-section").classList.toggle("hidden", currentTab !== "received");
+  document.querySelectorAll("#tab-switch [data-tab]").forEach((b) => {
+    const on = b.dataset.tab === currentTab;
+    b.classList.toggle("bg-emerald-600", on); b.classList.toggle("text-white", on); b.classList.toggle("shadow", on);
+    b.classList.toggle("hover:bg-slate-700", !on); b.classList.toggle("text-slate-400", !on);
+  });
+}
+function initTabs() {
+  document.querySelectorAll("#tab-switch [data-tab]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  const wanted = new URLSearchParams(window.location.search).get("tab") || localStorage.getItem("dashboardTab");
+  showTab(wanted || "own");
+  document.getElementById("received-add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("received-link");
+    const link = input.value.trim();
+    if (!link) return;
+    try {
+      const cal = await api.addReceived(link);
+      input.value = "";
+      UI.toast(`„${cal.recipientName}“ ist jetzt unter „Erhalten“ gespeichert.`);
+      await loadReceived();
+    } catch (err) {
+      UI.toast(err.message, { error: true });
+    }
+  });
+}
+
+async function loadReceived() {
+  let list = [];
+  try { list = await api.listReceived(); } catch (err) { console.warn("Erhaltene Kalender:", err.message); }
+  const el = document.getElementById("received-list");
+  const badge = document.getElementById("received-count");
+  el.innerHTML = "";
+  document.getElementById("received-empty").classList.toggle("hidden", list.length > 0);
+  badge.textContent = String(list.length);
+  badge.classList.toggle("hidden", !list.length);
+  for (const cal of list) el.appendChild(renderReceivedCard(cal));
+}
+
+function renderReceivedCard(cal) {
+  const card = document.createElement("div");
+  card.className = "bg-white/5 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col gap-3 transition-colors";
+  card.style.cursor = "pointer";
+  card.addEventListener("click", (e) => { if (!e.target.closest("a, button")) window.location.href = cal.shareUrl; });
+  const pct = Math.round((cal.openedDoors / (cal.dayCount || 24)) * 100);
+  const from = cal.ownerName ? `von ${escapeHtml(cal.ownerName)}` : "";
+  const how = cal.source?.kind === "email" ? "an deine E-Mail geschickt" : cal.source?.kind === "reminder" ? "Erinnerung abonniert" : "per Link hinzugefügt";
+  card.innerHTML = `
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0">
+        <h3 class="font-display font-semibold text-lg truncate">${escapeHtml(cal.recipientName)}</h3>
+        <p class="text-xs text-slate-400">${from ? from + " · " : ""}${cal.period ? escapeHtml(cal.periodLabel) : `Dezember ${cal.year}`}</p>
+      </div>
+      ${cal.isPro ? `<span class="ui-pro-badge">PRO</span>` : ""}
+    </div>
+    <div>
+      <div class="flex justify-between text-xs text-slate-400 mb-1"><span>${cal.openedDoors}/${cal.dayCount || 24} Türchen geöffnet</span><span class="text-slate-500">${how}</span></div>
+      <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div class="h-full bg-emerald-500" style="width:${pct}%"></div></div>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-1">
+      <a href="${cal.shareUrl}" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-3 py-1.5 transition-colors"><i data-icon="door-open"></i> Öffnen</a>
+      <button type="button" data-action="copy" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="link"></i> Link</button>
+      <button type="button" data-action="remove" class="rounded-lg bg-slate-800 hover:bg-rose-900/50 text-rose-400 text-sm font-medium px-3 py-1.5 transition-colors ml-auto">Entfernen</button>
+    </div>`;
+  card.querySelector('[data-action="copy"]').addEventListener("click", () => UI.copy(cal.shareUrl));
+  card.querySelector('[data-action="remove"]').addEventListener("click", async () => {
+    const ok = await UI.confirm({ title: "Aus „Erhalten“ entfernen?", text: `„${cal.recipientName}“ verschwindet aus deiner Übersicht. Der Kalender selbst bleibt bestehen, und über den Link kommst du weiterhin hin.`, ok: "Entfernen" });
+    if (!ok) return;
+    try { await api.removeReceived(cal.token); await loadReceived(); } catch (err) { UI.toast(err.message, { error: true }); }
+  });
+  return card;
+}
 
 async function loadCalendars() {
   const calendars = await api.listCalendars();
@@ -333,6 +415,29 @@ function renderTableRow(cal) {
   return row;
 }
 
+// E-mail with the link to the recipient; with an account under that address
+// the calendar then appears under "Erhalten" on their dashboard.
+async function sendCalendarDialog(cal) {
+  const already = (cal.sentTo || []).length ? `Bereits geschickt an: ${cal.sentTo.map(escapeHtml).join(", ")}` : "";
+  const r = await UI.form({
+    title: `„${cal.recipientName}“ verschicken`,
+    text: `Der Beschenkte bekommt eine E-Mail mit dem Link. Hat er ein Konto mit dieser Adresse, erscheint der Kalender dort automatisch unter „Erhalten“.${already ? " " + already : ""}`,
+    ok: "E-Mail senden",
+    fields: [
+      { name: "email", type: "email", label: "E-Mail-Adresse des Beschenkten", required: true, placeholder: "name@beispiel.ch" },
+      { name: "message", type: "textarea", label: "Persönliche Nachricht (optional)", rows: 3, placeholder: "z. B. Ich freue mich auf den Advent mit dir!" },
+    ],
+  });
+  if (!r) return;
+  try {
+    const res = await api.sendCalendar(cal.id, r.email, r.message);
+    UI.toast(res.sent ? `Kalender an ${r.email} geschickt.` : `Gespeichert für ${r.email} – der Mailversand ist auf diesem Server nicht eingerichtet.`, { error: !res.sent });
+    await loadCalendars();
+  } catch (err) {
+    UI.toast(err.message, { error: true });
+  }
+}
+
 function renderCard(cal) {
   const card = document.createElement("div");
   card.className = "bg-white/5 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col gap-3 transition-colors";
@@ -373,6 +478,7 @@ function renderCard(cal) {
       <a href="/c/preview/${cal.id}" target="_blank" rel="noopener" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors">Vorschau</a>
       <button data-action="copy" data-url="${cal.shareUrl}" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors"><i data-icon="link"></i> Link</button>
       <button data-action="duplicate" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Duplizieren"><i data-icon="copy"></i> Kopieren</button>
+      <button data-action="send" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-3 py-1.5 transition-colors" title="Per E-Mail an den Beschenkten schicken"><i data-icon="mail"></i> Senden${cal.sentTo && cal.sentTo.length ? ` <span class="text-[11px] text-emerald-300">✓</span>` : ""}</button>
       <button data-action="collab" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-medium px-3 py-1.5 transition-colors" title="Zusammen befüllen">+ Mitbearbeiter</button>
       ${(cal.isPro || isProUser) ? `<span class="ui-pro-badge self-center">PRO</span>` : ""}
     </div>
@@ -397,6 +503,8 @@ function renderCard(cal) {
       e.currentTarget.disabled = false;
     }
   });
+
+  card.querySelector('[data-action="send"]').addEventListener("click", () => sendCalendarDialog(cal));
 
   card.querySelector('[data-action="collab"]').addEventListener("click", async () => {
     const email = prompt("E-Mail-Adresse des Mitbearbeiters:");

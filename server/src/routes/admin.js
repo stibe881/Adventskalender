@@ -422,6 +422,7 @@ function toSummary(cal) {
     randomLayout: Boolean(cal.randomLayout),
     swissMode: Boolean(cal.swissMode),
     collaborators: cal.collaborators || [],
+    sentTo: cal.sentTo || [],
     isPro: Boolean(cal.isPro),
     bonusUnlock: bonusRule(cal),
     referrals: cal.referrals || 0,
@@ -430,6 +431,125 @@ function toSummary(cal) {
     periodLabel: periodLabel(cal),
   };
 }
+
+// ---------- Received calendars (the ones somebody made for me) ----------
+// A calendar counts as received when the user saved its link, when the owner
+// sent it to the user's e-mail address, or when the user subscribed to its
+// morning reminder with that address.
+const mail = require("../services/mail");
+const normEmail = (e) => String(e || "").trim().toLowerCase();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function tokenFromLink(input) {
+  const s = String(input || "").trim();
+  if (!s) return null;
+  try {
+    const u = new URL(s);
+    const m = u.pathname.match(/\/c\/([A-Za-z0-9_-]{6,})/);
+    if (m) return m[1];
+  } catch (_) { /* not a URL */ }
+  const bare = s.match(/^(?:\/?c\/)?([A-Za-z0-9_-]{6,})$/);
+  return bare ? bare[1] : null;
+}
+
+function receivedSummary(cal, source) {
+  const s = toSummary(cal);
+  return {
+    token: cal.token, recipientName: s.recipientName, ownerName: cal.ownerName || null, theme: s.theme, year: s.year,
+    period: s.period, periodLabel: s.periodLabel, dayCount: s.dayCount, filledDoors: s.filledDoors, openedDoors: s.openedDoors,
+    shareUrl: s.shareUrl, isPro: s.isPro, source, sentAt: (cal.sentLog || []).find((x) => x.to === source.email)?.at || null,
+  };
+}
+
+async function receivedFor(user) {
+  const email = normEmail(user.email);
+  const saved = user.receivedCalendars || [];
+  const hidden = new Set(user.hiddenCalendars || []);
+  const all = await db.getAllCalendars();
+  const out = [];
+  for (const cal of all) {
+    if (!cal || cal.ownerId === user.id || hidden.has(cal.token)) continue;
+    let source = null;
+    if ((cal.sentTo || []).includes(email)) source = { kind: "email", email };
+    else if (normEmail(cal.recipientEmail) === email) source = { kind: "reminder", email };
+    else if (saved.includes(cal.token)) source = { kind: "link" };
+    if (source) out.push(receivedSummary(cal, source));
+  }
+  out.sort((a, b) => (b.year || 0) - (a.year || 0) || String(a.recipientName).localeCompare(String(b.recipientName)));
+  return out;
+}
+
+router.get("/received", async (req, res) => {
+  const user = await db.getUserByEmail(req.user.email);
+  if (!user) return res.status(404).json({ error: "Nutzer nicht gefunden." });
+  res.json(await receivedFor(user));
+});
+
+router.post("/received", async (req, res) => {
+  const token = tokenFromLink(req.body?.link);
+  if (!token) return res.status(400).json({ error: "Das sieht nicht nach einem Kalender-Link aus." });
+  const cal = await db.getCalendarByToken(token);
+  if (!cal) return res.status(404).json({ error: "Unter diesem Link gibt es keinen Kalender." });
+  if (cal.ownerId === req.user.id) return res.status(400).json({ error: "Das ist dein eigener Kalender – er steht schon unter „Selbst erstellt“." });
+  const user = await db.updateUser(req.user.id, (u) => {
+    u.receivedCalendars = [...new Set([...(u.receivedCalendars || []), token])].slice(-200);
+    u.hiddenCalendars = (u.hiddenCalendars || []).filter((t) => t !== token);
+    return u;
+  });
+  if (!user) return res.status(404).json({ error: "Nutzer nicht gefunden." });
+  res.json(receivedSummary(cal, { kind: "link" }));
+});
+
+// Removing hides the calendar even when it was sent to this address.
+router.delete("/received/:token", async (req, res) => {
+  const token = String(req.params.token || "");
+  const user = await db.updateUser(req.user.id, (u) => {
+    u.receivedCalendars = (u.receivedCalendars || []).filter((t) => t !== token);
+    u.hiddenCalendars = [...new Set([...(u.hiddenCalendars || []), token])].slice(-200);
+    return u;
+  });
+  if (!user) return res.status(404).json({ error: "Nutzer nicht gefunden." });
+  res.json({ ok: true });
+});
+
+// For the "save to my overview" button on the calendar page.
+router.get("/received/status/:token", async (req, res) => {
+  const cal = await db.getCalendarByToken(String(req.params.token || ""));
+  if (!cal) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const user = await db.getUserByEmail(req.user.email);
+  const own = cal.ownerId === req.user.id || (cal.collaborators || []).includes(req.user.email);
+  const list = own ? [] : await receivedFor(user);
+  res.json({ own, saved: list.some((c) => c.token === cal.token) });
+});
+
+// The owner sends the calendar to the recipient's e-mail address. If the
+// recipient has an account with that address, it shows up under "Erhalten".
+router.post("/calendars/:id/send", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const email = normEmail(req.body?.email);
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Bitte eine gültige E-Mail-Adresse angeben." });
+  if (email === normEmail(req.user.email)) return res.status(400).json({ error: "Das ist deine eigene Adresse." });
+  const message = String(req.body?.message || "").trim().slice(0, 1000);
+  const summary = toSummary(calendar);
+  const sender = req.user.username || calendar.ownerName || "Jemand";
+  const at = new Date().toISOString();
+  await db.updateCalendar(calendar.id, (cal) => {
+    cal.sentTo = [...new Set([...(cal.sentTo || []), email])].slice(-100);
+    cal.sentLog = [...(cal.sentLog || []), { to: email, at }].slice(-100);
+    return cal;
+  });
+  const subject = `${sender} hat dir einen Adventskalender geschenkt`;
+  const intro = `${sender} hat einen persönlichen Adventskalender für dich erstellt${calendar.recipientName ? ` – für ${calendar.recipientName}` : ""}.`;
+  const text = `${intro}\n\n${message ? message + "\n\n" : ""}Hier geht es zu deinem Kalender:\n${summary.shareUrl}\n\nTipp: Mit einem kostenlosen Konto unter ${config.baseUrl}/admin/index.html?mode=register&next=${encodeURIComponent(`/c/${calendar.token}`)} findest du den Kalender jederzeit unter „Erhalten“ wieder.`;
+  const html = mail.layout("Ein Adventskalender für dich", `
+    <p>${mail.escapeHtml(intro)}</p>
+    ${message ? `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #34d399;background:rgba(255,255,255,.04);white-space:pre-wrap">${mail.escapeHtml(message)}</blockquote>` : ""}
+    <p style="margin:24px 0"><a href="${summary.shareUrl}" style="background:#059669;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700">Kalender öffnen</a></p>
+    <p style="font-size:13px;color:#94a3b8">Mit einem kostenlosen Konto findest du den Kalender jederzeit unter „Erhalten“ wieder: <a href="${config.baseUrl}/admin/index.html?mode=register&amp;next=${encodeURIComponent(`/c/${calendar.token}`)}" style="color:#6ee7b7">Konto erstellen</a></p>`);
+  const sent = await mail.sendMail({ to: email, subject, text, html });
+  res.json({ ok: true, sent, email, sentTo: [...new Set([...(calendar.sentTo || []), email])] });
+});
 
 // Session Token Refresh (e.g. after Stripe Payment)
 router.post("/refresh", async (req, res) => {
