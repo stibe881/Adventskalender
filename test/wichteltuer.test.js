@@ -96,7 +96,7 @@ test("Wichteltür: owner creates a plan, co-parent edits via share link, kids wr
   const mia = r.d.children[0].id;
   pushed.length = 0;
   await anon("POST", `/api/wichteltuer/s/${share}/push`, { expoToken: "ExponentPushToken[papa]", who: "Stefan" });
-  r = await anon("POST", `/api/wichteltuer/k/${kid}/letters`, { childId: mia, text: "Lieber Pixi, magst du Kekse?" });
+  r = await anon("POST", `/api/wichteltuer/k/${kid}/letters`, { acceptTerms: true, childId: mia, text: "Lieber Pixi, magst du Kekse?" });
   assert.equal(r.status, 201);
   assert.equal(r.d.letters[0].from, "kid");
   assert.equal(r.d.letters[0].childName, "Mia");
@@ -183,7 +183,7 @@ test("Wichteltür: without PRO the idea library, letters and shopping list stay 
   assert.equal(r.status, 200);
   assert.equal(r.d.days[2].entry.title, "Mehlspuren");
   assert.deepEqual(r.d.shopping, [], "no shopping list without PRO");
-  r = await anon("POST", `/api/wichteltuer/k/${kid}/letters`, { text: "Lieber Pixi" });
+  r = await anon("POST", `/api/wichteltuer/k/${kid}/letters`, { acceptTerms: true, text: "Lieber Pixi" });
   assert.equal(r.status, 201);
   r = await anon("GET", `/api/wichteltuer/s/${share}`);
   assert.equal(r.d.unreadPost, 1);

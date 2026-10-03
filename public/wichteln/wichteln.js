@@ -120,6 +120,7 @@ async function renderJoin() {
               <li><i data-icon="link"></i> Ohne E-Mail: Dein persönlicher Link ist dein Zugang – du kannst ihn gleich speichern.</li>
               ${info.waitingRoom ? `<li><i data-icon="hourglass"></i> Diese Runde hat einen Warteraum: Der Organisator gibt dich frei, danach bist du dabei.</li>` : ""}
             </ul>
+            <label class="flex items-start gap-2 text-xs text-slate-300 mt-3"><input type="checkbox" name="acceptTerms" class="mt-0.5"> <span>Ich akzeptiere die <a href="/nutzungsbedingungen.html" target="_blank" rel="noopener" class="underline">Nutzungsbedingungen</a>: respektvoll bleiben, keine anstössigen Inhalte – Verstösse führen zum Ausschluss.</span></label>
             <div class="flex gap-2 mt-3">
               <button type="button" id="join-back" class="w-btn w-btn--ghost">Zurück</button>
               <button type="submit" id="join-submit" class="w-btn w-btn--primary flex-1">Eintragen</button>
@@ -153,7 +154,8 @@ async function renderJoin() {
     const btn = document.getElementById("join-submit");
     btn.disabled = true;
     try {
-      const r = await req("POST", "", { name: form.elements.name.value, email: form.elements.email.value });
+      if (!form.elements.acceptTerms.checked) throw new Error("Bitte akzeptiere die Nutzungsbedingungen.");
+      const r = await req("POST", "", { name: form.elements.name.value, email: form.elements.email.value, acceptTerms: true });
       rememberToken(r.token);
       haptic("success");
       window.location.href = `/w/${r.token}?welcome=1`;
@@ -521,15 +523,22 @@ function chatBlock(messages, channel, placeholder) {
     const day = dayLabel(m.at);
     if (day !== lastDay) { rows.push(`<div class="w-msg-day">${day}</div>`); lastDay = day; }
     const status = m.mine && i === lastMineIdx ? ` · ${m.read ? `Gelesen <i data-icon="check"></i>` : "Zugestellt"}` : "";
-    rows.push(`<div class="w-msg ${m.mine ? "is-mine" : "is-theirs"}">${esc(m.text)}<small>${esc(m.from)} · ${timeAgo(m.at)}${status}</small></div>`);
+    const tools = m.mine
+      ? `<div class="w-msg-tools"><button type="button" data-act="msg-delete" data-id="${esc(m.id)}">Löschen</button></div>`
+      : `<div class="w-msg-tools"><button type="button" data-act="msg-report" data-id="${esc(m.id)}" data-text="${esc(m.text)}">Melden</button></div>`;
+    rows.push(`<div class="w-msg ${m.mine ? "is-mine" : "is-theirs"}">${esc(m.text)}<small>${esc(m.from)} · ${timeAgo(m.at)}${status}</small>${tools}</div>`);
   });
+  const blocked = channel === "recipient" ? data.recipient?.blocked : data.santa?.blocked;
   return `<div class="w-chat" id="chat-${channel}">
       ${rows.length ? rows.join("") : `<p class="text-xs text-slate-500 text-center py-3">Noch keine Nachrichten – schreib die erste.</p>`}
     </div>
-    <form class="flex gap-2 mt-2" data-chat="${channel}">
+    ${blocked
+      ? `<div class="w-blocked"><i data-icon="ban"></i> Du hast diesen Chat blockiert. Dein Gegenüber kann dir nicht mehr schreiben. <button type="button" class="underline" data-act="block" data-channel="${channel}" data-on="0">Blockierung aufheben</button></div>`
+      : `<form class="flex gap-2 mt-2" data-chat="${channel}">
       <input name="text" maxlength="1000" required class="w-input" placeholder="${esc(placeholder)}" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i><span class="hidden sm:inline">Senden</span></button>
-    </form>`;
+    </form>
+    <p class="text-right mt-1"><button type="button" class="text-[11px] text-slate-500 hover:text-rose-300 underline" data-act="block" data-channel="${channel}" data-on="1">Gesprächspartner blockieren</button></p>`}`;
 }
 
 function recipientCard() {
@@ -707,7 +716,7 @@ function recapCard() {
       <input name="text" maxlength="400" required class="w-input" placeholder="Ein paar Worte an die Runde oder deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
-    <div class="space-y-2 mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks">${esc(t.text)}<small>${esc(t.from)} · ${timeAgo(t.at)}</small></div>`).join("") : ""}</div>
+    <div class="space-y-2 mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks">${esc(t.text)}<small>${esc(t.from)} · ${timeAgo(t.at)}${t.mine ? ` · <button type="button" class="underline" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : ` · <button type="button" class="underline" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</small></div>`).join("") : ""}</div>
 
     <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="image"></i> Foto-Wand</h3>
     <form id="photo-form" class="flex flex-wrap gap-2 items-center">
@@ -716,13 +725,13 @@ function recapCard() {
       <label class="w-btn w-btn--primary"><i data-icon="image"></i> ${mobile ? "Galerie" : "Foto hochladen"}<input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp" class="sr-only"></label>
     </form>
     <p class="text-xs text-slate-500 mt-1">Wird direkt nach der Auswahl hochgeladen. Nur für die Runde sichtbar, wird mit der Runde gelöscht.</p>
-    <div class="w-photos mt-4">${data.photos.length ? data.photos.map((ph) => `<figure class="w-photo"><a href="${esc(ph.url)}" target="_blank"><img src="${esc(ph.url)}" alt="${esc(ph.caption || "")}" loading="lazy"></a>${ph.caption || ph.by ? `<figcaption>${esc(ph.caption || "")}${ph.by ? ` <span class="opacity-70">– ${esc(ph.by)}</span>` : ""}</figcaption>` : ""}${ph.mine ? `<button data-act="remove-photo" data-id="${esc(ph.id)}" title="Löschen"><i data-icon="x"></i></button>` : ""}</figure>`).join("") : `<div class="col-span-full">${emptyState("image", "Noch keine Fotos – nach der Bescherung ist hier Platz.")}</div>`}</div>
+    <div class="w-photos mt-4">${data.photos.length ? data.photos.map((ph) => `<figure class="w-photo"><a href="${esc(ph.url)}" target="_blank"><img src="${esc(ph.url)}" alt="${esc(ph.caption || "")}" loading="lazy"></a>${ph.caption || ph.by ? `<figcaption>${esc(ph.caption || "")}${ph.by ? ` <span class="opacity-70">– ${esc(ph.by)}</span>` : ""}</figcaption>` : ""}${ph.mine ? `<button data-act="remove-photo" data-id="${esc(ph.id)}" title="Löschen"><i data-icon="x"></i></button>` : `<button data-act="report-photo" data-id="${esc(ph.id)}" title="Melden"><i data-icon="triangle-alert"></i></button>`}</figure>`).join("") : `<div class="col-span-full">${emptyState("image", "Noch keine Fotos – nach der Bescherung ist hier Platz.")}</div>`}</div>
   </div>`;
 }
 
 function footerCard() {
   const g = data.group;
-  return `<p class="text-center text-xs text-slate-500 pb-6">
+  return `${Moderation.footer({ kind: "other", ref: { groupId: g.id, participantId: data.me?.id }, label: "Inhalte in dieser Wichtel-Runde" })}<p class="text-center text-xs text-slate-500 pb-6">
     ${g.deleteAt ? `Diese Runde wird am ${new Date(g.deleteAt).toLocaleDateString("de-DE")} automatisch und spurlos gelöscht – samt Fotos, Nachrichten und Wünschen.<br>` : ""}
     Dein Zugang ist dieser Link – speichere ihn dir.${g.organizerName ? ` Organisiert von ${esc(g.organizerName)}.` : ""}
   </p>`;
@@ -775,8 +784,9 @@ function bindEvents() {
       e.preventDefault();
       const text = form.elements.text.value.trim();
       if (!text) return;
+      if (!(await rulesOk())) return;
       try {
-        data = await req("POST", "/messages", { channel: form.dataset.chat, text });
+        data = await req("POST", "/messages", { channel: form.dataset.chat, text, acceptTerms: true });
         haptic("light");
         render();
         maybeAskPush();
@@ -853,7 +863,8 @@ function bindEvents() {
       }
       const item = { id: `w${Date.now().toString(36)}`, url, title, price: f.price.value.trim(), note: f.note.value.trim(), image: f.image.value };
       try {
-        data = await req("PUT", "/wishlist", { wishlist: [...data.me.wishlist, item] });
+        if (!(await rulesOk())) return;
+        data = await req("PUT", "/wishlist", { wishlist: [...data.me.wishlist, item], acceptTerms: true });
         haptic("success");
         render();
         toast("Wunsch gespeichert");
@@ -873,7 +884,7 @@ function bindEvents() {
       const btn = e.target.closest("button[data-act='remove-wish']");
       if (!btn) return;
       try {
-        data = await req("PUT", "/wishlist", { wishlist: data.me.wishlist.filter((w) => w.id !== btn.dataset.id) });
+        data = await req("PUT", "/wishlist", { wishlist: data.me.wishlist.filter((w) => w.id !== btn.dataset.id), acceptTerms: true });
         render();
       } catch (err) {
         toast(err.message, true);
@@ -904,8 +915,9 @@ function bindEvents() {
     e.preventDefault();
     const text = thanksForm.elements.text.value.trim();
     if (!text) return;
+    if (!(await rulesOk())) return;
     try {
-      data = await req("POST", "/thanks", { text });
+      data = await req("POST", "/thanks", { text, acceptTerms: true });
       haptic("success");
       render();
       toast("Danke gesagt");
@@ -921,6 +933,8 @@ function bindEvents() {
     const fd = new FormData();
     fd.append("photo", file, file.name || "foto.jpg");
     fd.append("caption", photoForm.elements.caption.value);
+    if (!(await rulesOk())) { input.value = ""; return; }
+    fd.append("acceptTerms", "true");
     toast("Lade hoch …");
     try {
       data = await req("POST", "/photos", fd, true);
@@ -932,6 +946,7 @@ function bindEvents() {
       input.value = "";
     }
   }));
+  bindSafety();
   document.querySelectorAll("button[data-act='remove-photo']").forEach((b) => b.addEventListener("click", async () => {
     if (!(await UI.confirm({ title: "Foto löschen?", text: "Das Foto verschwindet für alle aus der Foto-Wand.", ok: "Löschen", danger: true }))) return;
     try {
@@ -940,6 +955,31 @@ function bindEvents() {
     } catch (err) {
       toast(err.message, true);
     }
+  }));
+}
+
+// House rules once per device; the server remembers the acceptance too.
+async function rulesOk() {
+  return Moderation.gate(`wichteln_${token}`, { already: Boolean(data?.me?.termsAccepted) });
+}
+
+// Report, block and delete: the safety tools on chat, thanks and photos.
+function bindSafety() {
+  const reportVia = (path) => async (payload) => { data = await req("POST", path, payload); render(); };
+  document.querySelectorAll("[data-act='msg-report']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-message", label: "diese Nachricht", excerpt: b.dataset.text, send: reportVia(`/messages/${b.dataset.id}/report`) })));
+  document.querySelectorAll("[data-act='thanks-report']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-thanks", label: "diesen Eintrag", excerpt: b.dataset.text, send: reportVia(`/thanks/${b.dataset.id}/report`) })));
+  document.querySelectorAll("[data-act='report-photo']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-photo", label: "dieses Foto", send: reportVia(`/photos/${b.dataset.id}/report`) })));
+  document.querySelectorAll("[data-act='msg-delete']").forEach((b) => b.addEventListener("click", async () => {
+    if (!(await UI.confirm({ title: "Nachricht löschen?", text: "Sie verschwindet für beide Seiten.", ok: "Löschen", danger: true }))) return;
+    try { data = await req("DELETE", `/messages/${b.dataset.id}`); render(); } catch (err) { toast(err.message, true); }
+  }));
+  document.querySelectorAll("[data-act='thanks-delete']").forEach((b) => b.addEventListener("click", async () => {
+    try { data = await req("DELETE", `/thanks/${b.dataset.id}`); render(); } catch (err) { toast(err.message, true); }
+  }));
+  document.querySelectorAll("[data-act='block']").forEach((b) => b.addEventListener("click", async () => {
+    const on = b.dataset.on === "1";
+    if (on && !(await UI.confirm({ title: "Gesprächspartner blockieren?", text: "Die Person kann dir in diesem Chat nicht mehr schreiben, ihre Nachrichten werden ausgeblendet. Du kannst das jederzeit aufheben.", ok: "Blockieren", danger: true }))) return;
+    try { data = await req("PUT", "/block", { channel: b.dataset.channel, on }); render(); toast(on ? "Chat blockiert" : "Blockierung aufgehoben"); } catch (err) { toast(err.message, true); }
   }));
 }
 

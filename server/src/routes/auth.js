@@ -27,9 +27,12 @@ const transporter = nodemailer.createTransport({
 });
 
 router.post("/register", async (req, res) => {
-  const { email, password, username, company } = req.body || {};
+  const { email, password, username, company, acceptTerms } = req.body || {};
   if (!email || !password || email.length < 5 || password.length < 6 || !email.includes("@")) {
     return res.status(400).json({ error: "Gültige E-Mail und Passwort (min. 6 Zeichen) erforderlich." });
+  }
+  if (acceptTerms !== true) {
+    return res.status(400).json({ error: "Bitte akzeptiere die Nutzungsbedingungen." });
   }
 
   const existing = await db.getUserByEmail(email);
@@ -47,6 +50,7 @@ router.post("/register", async (req, res) => {
     company: company ? String(company).trim() : null,
     passwordHash,
     createdAt: new Date().toISOString(),
+    termsAcceptedAt: new Date().toISOString(),
     isPremium: false,
     isVerified: false,
     verificationToken,

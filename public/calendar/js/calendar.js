@@ -174,6 +174,12 @@ async function init() {
   renderGarland();
   renderHeader(themeKey, theme, calendarMeta);
   renderFooter(calendarMeta);
+  if (!isPreview && window.Moderation) {
+    const legal = document.createElement("div");
+    legal.innerHTML = Moderation.footer({ kind: "calendar", ref: { token: routeId }, label: "Inhalte dieses Kalenders" });
+    legal.firstElementChild.classList.add("mt-4");
+    document.getElementById("calendar-footer")?.appendChild(legal.firstElementChild);
+  }
   if (!isPreview) offerSaveToOverview();
   if (!isPreview && window.Welcome) setTimeout(() => window.Welcome.maybeShow("calendar"), 1200);
   initNextDoorCountdown();
@@ -1416,6 +1422,7 @@ function setupFeedback(dayNum) {
       showLockToast("Wird gesendet...");
     } else {
       try {
+        if (window.Moderation && !(await Moderation.gate(`calendar_${routeId}`))) return;
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
@@ -1428,7 +1435,7 @@ function setupFeedback(dayNum) {
             await fetchJson(`/api/calendar/${routeId}/days/${dayNum}/reply`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ type: "audio", url })
+              body: JSON.stringify({ type: "audio", url, acceptTerms: true })
             });
             showLockToast("Sprachnachricht gesendet!");
           } catch (e) {

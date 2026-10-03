@@ -159,6 +159,7 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/spotify", require("./routes/spotify"));
 app.use("/api/wichteln", require("./routes/wichteln"));
 app.use("/api/wichteltuer", require("./routes/wichteltuer"));
+app.use("/api/report", require("./routes/report"));
 
 // Wichteltür: parents' planner (shared link) and the children's page.
 app.get("/e/:token", (req, res) => {

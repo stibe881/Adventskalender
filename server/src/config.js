@@ -43,6 +43,11 @@ module.exports = {
     pass: process.env.SMTP_PASS || "",
     from: process.env.SMTP_FROM || '"Adventskalender" <noreply@adventskalender.local>',
   },
+  // Where reports of objectionable content go and who may handle them in the app.
+  moderation: {
+    email: process.env.MODERATION_EMAIL || (process.env.SMTP_FROM || "").match(/<([^>]+)>/)?.[1] || process.env.SMTP_USER || "stefan.gross@gross-ict.ch",
+    admins: (process.env.MODERATION_ADMINS || "stefan.gross@gross-ict.ch").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+  },
   push: {
     // Contact for push services (Apple, Google, Mozilla) if they need to reach the operator.
     // Falls back to the SMTP sender address.

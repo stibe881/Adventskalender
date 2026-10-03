@@ -37,7 +37,10 @@ async function request(method, url, body, isForm = false) {
 
 const api = {
   login: (email, password, remember = false) => request("POST", "/auth/login", { email, password, remember }),
-  register: (email, password, username, company) => request("POST", "/auth/register", { email, password, username, company }),
+  register: (email, password, username, company, acceptTerms) => request("POST", "/auth/register", { email, password, username, company, acceptTerms: Boolean(acceptTerms) }),
+  deleteReply: (id, day, replyId) => request("DELETE", `/admin/calendars/${id}/days/${day}/replies/${encodeURIComponent(replyId)}`),
+  listReports: (status) => request("GET", `/admin/moderation/reports${status ? `?status=${status}` : ""}`),
+  resolveReport: (id, action) => request("POST", `/admin/moderation/reports/${id}/resolve`, { action }),
   devLogin: () => request("POST", "/auth/dev-login"),
   logout: () => request("POST", "/auth/logout"),
   me: () => request("GET", "/auth/me"),

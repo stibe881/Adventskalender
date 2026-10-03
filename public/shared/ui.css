@@ -78,3 +78,12 @@ html.is-native-app .ui-offline { padding-top: calc(env(safe-area-inset-top) + 8p
 .w-btn--pro, .btn-pro, .ui-btn--pro { background: linear-gradient(90deg, #f59e0b, #f97316) !important; color: #fff !important; border: 0 !important; font-weight: 700; white-space: nowrap; }
 .w-btn--pro:hover, .btn-pro:hover, .ui-btn--pro:hover { filter: brightness(1.08); }
 .btn-pro { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+
+/* Safety: rules dialog and footer */
+.mod-rules { margin: 8px 0 12px; padding-left: 18px; font-size: .9rem; line-height: 1.45; color: #e2e8f0; }
+.mod-rules li + li { margin-top: 6px; }
+.mod-footer button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.w-msg-tools { display: flex; gap: 10px; margin-top: 4px; }
+.w-msg-tools button { background: none; border: 0; padding: 0; font-size: .7rem; color: rgba(255,255,255,.55); cursor: pointer; }
+.w-msg-tools button:hover { color: #fff; text-decoration: underline; }
+.w-blocked { font-size: .8rem; color: #fda4af; background: rgba(244,63,94,.1); border: 1px solid rgba(244,63,94,.3); border-radius: 10px; padding: 8px 12px; margin-top: 8px; }

@@ -68,6 +68,7 @@ async function init() {
     }
 
     if (user.email === "stefan.gross@gross-ict.ch") {
+      document.getElementById("admin-moderation-link").classList.remove("hidden");
       const toggleBtn = document.getElementById("admin-toggle-pro");
       toggleBtn.classList.remove("hidden");
       toggleBtn.addEventListener("click", async () => {

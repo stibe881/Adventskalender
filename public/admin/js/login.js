@@ -99,7 +99,10 @@ form.addEventListener("submit", async (e) => {
       if (password !== passwordConfirm) {
         throw new Error("Die Passwörter stimmen nicht überein.");
       }
-      const res = await api.register(email, password, username, company);
+      if (!document.getElementById("accept-terms").checked) {
+        throw new Error("Bitte akzeptiere die Nutzungsbedingungen.");
+      }
+      const res = await api.register(email, password, username, company, true);
       
       // Switch back to login mode programmatically
       isRegisterMode = false;

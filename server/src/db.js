@@ -70,6 +70,17 @@ async function initDB() {
 
   // Wichteltür (Christmas elf planner). Parents share the plan via shareToken,
   // children get a read-mostly page via kidToken.
+  // Reports of objectionable content (chat, photos, letters …) for moderation.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id VARCHAR(255) PRIMARY KEY,
+      status VARCHAR(32),
+      createdAt VARCHAR(40),
+      data JSON,
+      INDEX idx_reports_status (status)
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS elf_plans (
       id VARCHAR(255) PRIMARY KEY,
@@ -270,6 +281,29 @@ async function deleteElfPlan(id) {
   return result.affectedRows > 0;
 }
 
+// ── Reports ─────────────────────────────────────────────────────────────────
+async function createReport(report) {
+  await pool.query("INSERT INTO reports (id, status, createdAt, data) VALUES (?, ?, ?, ?)", [report.id, report.status, report.createdAt, JSON.stringify(report)]);
+  return report;
+}
+async function listReports(status) {
+  const [rows] = status
+    ? await pool.query("SELECT * FROM reports WHERE status = ? ORDER BY createdAt DESC LIMIT 500", [status])
+    : await pool.query("SELECT * FROM reports ORDER BY createdAt DESC LIMIT 500");
+  return rows.map((r) => r.data);
+}
+async function getReportById(id) {
+  const [rows] = await pool.query("SELECT * FROM reports WHERE id = ?", [id]);
+  return rows.length ? rows[0].data : null;
+}
+async function updateReport(id, updaterFn) {
+  const report = await getReportById(id);
+  if (!report) return null;
+  const updated = await updaterFn(report);
+  await pool.query("UPDATE reports SET status = ?, data = ? WHERE id = ?", [updated.status, JSON.stringify(updated), id]);
+  return updated;
+}
+
 // User operations
 async function getUserByEmail(email) {
   const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
@@ -374,6 +408,7 @@ async function deleteUser(id) {
 }
 
 module.exports = {
+  createReport, listReports, getReportById, updateReport,
   getAllCalendars,
   getCalendarsByOwnerOrCollaborator,
   getCalendarById,

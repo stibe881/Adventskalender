@@ -196,6 +196,19 @@ router.delete("/groups/:id/participants/:pid", async (req, res) => {
   res.json(await view(updated));
 });
 
+// The organizer may remove any content of the round (moderation).
+for (const [listKey, label] of [["messages", "Nachricht"], ["photos", "Foto"], ["thanks", "Eintrag"]]) {
+  router.delete(`/groups/:id/${listKey}/:itemId`, async (req, res) => {
+    const group = await loadOwnedGroup(req, res);
+    if (!group) return;
+    const item = (group[listKey] || []).find((x) => x.id === req.params.itemId);
+    if (!item) return res.status(404).json({ error: `${label} nicht gefunden.` });
+    if (listKey === "photos") require("./shared").removePhotoFiles({ photos: [item] });
+    const updated = await db.updateWichtelGroup(group.id, (g) => { g[listKey] = (g[listKey] || []).filter((x) => x.id !== item.id); return g; });
+    res.json(await view(updated));
+  });
+}
+
 router.post("/groups/:id/participants/:pid/approve", async (req, res) => {
   const group = await loadOwnedGroup(req, res);
   if (!group) return;

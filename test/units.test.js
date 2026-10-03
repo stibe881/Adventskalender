@@ -90,3 +90,13 @@ test("Türchen 25 appears by the owner's rule: invitations, all doors open, a da
   assert.deepEqual(cleanBonusRule({ mode: "bogus", count: "999", date: "nope" }, cal), { mode: "referrals", count: 50, date: "2026-12-25" });
   assert.match(getBonusDoor({ ...cal, bonusUnlock: { mode: "allOpened" } }).content.message, /Alle 24 Türchen/);
 });
+
+test("Moderation: der Wortfilter trifft klare Fälle und lässt harmlose Texte durch", () => {
+  const { findObjectionable } = require(path.join(SRC, "utils/moderation"));
+  assert.equal(findObjectionable("Schöne Adventszeit euch allen"), null);
+  assert.equal(findObjectionable("Scheibenkleister, Dickicht, Passport, Analyse"), null);
+  assert.ok(findObjectionable("Du Arschloch"));
+  assert.ok(findObjectionable("f1ck dich"));
+  assert.ok(findObjectionable("KILL YOURSELF"));
+  assert.ok(findObjectionable("so ein Hurensohn"));
+});

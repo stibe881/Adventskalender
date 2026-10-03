@@ -11,10 +11,21 @@ const { isEmail, cleanText, buildIcs } = require("../../utils/wichtel");
 const { notify } = require("./notify");
 const { isProItem, proOrDeny } = require("../../utils/pro");
 const { fetchLinkPreview } = require("./preview");
+const { assertClean } = require("../../utils/moderation");
+const { fileReport } = require("../../services/reports");
 const {
   cfg, participantLink, newParticipant, findParticipant, giverOf, activeParticipants, isDrawn, participantView,
-  loadByParticipantToken, safeHttpUrl, removePhotoFiles,
+  loadByParticipantToken, safeHttpUrl, removePhotoFiles, blockedByViewer,
 } = require("./shared");
+
+// Everybody who posts has agreed to the house rules once (join form or the
+// dialog before the first post); the flag travels along with the request.
+function termsOk(found, req, res) {
+  if (found.me.termsAcceptedAt || req.body?.acceptTerms === true) return true;
+  res.status(428).json({ error: "Bitte akzeptiere zuerst die Nutzungsbedingungen.", terms: true });
+  return false;
+}
+const acceptTermsNow = (p, req) => { if (!p.termsAcceptedAt && req.body?.acceptTerms === true) p.termsAcceptedAt = new Date().toISOString(); };
 
 const router = express.Router();
 const newId = () => crypto.randomBytes(6).toString("hex");
@@ -50,7 +61,9 @@ router.post("/join/:inviteToken", joinLimiter, async (req, res) => {
   const name = cleanText(req.body?.name, cfg.nameMax);
   const email = String(req.body?.email || "").trim().toLowerCase();
   if (!name) return res.status(400).json({ error: "Bitte gib deinen Namen ein." });
+  if (!assertClean(res, name)) return;
   if (email && !isEmail(email)) return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
+  if (req.body?.acceptTerms !== true) return res.status(400).json({ error: "Bitte akzeptiere die Nutzungsbedingungen.", terms: true });
   if ((group.participants || []).length >= cfg.maxParticipants) return res.status(400).json({ error: "Diese Runde ist voll." });
 
   // Someone the organizer already listed can claim their entry by e-mail.
@@ -61,6 +74,7 @@ router.post("/join/:inviteToken", joinLimiter, async (req, res) => {
   }
   const p = newParticipant({ name, email, pending: group.waitingRoom !== false });
   p.joinedAt = new Date().toISOString();
+  p.termsAcceptedAt = p.joinedAt;
   await db.updateWichtelGroup(group.id, (g) => {
     g.participants.push(p);
     return g;
@@ -107,6 +121,7 @@ router.get("/p/:token", async (req, res) => {
 router.put("/p/:token/profile", async (req, res) => {
   const b = req.body || {};
   if (b.email !== undefined && b.email && !isEmail(b.email)) return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
+  if (!assertClean(res, b.name, b.hints?.allergies, b.hints?.favorites, b.hints?.hobbies, b.hints?.notes)) return;
   if (b.hints && typeof b.hints === "object") {
     const found0 = await loadByParticipantToken(req, res);
     if (!found0) return;
@@ -140,7 +155,10 @@ router.put("/p/:token/wishlist", async (req, res) => {
     price: cleanText(w.price, 20),
     note: cleanText(w.note, 300),
   })).filter((w) => w.title || w.url);
+  if (!assertClean(res, ...wishlist.flatMap((w) => [w.title, w.note]))) return;
+  if (!termsOk(found0, req, res)) return;
   const done = await mutateAndRespond(req, res, () => (g, p) => {
+    acceptTermsNow(p, req);
     p.wishlist = wishlist;
     p.wishlistUpdatedAt = new Date().toISOString();
   });
@@ -181,10 +199,15 @@ router.post("/p/:token/messages", async (req, res) => {
   if (!isDrawn(group)) return res.status(400).json({ error: "Der Chat öffnet nach der Auslosung." });
   const text = cleanText(req.body?.text, cfg.messageMax);
   if (!text) return res.status(400).json({ error: "Nachricht ist leer." });
+  if (!termsOk(found, req, res)) return;
+  if (!assertClean(res, text)) return;
   const toRecipient = req.body?.channel === "recipient";
   const santa = giverOf(group, me.id);
   const channel = toRecipient ? me.id : santa?.id;
   if (!channel) return res.status(400).json({ error: "Kein Gesprächspartner gefunden." });
+  const otherBefore = toRecipient ? findParticipant(group, me.assignedTo) : santa;
+  if (blockedByViewer(me, channel)) return res.status(403).json({ error: "Du hast diesen Chat blockiert. Hebe die Blockierung auf, um zu schreiben." });
+  if (otherBefore && blockedByViewer(otherBefore, channel)) return res.status(403).json({ error: "Dein Gesprächspartner hat diesen Chat beendet." });
   const msg = { id: newId(), channel, from: me.id, text, at: new Date().toISOString() };
   const updated = await db.updateWichtelGroup(group.id, (g) => {
     if (!g.messages) g.messages = [];
@@ -192,6 +215,7 @@ router.post("/p/:token/messages", async (req, res) => {
     if (g.messages.length > cfg.maxMessages) g.messages = g.messages.slice(-cfg.maxMessages);
     // Sending implies having read the channel.
     const p = findParticipant(g, me.id);
+    acceptTermsNow(p, req);
     p.lastRead = { ...(p.lastRead || {}), [toRecipient ? "recipient" : "santa"]: msg.at };
     return g;
   });
@@ -200,12 +224,58 @@ router.post("/p/:token/messages", async (req, res) => {
   res.status(201).json(await pview(updated, findParticipant(updated, me.id)));
 });
 
+// Own messages can be taken back any time.
+router.delete("/p/:token/messages/:id", async (req, res) => {
+  await mutateAndRespond(req, res, ({ group, me }) => {
+    const m = (group.messages || []).find((x) => x.id === req.params.id);
+    if (!m || m.from !== me.id) {
+      res.status(404).json({ error: "Nachricht nicht gefunden." });
+      return false;
+    }
+    return (g) => { g.messages = (g.messages || []).filter((x) => x.id !== m.id); };
+  });
+});
+
+// Reporting hides the item for the reporter at once and alerts moderation.
+async function reportItem(req, res, listKey, kind) {
+  const found = await loadByParticipantToken(req, res);
+  if (!found) return;
+  const { group, me } = found;
+  const item = (group[listKey] || []).find((x) => x.id === req.params.id);
+  if (!item || item.from === me.id || item.by === me.id) return res.status(404).json({ error: "Eintrag nicht gefunden." });
+  const updated = await db.updateWichtelGroup(group.id, (g) => {
+    const it = (g[listKey] || []).find((x) => x.id === item.id);
+    if (it) it.hiddenFor = [...new Set([...(it.hiddenFor || []), me.id])];
+    return g;
+  });
+  await fileReport({
+    kind, ref: { groupId: group.id, [listKey === "messages" ? "messageId" : listKey === "photos" ? "photoId" : "thanksId"]: item.id, by: item.from || item.by || null },
+    reason: req.body?.reason, details: req.body?.details, excerpt: item.text || item.caption || item.url || "", reporter: `${me.name} (${me.id})`, ip: req.ip,
+  });
+  res.json(await pview(updated, findParticipant(updated, me.id)));
+}
+router.post("/p/:token/messages/:id/report", (req, res) => reportItem(req, res, "messages", "wichteln-message"));
+router.post("/p/:token/photos/:id/report", (req, res) => reportItem(req, res, "photos", "wichteln-photo"));
+router.post("/p/:token/thanks/:id/report", (req, res) => reportItem(req, res, "thanks", "wichteln-thanks"));
+
+// Block a chat partner: their messages disappear for me and they can no longer write to me.
+router.put("/p/:token/block", async (req, res) => {
+  const channel = req.body?.channel === "santa" ? "santa" : "recipient";
+  const on = req.body?.on !== false;
+  await mutateAndRespond(req, res, () => (g, p) => {
+    p.blocked = { ...(p.blocked || {}), [channel]: on };
+  });
+});
+
 // Thank-you notes after the event (the recap).
 router.post("/p/:token/thanks", async (req, res) => {
   const text = cleanText(req.body?.text, cfg.thanksMax);
   if (!text) return res.status(400).json({ error: "Bitte schreib ein paar Worte." });
+  if (!assertClean(res, text)) return;
   let entry;
-  const done = await mutateAndRespond(req, res, ({ group }) => {
+  const done = await mutateAndRespond(req, res, (found) => {
+    const { group } = found;
+    if (!termsOk(found, req, res)) return false;
     if (!isDrawn(group)) {
       res.status(400).json({ error: "Danke sagen geht nach der Auslosung." });
       return false;
@@ -215,6 +285,7 @@ router.post("/p/:token/thanks", async (req, res) => {
       return false;
     }
     return (g, p) => {
+      acceptTermsNow(p, req);
       if (!g.thanks) g.thanks = [];
       entry = { id: newId(), from: p.id, text, at: new Date().toISOString() };
       g.thanks.push(entry);
@@ -255,12 +326,17 @@ const photoUpload = multer({
 router.post("/p/:token/photos", photoUpload.single("photo"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Bitte ein Bild (PNG, JPG, GIF, WebP) auswählen." });
   const photo = { id: newId(), url: `/uploads/${req.file.filename}`, by: null, caption: cleanText(req.body?.caption, cfg.captionMax), at: new Date().toISOString() };
-  const done = await mutateAndRespond(req, res, ({ group }) => {
+  if (req.body) req.body.acceptTerms = req.body.acceptTerms === "true" || req.body.acceptTerms === true;
+  if (!assertClean(res, photo.caption)) { removePhotoFiles({ photos: [photo] }); return; }
+  const done = await mutateAndRespond(req, res, (found) => {
+    const { group } = found;
+    if (!termsOk(found, req, res)) return false;
     if ((group.photos || []).length >= cfg.maxPhotos) {
       res.status(400).json({ error: "Die Foto-Wand ist voll." });
       return false;
     }
     return (g, p) => {
+      acceptTermsNow(p, req);
       if (!g.photos) g.photos = [];
       g.photos.push({ ...photo, by: p.id });
     };

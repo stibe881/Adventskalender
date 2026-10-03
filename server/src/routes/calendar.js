@@ -300,11 +300,13 @@ router.post("/:token/days/:day/reply", async (req, res) => {
   const dayNum = parseInt(req.params.day, 10);
   const { type, url, text } = req.body;
   if (!type) return res.status(400).json({ error: "Typ fehlt" });
+  if (req.body.acceptTerms !== true) return res.status(428).json({ error: "Bitte zuerst die Regeln bestätigen.", terms: true });
+  if (!require("../utils/moderation").assertClean(res, text)) return;
 
   await db.updateCalendar(calendar.id, (cal) => {
     const idx = cal.days.findIndex((d) => d.day === dayNum);
     if (!cal.days[idx].feedback) cal.days[idx].feedback = { reactions: [], replies: [] };
-    cal.days[idx].feedback.replies.push({ type, url, text, createdAt: new Date().toISOString() });
+    cal.days[idx].feedback.replies.push({ id: require("crypto").randomBytes(6).toString("hex"), type, url, text, createdAt: new Date().toISOString() });
     return cal;
   });
   res.json({ success: true });
@@ -316,6 +318,7 @@ router.post("/:token/score", async (req, res) => {
   
   const { name, game, score, day } = req.body;
   if (!name || !game || score === undefined) return res.status(400).json({ error: "Daten fehlen" });
+  if (!require("../utils/moderation").assertClean(res, name)) return;
 
   await db.updateCalendar(calendar.id, (cal) => {
     if (!cal.leaderboard) cal.leaderboard = [];

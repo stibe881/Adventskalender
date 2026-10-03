@@ -551,6 +551,86 @@ router.post("/calendars/:id/send", async (req, res) => {
   res.json({ ok: true, sent, email, sentTo: [...new Set([...(calendar.sentTo || []), email])] });
 });
 
+// ---------- Moderation (site admins only) ----------
+// Reports are listed here and resolved within 24 hours: remove the content
+// (and, where it exists, the participant behind it) or dismiss the report.
+const isModerator = (req) => config.moderation.admins.includes(String(req.user.email || "").toLowerCase());
+
+router.get("/moderation/reports", async (req, res) => {
+  if (!isModerator(req)) return res.status(403).json({ error: "Nur für Moderatoren." });
+  res.json(await db.listReports(req.query.status === "all" ? null : "open"));
+});
+
+async function removeReportedContent(report) {
+  const r = report.ref || {};
+  const kind = report.kind;
+  if (kind.startsWith("wichteln-") && r.groupId) {
+    const listKey = kind === "wichteln-message" ? "messages" : kind === "wichteln-photo" ? "photos" : kind === "wichteln-thanks" ? "thanks" : null;
+    const itemId = r.messageId || r.photoId || r.thanksId;
+    const group = await db.getWichtelGroupById(r.groupId);
+    if (!group) return "Runde existiert nicht mehr";
+    await db.updateWichtelGroup(group.id, (g) => {
+      if (listKey && itemId) {
+        const item = (g[listKey] || []).find((x) => x.id === itemId);
+        if (item && listKey === "photos") require("./wichteln/shared").removePhotoFiles({ photos: [item] });
+        g[listKey] = (g[listKey] || []).filter((x) => x.id !== itemId);
+      }
+      if (kind === "wichteln-wishlist" && r.participantId) {
+        const p = (g.participants || []).find((x) => x.id === r.participantId);
+        if (p) p.wishlist = [];
+      }
+      return g;
+    });
+    return "Inhalt entfernt";
+  }
+  if (kind === "wichteltuer-letter" && r.planId && r.letterId) {
+    const plan = await db.getElfPlanById(r.planId);
+    if (!plan) return "Wichteltür existiert nicht mehr";
+    await db.updateElfPlan(plan.id, (p) => { p.post = (p.post || []).filter((l) => l.id !== r.letterId); return p; });
+    return "Brief entfernt";
+  }
+  if ((kind === "calendar-reply" || kind === "canvas" || kind === "calendar") && r.token) {
+    const cal = await db.getCalendarByToken(r.token);
+    if (!cal) return "Kalender existiert nicht mehr";
+    await db.updateCalendar(cal.id, (c) => {
+      if (kind === "calendar-reply" && r.day) {
+        const d = c.days.find((x) => x.day === Number(r.day));
+        if (d && d.feedback) d.feedback.replies = (d.feedback.replies || []).filter((x) => x.id !== r.replyId);
+      }
+      if (kind === "canvas") c.pixelGrid = {};
+      return c;
+    });
+    return kind === "calendar" ? "Kalender geprüft (keine automatische Löschung)" : "Inhalt entfernt";
+  }
+  return "Keine automatische Löschung möglich";
+}
+
+router.post("/moderation/reports/:id/resolve", async (req, res) => {
+  if (!isModerator(req)) return res.status(403).json({ error: "Nur für Moderatoren." });
+  const report = await db.getReportById(req.params.id);
+  if (!report) return res.status(404).json({ error: "Meldung nicht gefunden." });
+  const action = req.body?.action === "remove" ? "remove" : "dismiss";
+  let outcome = "Meldung verworfen";
+  if (action === "remove") {
+    try { outcome = await removeReportedContent(report); } catch (err) { return res.status(500).json({ error: `Entfernen fehlgeschlagen: ${err.message}` }); }
+  }
+  const updated = await db.updateReport(report.id, (r) => ({ ...r, status: "resolved", action, outcome, resolvedAt: new Date().toISOString(), resolvedBy: req.user.email }));
+  res.json(updated);
+});
+
+// Calendar owners can delete replies on their doors.
+router.delete("/calendars/:id/days/:day/replies/:replyId", async (req, res) => {
+  const calendar = await db.getCalendarById(req.params.id);
+  if (!hasAccess(calendar, req.user)) return res.status(404).json({ error: "Kalender nicht gefunden." });
+  const dayNum = parseInt(req.params.day, 10);
+  const updated = await db.updateCalendar(calendar.id, (c) => {
+    const d = c.days.find((x) => x.day === dayNum);
+    if (d && d.feedback) d.feedback.replies = (d.feedback.replies || []).filter((x, i) => x.id !== req.params.replyId && String(i) !== req.params.replyId);
+    return c;
+  });
+  res.json({ ok: true, replies: (updated.days.find((x) => x.day === dayNum)?.feedback?.replies) || [] });
+});
+
 // Session Token Refresh (e.g. after Stripe Payment)
 router.post("/refresh", async (req, res) => {
   try {

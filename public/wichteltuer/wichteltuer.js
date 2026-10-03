@@ -205,6 +205,7 @@ function render() {
     sec("einkauf", feat().shopping ? shoppingCard() : ""),
     sec("post", postCard()),
     sec("wichtel", elfCard() + settingsCard() + linksCard()),
+    window.Moderation ? Moderation.footer({ kind: "wichteltuer-letter", ref: { planId: data?.id || null, shareToken: token }, label: "Inhalte dieser Wichteltür" }) : "",
     `<p class="text-center text-xs text-slate-500 pb-6">Wichteltür · Advently</p>`,
   ].join("");
   bindEvents();

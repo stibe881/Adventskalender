@@ -13,8 +13,13 @@ function createStubDb() {
   const groups = {};
   const calendars = {};
   const plans = {};
+  const reports = [];
   const db = {
-    user, groups, calendars, plans,
+    user, groups, calendars, plans, reports,
+    createReport: async (r) => { reports.push(clone(r)); return r; },
+    listReports: async (status) => reports.filter((r) => !status || r.status === status).map(clone),
+    getReportById: async (id) => clone(reports.find((r) => r.id === id) || null),
+    updateReport: async (id, fn) => { const i = reports.findIndex((r) => r.id === id); if (i < 0) return null; reports[i] = clone(await fn(clone(reports[i]))); return reports[i]; },
     getUserByEmail: async () => clone(user),
     getUserById: async () => clone(user),
     updateUser: async (id, fn) => { Object.assign(user, await fn(clone(user))); return user; },

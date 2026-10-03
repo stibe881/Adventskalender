@@ -83,6 +83,7 @@ function render() {
       <textarea name="text" rows="3" maxlength="800" required class="w-input" placeholder="Lieber ${esc(elf)} …"></textarea>
       <button class="w-btn w-btn--primary w-full"><i data-icon="mail"></i> Abschicken</button>
     </form>` : ""}
+    ${window.Moderation ? Moderation.footer({ kind: "other", ref: { kidToken: token }, label: "Inhalte auf dieser Kinderseite" }) : ""}
     <p class="text-center text-xs text-slate-500 pb-6">Wichteltür · Advently</p>`;
   if (!myChild && d.children.length === 1) childId = d.children[0].id;
   const who = document.getElementById("who");
@@ -109,8 +110,9 @@ function render() {
   if (form) form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (needChild()) return;
+    if (window.Moderation && !(await Moderation.gate(`kids_${token}`))) return;
     try {
-      data = await req("POST", "/letters", { childId, text: form.elements.text.value });
+      data = await req("POST", "/letters", { childId, text: form.elements.text.value, acceptTerms: true });
       haptic("success");
       render();
       UI.toast("Der Brief liegt vor der Wichteltür.");

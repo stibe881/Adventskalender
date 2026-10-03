@@ -69,12 +69,20 @@ function giftProgress(p) {
 }
 
 // A channel is keyed by the giver's id and connects the giver with their recipient.
+// Has `p` blocked the other side of this channel? (giver channel = p's recipient chat)
+function blockedByViewer(viewer, giverId) {
+  const key = giverId === viewer.id ? "recipient" : "santa";
+  return Boolean(viewer.blocked && viewer.blocked[key]);
+}
+const hiddenFor = (item, viewer) => Array.isArray(item.hiddenFor) && item.hiddenFor.includes(viewer.id);
+
 function channelMessages(group, giverId, viewer) {
   const other = giverId === viewer.id ? findParticipant(group, viewer.assignedTo) : findParticipant(group, giverId);
   const otherReadKey = giverId === viewer.id ? "santa" : "recipient";
   const otherRead = other?.lastRead?.[otherReadKey] || "";
+  const blocked = blockedByViewer(viewer, giverId);
   return (group.messages || [])
-    .filter((m) => m.channel === giverId)
+    .filter((m) => m.channel === giverId && !hiddenFor(m, viewer) && !(blocked && m.from !== viewer.id))
     .map((m) => ({
       id: m.id,
       at: m.at,
@@ -88,7 +96,8 @@ function channelMessages(group, giverId, viewer) {
 
 function unreadCount(group, viewer, channelId, readKey) {
   const since = viewer.lastRead?.[readKey] || "";
-  return (group.messages || []).filter((m) => m.channel === channelId && m.from !== viewer.id && m.at > since).length;
+  if (blockedByViewer(viewer, channelId)) return 0;
+  return (group.messages || []).filter((m) => m.channel === channelId && m.from !== viewer.id && m.at > since && !hiddenFor(m, viewer)).length;
 }
 
 // Wish list, hints and the anonymous chat are PRO features of a round.
@@ -100,8 +109,8 @@ function wishView(w, withImage = true) {
   return { id: w.id, url: w.url, title: w.title, image: withImage ? w.image : undefined, price: w.price, note: w.note };
 }
 
-function thanksView(group) {
-  return (group.thanks || []).map((t) => ({ id: t.id, text: t.text, from: findParticipant(group, t.from)?.name || "?", at: t.at }));
+function thanksView(group, me) {
+  return (group.thanks || []).map((t) => ({ id: t.id, text: t.text, from: findParticipant(group, t.from)?.name || "?", at: t.at, mine: me ? t.from === me.id : false }));
 }
 
 function photoView(group, ph, me) {
@@ -203,6 +212,7 @@ function participantView(group, me, pro = Boolean(group.isPro)) {
       wishlist: pro ? me.wishlist || [] : [],
       giftStatus: giftProgress(me),
       notify: me.notify || { email: true, push: true },
+      termsAccepted: Boolean(me.termsAcceptedAt),
       pushDevices: (me.subscriptions || []).length,
       icsUrl: group.eventDate ? `/api/wichteln/p/${me.token}/event.ics` : null,
     },
@@ -213,19 +223,21 @@ function participantView(group, me, pro = Boolean(group.isPro)) {
       wishlist: pro ? (target.wishlist || []).map((w) => wishView(w)) : [],
       messages: chat ? channelMessages(group, me.id, me) : [],
       unread: chat ? unreadCount(group, me, me.id, "recipient") : 0,
+      blocked: blockedByViewer(me, me.id),
     } : null,
     santa: santa ? {
       progress: giftProgress(santa),
       messages: chat ? channelMessages(group, santa.id, me) : [],
       unread: chat ? unreadCount(group, me, santa.id, "santa") : 0,
+      blocked: blockedByViewer(me, santa.id),
     } : null,
     participants: activeParticipants(group).map((p) => ({ id: p.id, name: p.name, isOrganizer: Boolean(p.isOrganizer), joined: Boolean(p.joinedAt) })),
     // Family rounds: everybody may see everybody's wishes.
     wishlists: group.wishlistsShared && pro
       ? activeParticipants(group).filter((p) => p.id !== me.id).map((p) => ({ id: p.id, name: p.name, wishlist: (p.wishlist || []).map((w) => wishView(w)) }))
       : null,
-    photos: (group.photos || []).map((ph) => photoView(group, ph, me)),
-    thanks: thanksView(group),
+    photos: (group.photos || []).filter((ph) => !hiddenFor(ph, me)).map((ph) => photoView(group, ph, me)),
+    thanks: thanksView({ ...group, thanks: (group.thanks || []).filter((t) => !hiddenFor(t, me)) }, me),
     // The reveal is for the organizer only.
     reveal: group.status === "revealed" && me.isOrganizer
       ? activeParticipants(group).map((p) => ({ giver: p.name, receiver: findParticipant(group, p.assignedTo)?.name || "?" }))
@@ -309,6 +321,7 @@ function removePhotoFiles(group) {
 }
 
 module.exports = {
+  blockedByViewer, hiddenFor,
   cfg, proFeatures, participantLink, inviteLink, formatDate, eventLine, todayIso, eventPassed, computeDeleteAt, newParticipant,
   findParticipant, giverOf, activeParticipants, isDrawn, giftProgress, organizerView, participantView,
   loadOwnedGroup, loadByParticipantToken, applySettings, syncOrganizerParticipant, safeHttpUrl, removePhotoFiles,

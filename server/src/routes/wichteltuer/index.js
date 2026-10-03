@@ -467,6 +467,8 @@ kids.post("/letters", async (req, res) => {
   if (!plan) return;
   const text = cleanText(req.body?.text, cfg.kidLetterMax);
   if (!text) return res.status(400).json({ error: "Schreib dem Wichtel etwas." });
+  if (req.body?.acceptTerms !== true) return res.status(428).json({ error: "Bitte zuerst die Regeln bestätigen.", terms: true });
+  if (!require("../../utils/moderation").assertClean(res, text)) return;
   const child = plan.children.find((c) => c.id === req.body?.childId);
   const updated = await db.updateElfPlan(plan.id, (p) => {
     if (!p.post) p.post = [];

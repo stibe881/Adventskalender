@@ -707,10 +707,20 @@ function openModal(day) {
     section.classList.remove("hidden");
     const REACTION_ICONS = { heart: ["heart", "text-rose-400"], laugh: ["laugh", "text-amber-300"], touched: ["frown", "text-sky-300"], party: ["party-popper", "text-emerald-300"], "❤️": ["heart", "text-rose-400"], "😂": ["laugh", "text-amber-300"], "🥺": ["frown", "text-sky-300"], "🎉": ["party-popper", "text-emerald-300"] };
     document.getElementById("feedback-reactions").innerHTML = door.feedback.reactions?.map(e => { const r = REACTION_ICONS[e]; return `<span class="${r ? r[1] : ""}">${r ? icon(r[0]) : escapeHtml(e)}</span>`; }).join("") || "–";
-    document.getElementById("feedback-replies").innerHTML = door.feedback.replies?.map(r => {
-      if (r.type === "audio") return `<audio controls src="${escapeHtml(r.url)}" class="w-full h-8 mt-1"></audio>`;
-      return `<p class="text-sm text-slate-300">Unbekanntes Feedback</p>`;
+    document.getElementById("feedback-replies").innerHTML = door.feedback.replies?.map((r, i) => {
+      const del = `<button type="button" class="text-xs text-rose-400 hover:text-rose-300 underline" data-del-reply="${escapeHtml(r.id || String(i))}" data-day="${door.day}">Antwort löschen</button>`;
+      if (r.type === "audio") return `<div class="flex items-center gap-2 mt-1"><audio controls src="${escapeHtml(r.url)}" class="flex-1 h-8"></audio>${del}</div>`;
+      return `<p class="text-sm text-slate-300">${escapeHtml(r.text || "Antwort")} ${del}</p>`;
     }).join("") || "Keine Antworten.";
+    document.querySelectorAll("[data-del-reply]").forEach((b) => b.addEventListener("click", async () => {
+      if (!(await UI.confirm({ title: "Antwort löschen?", text: "Die Antwort wird dauerhaft entfernt.", ok: "Löschen", danger: true }))) return;
+      try {
+        const res = await api.deleteReply(calendar.id, b.dataset.day, b.dataset.delReply);
+        door.feedback.replies = res.replies;
+        b.closest("div, p")?.remove();
+        UI.toast("Antwort gelöscht.");
+      } catch (err) { UI.toast(err.message, { error: true }); }
+    }));
   } else {
     section.classList.add("hidden");
   }

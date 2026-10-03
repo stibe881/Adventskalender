@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const path = require("path");
 const { startApp } = require("./helpers/app");
 
+const SRC = path.join(__dirname, "..", "server", "src");
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const isoIn = (config, days) => new Intl.DateTimeFormat("en-CA", { timeZone: config.timezone }).format(new Date(Date.now() + days * 86400000));
 
@@ -45,14 +46,14 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   assert.equal(r.status, 200);
   assert.equal(r.d.recipient, null);
   assert.equal(r.d.wishlists.length, 4, "shared wish lists list everybody else");
-  r = await anon("PUT", `/api/wichteln/p/${P.Anna.token}/wishlist`, { wishlist: [{ id: "w1", url: "https://example.com/buch", title: "Ein Buch", price: "15 CHF" }, { title: "" }] });
+  r = await anon("PUT", `/api/wichteln/p/${P.Anna.token}/wishlist`, { acceptTerms: true, wishlist: [{ id: "w1", url: "https://example.com/buch", title: "Ein Buch", price: "15 CHF" }, { title: "" }] });
   assert.equal(r.d.me.wishlist.length, 1);
   r = await anon("PUT", `/api/wichteln/p/${P.Anna.token}/profile`, { hints: { allergies: "Nüsse" }, notify: { email: false } });
   assert.equal(r.d.me.hints.allergies, "Nüsse");
   assert.equal(r.d.me.notify.email, false);
-  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { channel: "recipient", text: "hi" });
+  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { acceptTerms: true, channel: "recipient", text: "hi" });
   assert.equal(r.status, 400, "chat closed before the draw");
-  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/thanks`, { text: "Danke!" });
+  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/thanks`, { acceptTerms: true, text: "Danke!" });
   assert.equal(r.status, 400, "thanks only after the draw");
 
   // Draw
@@ -74,7 +75,7 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   // Chat with unread counters and read receipts
   const annaTarget = stored.participants.find((p) => p.id === map[P.Anna.id]);
   const annaSanta = stored.participants.find((p) => p.assignedTo === P.Anna.id);
-  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { channel: "recipient", text: "Magst du Tee?" });
+  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { acceptTerms: true, channel: "recipient", text: "Magst du Tee?" });
   assert.equal(r.status, 201);
   assert.equal(r.d.recipient.messages.length, 1);
   assert.equal(r.d.recipient.messages[0].read, false, "not read yet by the recipient");
@@ -94,7 +95,7 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   r = await anon("POST", `/api/wichteln/p/${annaTarget.token}/push`, { expoToken: "nope" });
   assert.equal(r.status, 400);
   pushed.length = 0;
-  await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { channel: "recipient", text: "Und Kaffee?" });
+  await anon("POST", `/api/wichteln/p/${P.Anna.token}/messages`, { acceptTerms: true, channel: "recipient", text: "Und Kaffee?" });
   await wait(150);
   const toTarget = pushed.filter((x) => x.payload.url.includes(annaTarget.token));
   assert.equal(toTarget.length, 2);
@@ -114,7 +115,7 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   assert.equal(r.d.recipient.wishlist[0].title, "Ein Buch");
 
   // Thanks after the draw
-  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/thanks`, { text: "Danke für das tolle Geschenk!" });
+  r = await anon("POST", `/api/wichteln/p/${P.Anna.token}/thanks`, { acceptTerms: true, text: "Danke für das tolle Geschenk!" });
   assert.equal(r.status, 201);
   assert.equal(r.d.thanks.length, 1);
   assert.equal(r.d.thanks[0].from, "Anna");
@@ -156,13 +157,13 @@ test("Wichteln: organizer flow, draw, chat, reminders", async (t) => {
   // Join via link into the waiting room, then approve
   r = await anon("GET", `/api/wichteln/join/${db.groups[copyId].inviteToken}`);
   assert.equal(r.d.waitingRoom, true);
-  r = await anon("POST", `/api/wichteln/join/${db.groups[copyId].inviteToken}`, { name: "Eva", email: "eva@x.ch" });
+  r = await anon("POST", `/api/wichteln/join/${db.groups[copyId].inviteToken}`, { acceptTerms: true, name: "Eva", email: "eva@x.ch" });
   assert.equal(r.status, 201);
   assert.equal(r.d.pending, true);
   const eva = db.groups[copyId].participants.find((p) => p.name === "Eva");
   r = await call("POST", `/api/wichteln/groups/${copyId}/participants/${eva.id}/approve`);
   assert.ok(r.d.participants.find((p) => p.id === eva.id && !p.pending));
-  r = await anon("POST", `/api/wichteln/join/${db.groups[gid].inviteToken}`, { name: "Eva" });
+  r = await anon("POST", `/api/wichteln/join/${db.groups[gid].inviteToken}`, { acceptTerms: true, name: "Eva" });
   assert.equal(r.status, 409, "no joining after the draw");
 
   // Cron: reminder the day before, gift reminder a week before, auto delete
@@ -200,7 +201,7 @@ test("Wichteln: without PRO the wishlist, hints and chat stay locked until the r
   assert.equal(r.d[0].isPro, false, "list shows the PRO state");
 
   // Locked features answer 402 with a hint that PRO unlocks them.
-  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { wishlist: [{ id: "w1", title: "Buch" }] });
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { acceptTerms: true, wishlist: [{ id: "w1", title: "Buch" }] });
   assert.equal(r.status, 402);
   assert.equal(r.d.pro, true);
   assert.match(r.d.error, /PRO/);
@@ -214,20 +215,92 @@ test("Wichteln: without PRO the wishlist, hints and chat stay locked until the r
 
   r = await call("POST", `/api/wichteln/groups/${gid}/draw`);
   assert.equal(r.status, 200);
-  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { to: "recipient", text: "Hallo?" });
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { acceptTerms: true, to: "recipient", text: "Hallo?" });
   assert.equal(r.status, 402, "chat is PRO");
 
   // Upgrading the round (what the Stripe webhook does) unlocks everything for everybody.
   await db.updateWichtelGroup(gid, (g) => { g.isPro = true; return g; });
   r = await anon("GET", `/api/wichteln/p/${tok.Anna}`);
   assert.deepEqual(r.d.features, { wishlist: true, hints: true, chat: true });
-  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { wishlist: [{ id: "w1", title: "Buch" }] });
+  r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/wishlist`, { acceptTerms: true, wishlist: [{ id: "w1", title: "Buch" }] });
   assert.equal(r.status, 200);
   assert.equal(r.d.me.wishlist.length, 1);
   r = await anon("PUT", `/api/wichteln/p/${tok.Anna}/profile`, { hints: { hobbies: "Lesen" } });
   assert.equal(r.d.me.hints.hobbies, "Lesen");
-  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { to: "recipient", text: "Hallo?" });
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { acceptTerms: true, to: "recipient", text: "Hallo?" });
   assert.equal(r.status, 201);
   r = await call("GET", `/api/wichteln/groups/${gid}`);
   assert.equal(r.d.isPro, true);
+});
+
+test("Wichteln: Nutzungsbedingungen, Wortfilter, Melden, Blockieren und Löschen im Chat", async (t) => {
+  const h = await startApp();
+  h.app.use("/api/wichteln", require(path.join(SRC, "routes/wichteln")));
+  h.app.use("/api/admin", require(path.join(SRC, "routes/admin")));
+  const { call, anon, mails, db } = h;
+  t.after(h.stop);
+  let r = await call("POST", "/api/wichteln/groups", { title: "Team", organizerName: "Stefan", inviteMode: "email", organizerParticipates: true });
+  const gid = r.d.id;
+  for (const [name, email] of [["Anna", "anna@x.ch"], ["Ben", "ben@x.ch"]]) await call("POST", `/api/wichteln/groups/${gid}/participants`, { name, email });
+  // Joining requires accepting the terms; names go through the filter
+  const invite = db.groups[gid].inviteToken;
+  r = await anon("POST", `/api/wichteln/join/${invite}`, { name: "Eva" });
+  assert.equal(r.status, 400); assert.equal(r.d.terms, true);
+  r = await anon("POST", `/api/wichteln/join/${invite}`, { name: "Arschloch", acceptTerms: true });
+  assert.equal(r.status, 400); assert.equal(r.d.filtered, true);
+  r = await anon("POST", `/api/wichteln/join/${invite}`, { name: "Eva", acceptTerms: true });
+  assert.equal(r.status, 201);
+  await call("POST", `/api/wichteln/groups/${gid}/draw`);
+  const g = db.groups[gid];
+  const tok = Object.fromEntries(g.participants.map((p) => [p.name, p.token]));
+  const giverOf = (name) => g.participants.find((p) => p.assignedTo === g.participants.find((x) => x.name === name).id);
+  // Anna writes to her recipient: first without terms (428), then with, then something filtered
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { channel: "recipient", text: "Hallo!" });
+  assert.equal(r.status, 428); assert.equal(r.d.terms, true);
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { channel: "recipient", text: "Hallo!", acceptTerms: true });
+  assert.equal(r.status, 201); assert.equal(r.d.me.termsAccepted, true);
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { channel: "recipient", text: "Du bist ein Wichser" });
+  assert.equal(r.status, 400); assert.equal(r.d.filtered, true);
+  const annaTargetName = g.participants.find((p) => p.id === g.participants.find((x) => x.name === "Anna").assignedTo).name;
+  // The recipient sees the message, reports it: hidden at once, report stored + mailed
+  r = await anon("GET", `/api/wichteln/p/${tok[annaTargetName]}`);
+  assert.equal(r.d.santa.messages.length, 1);
+  const msgId = r.d.santa.messages[0].id;
+  mails.length = 0;
+  r = await anon("POST", `/api/wichteln/p/${tok[annaTargetName]}/messages/${msgId}/report`, { reason: "abuse", details: "unangenehm" });
+  assert.equal(r.status, 200);
+  assert.equal(r.d.santa.messages.length, 0, "hidden for the reporter immediately");
+  assert.equal(db.reports.length, 1); assert.equal(db.reports[0].kind, "wichteln-message"); assert.equal(db.reports[0].status, "open");
+  assert.ok(mails.some((m) => m.subject.includes("Moderation")), "moderation gets a mail");
+  r = await anon("GET", `/api/wichteln/p/${tok.Anna}`);
+  assert.equal(r.d.recipient.messages.length, 1, "still there for the sender");
+  // Block the santa: no more messages get through
+  r = await anon("PUT", `/api/wichteln/p/${tok[annaTargetName]}/block`, { channel: "santa", on: true });
+  assert.equal(r.d.santa.blocked, true);
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { channel: "recipient", text: "Noch da?" });
+  assert.equal(r.status, 403);
+  r = await anon("PUT", `/api/wichteln/p/${tok[annaTargetName]}/block`, { channel: "santa", on: false });
+  assert.equal(r.d.santa.blocked, false);
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/messages`, { channel: "recipient", text: "Noch da?" });
+  assert.equal(r.status, 201);
+  // Delete own message
+  const own = r.d.recipient.messages.find((m) => m.text === "Noch da?");
+  r = await anon("DELETE", `/api/wichteln/p/${tok.Anna}/messages/${own.id}`);
+  assert.equal(r.status, 200); assert.ok(!r.d.recipient.messages.some((m) => m.id === own.id));
+  assert.equal((await anon("DELETE", `/api/wichteln/p/${tok[annaTargetName]}/messages/${msgId}`)).status, 404, "only own messages");
+  // Moderator resolves the report by removing the content
+  r = await call("GET", "/api/admin/moderation/reports");
+  assert.equal(r.status, 403, "orga@example.ch is no moderator");
+  h.config.moderation.admins.push("orga@example.ch");
+  r = await call("GET", "/api/admin/moderation/reports");
+  assert.equal(r.status, 200); assert.equal(r.d.length, 1);
+  r = await call("POST", `/api/admin/moderation/reports/${db.reports[0].id}/resolve`, { action: "remove" });
+  assert.equal(r.status, 200); assert.equal(r.d.status, "resolved"); assert.equal(r.d.outcome, "Inhalt entfernt");
+  assert.ok(!db.groups[gid].messages.some((m) => m.id === msgId), "message gone for everybody");
+  assert.equal((await call("GET", "/api/admin/moderation/reports")).d.length, 0);
+  // Organizer can delete any photo/thanks/message too
+  r = await anon("POST", `/api/wichteln/p/${tok.Anna}/thanks`, { text: "Danke!", acceptTerms: true });
+  const thanksId = r.d.thanks[0].id;
+  r = await call("DELETE", `/api/wichteln/groups/${gid}/thanks/${thanksId}`);
+  assert.equal(r.status, 200); assert.equal(db.groups[gid].thanks.length, 0);
 });
