@@ -63,6 +63,8 @@
   function footer({ kind = "other", ref = {}, label = "Inhalte auf dieser Seite" } = {}) {
     return `<p class="mod-footer text-center text-xs text-slate-500 pb-6">
       <a href="${TERMS_URL}" target="_blank" rel="noopener" class="underline">Nutzungsbedingungen</a> ·
+      <a href="/datenschutz.html" target="_blank" rel="noopener" class="underline">Datenschutz</a> ·
+      <a href="/impressum.html" target="_blank" rel="noopener" class="underline">Impressum</a> ·
       <button type="button" class="underline" data-mod-report='${esc(JSON.stringify({ kind, ref, label }))}'>Inhalt melden</button> ·
       Kontakt: <a href="mailto:${CONTACT}" class="underline">${CONTACT}</a>
     </p>`;
