@@ -128,20 +128,35 @@ router.put("/p/:token/profile", async (req, res) => {
     if (!found0) return;
     if (!proOrDeny(await isProItem(found0.group), res, "Hinweise für den Wichtel")) return;
   }
-  await mutateAndRespond(req, res, () => (g, p) => {
+  let hintsChanged = false;
+  const done = await mutateAndRespond(req, res, () => (g, p) => {
     if (b.name !== undefined && cleanText(b.name, cfg.nameMax)) p.name = cleanText(b.name, cfg.nameMax);
     if (b.email !== undefined) p.email = b.email ? String(b.email).trim().toLowerCase() : "";
     if (b.hints && typeof b.hints === "object") {
-      p.hints = {
+      const hints = {
         allergies: cleanText(b.hints.allergies, cfg.hintMax),
         favorites: cleanText(b.hints.favorites, cfg.hintMax),
         hobbies: cleanText(b.hints.hobbies, cfg.hintMax),
         notes: cleanText(b.hints.notes, cfg.notesMax),
       };
+      hintsChanged = JSON.stringify(hints) !== JSON.stringify(p.hints || {}) && Object.values(hints).some(Boolean);
+      p.hints = hints;
     }
     if (b.notify && typeof b.notify === "object") p.notify = { email: b.notify.email !== false, push: b.notify.push !== false };
   });
+  if (!done || !hintsChanged) return;
+  // New hints for the secret santa: tell them, at most once per hour.
+  await tellSanta(done, "hintsNotifiedAt", (santa, me) => notify("hintsChanged", { group: done.group, p: santa, by: me }));
 });
+
+// Notifies the giver of `me` about a change, throttled per participant and kind.
+async function tellSanta({ group, me }, stampKey, send) {
+  const santa = giverOf(group, me.id);
+  if (!santa) return;
+  if (me[stampKey] && Date.now() - new Date(me[stampKey]).getTime() <= cfg.wishlistNotifyThrottleMs) return;
+  await db.updateWichtelGroup(group.id, (g) => { findParticipant(g, me.id)[stampKey] = new Date().toISOString(); return g; });
+  send(santa, me).catch(() => {});
+}
 
 router.put("/p/:token/wishlist", async (req, res) => {
   const found0 = await loadByParticipantToken(req, res);
@@ -158,19 +173,18 @@ router.put("/p/:token/wishlist", async (req, res) => {
   })).filter((w) => w.title || w.url);
   if (!assertClean(res, ...wishlist.flatMap((w) => [w.title, w.note]))) return;
   if (!termsOk(found0, req, res)) return;
+  const before = (found0.me.wishlist || []).map((w) => w.id);
   const done = await mutateAndRespond(req, res, () => (g, p) => {
     acceptTermsNow(p, req);
     p.wishlist = wishlist;
     p.wishlistUpdatedAt = new Date().toISOString();
   });
   if (!done) return;
-  // Tell the secret santa, at most once per hour.
-  const { group, me } = done;
-  const santa = giverOf(group, me.id);
-  if (santa && (!me.wishlistNotifiedAt || Date.now() - new Date(me.wishlistNotifiedAt).getTime() > cfg.wishlistNotifyThrottleMs)) {
-    await db.updateWichtelGroup(group.id, (g) => { findParticipant(g, me.id).wishlistNotifiedAt = new Date().toISOString(); return g; });
-    notify("wishlistChanged", { group, p: santa, by: me }).catch(() => {});
-  }
+  const changed = JSON.stringify(found0.me.wishlist || []) !== JSON.stringify(wishlist);
+  if (!changed) return;
+  // Tell the secret santa what is new, at most once per hour.
+  const added = wishlist.filter((w) => !before.includes(w.id)).map((w) => w.title || w.url);
+  await tellSanta(done, "wishlistNotifiedAt", (santa, me) => notify("wishlistChanged", { group: done.group, p: santa, by: me, added }));
 });
 
 router.put("/p/:token/gift-status", async (req, res) => {

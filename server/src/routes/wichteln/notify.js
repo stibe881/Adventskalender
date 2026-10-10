@@ -48,11 +48,21 @@ const EVENTS = {
       anchor: "",
     };
   },
-  wishlistChanged: ({ p, by }) => ({
-    subject: "Wunschzettel aktualisiert",
-    text: `Hallo ${p.name}!\n\n${by.name} hat den Wunschzettel geändert. Schau mal rein.`,
-    html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat den Wunschzettel geändert. Schau mal rein.</p>`,
-    push: `${by.name} hat den Wunschzettel geändert.`,
+  wishlistChanged: ({ p, by, added = [] }) => {
+    const what = added.length === 1 ? `einen neuen Wunsch eingetragen: „${added[0]}“` : added.length > 1 ? `${added.length} neue Wünsche eingetragen: ${added.map((a) => `„${a}“`).join(", ")}` : "den Wunschzettel geändert";
+    return {
+      subject: added.length ? "Neuer Wunsch auf dem Wunschzettel" : "Wunschzettel aktualisiert",
+      text: `Hallo ${p.name}!\n\n${by.name} hat ${what}. Schau mal rein.`,
+      html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat ${esc(what)}. Schau mal rein.</p>`,
+      push: `${by.name} hat ${what.length > 90 ? `${added.length} neue Wünsche eingetragen` : what}.`,
+      anchor: "#wichtelkind",
+    };
+  },
+  hintsChanged: ({ p, by }) => ({
+    subject: "Neue Hinweise für dich",
+    text: `Hallo ${p.name}!\n\n${by.name} hat die Hinweise für den Wichtel ausgefüllt (Allergien, Lieblingssachen, Hobbys oder Notizen). Schau mal rein.`,
+    html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat die Hinweise für den Wichtel ausgefüllt: Allergien, Lieblingssachen, Hobbys oder Notizen. Schau mal rein.</p>`,
+    push: `${by.name} hat Hinweise für dich hinterlegt.`,
     anchor: "#wichtelkind",
   }),
   message: ({ p, who, text }) => ({

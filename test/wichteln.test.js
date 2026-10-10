@@ -305,6 +305,47 @@ test("Wichteln: Nutzungsbedingungen, Wortfilter, Melden, Blockieren und Löschen
   assert.equal(r.status, 200); assert.equal(db.groups[gid].thanks.length, 0);
 });
 
+test("Wichteln: neue Wünsche und Hinweise benachrichtigen den Wichtel per Push und E-Mail", async (t) => {
+  const h = await startApp();
+  const { call, anon, mails, pushed, db } = h;
+  t.after(h.stop);
+  db.user.isPro = true;
+  let r = await call("POST", "/api/wichteln/groups", { title: "Team", organizerName: "Stefan", inviteMode: "email", organizerParticipates: true });
+  const gid = r.d.id;
+  for (const [name, email] of [["Anna", "anna@x.ch"], ["Ben", "ben@x.ch"]]) await call("POST", `/api/wichteln/groups/${gid}/participants`, { name, email });
+  await call("POST", `/api/wichteln/groups/${gid}/draw`);
+  const g = db.groups[gid];
+  const anna = g.participants.find((p) => p.name === "Anna");
+  const santa = g.participants.find((p) => p.assignedTo === anna.id);
+  santa.subscriptions = [{ endpoint: "https://push.example/santa", keys: {} }];
+  santa.notify = { email: true, push: true };
+  santa.email = "santa@x.ch";
+  await wait(150);
+  mails.length = 0; pushed.length = 0;
+  r = await anon("PUT", `/api/wichteln/p/${anna.token}/wishlist`, { acceptTerms: true, wishlist: [{ title: "Ein Buch" }, { title: "Socken" }] });
+  assert.equal(r.status, 200);
+  await wait(150);
+  assert.equal(mails.length, 1, "the santa gets one mail");
+  assert.equal(mails[0].to, "santa@x.ch");
+  assert.ok(mails[0].text.includes("Ein Buch") && mails[0].text.includes("Socken"), mails[0].text);
+  assert.equal(pushed.length, 1);
+  assert.ok(pushed[0].payload.body.includes("Anna"));
+  // Hints: a notification of its own
+  mails.length = 0; pushed.length = 0;
+  r = await anon("PUT", `/api/wichteln/p/${anna.token}/profile`, { hints: { allergies: "Nüsse", hobbies: "Wandern" } });
+  assert.equal(r.status, 200);
+  await wait(150);
+  assert.equal(mails.length, 1);
+  assert.ok(mails[0].subject.includes("Hinweise"), mails[0].subject);
+  assert.equal(pushed.length, 1);
+  // Unchanged hints and a second change within the hour stay quiet
+  mails.length = 0; pushed.length = 0;
+  await anon("PUT", `/api/wichteln/p/${anna.token}/profile`, { hints: { allergies: "Nüsse", hobbies: "Wandern" } });
+  await anon("PUT", `/api/wichteln/p/${anna.token}/profile`, { hints: { allergies: "Nüsse", hobbies: "Klettern" } });
+  await wait(150);
+  assert.equal(mails.length, 0, "throttled");
+});
+
 test("Wichteln: ein neues Foto an der Foto-Wand benachrichtigt alle anderen per Push und E-Mail", async (t) => {
   const h = await startApp();
   const { call, mails, pushed, db, base } = h;
