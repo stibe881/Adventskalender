@@ -342,7 +342,14 @@ router.post("/p/:token/photos", photoUpload.single("photo"), async (req, res) =>
       g.photos.push({ ...photo, by: p.id });
     };
   }, 201);
-  if (!done) removePhotoFiles({ photos: [photo] });
+  if (!done) return removePhotoFiles({ photos: [photo] });
+  // Everybody else in the round hears about the new photo (push and e-mail).
+  const { group: g, me } = done;
+  const count = (g.photos || []).length;
+  for (const other of activeParticipants(g)) {
+    if (other.id === me.id) continue;
+    notify("photo", { group: g, p: other, by: me, caption: photo.caption, count }).catch(() => {});
+  }
 });
 
 router.delete("/p/:token/photos/:photoId", async (req, res) => {

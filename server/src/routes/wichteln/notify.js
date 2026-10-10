@@ -1,7 +1,9 @@
 /* Every notification of the Wichteln module in one place: what is said by
  * e-mail (subject, text, html) and by push (title, body) for each event. */
 const db = require("../../db");
-const { sendMail, layout, escapeHtml } = require("../../services/mail");
+// Namespace import on purpose: the mail transport may be swapped at runtime (tests).
+const mail = require("../../services/mail");
+const { layout, escapeHtml } = mail;
 const { participantLink, eventLine, findParticipant } = require("./shared");
 
 const esc = escapeHtml;
@@ -81,6 +83,13 @@ const EVENTS = {
       anchor: "#wichtelkind",
     };
   },
+  photo: ({ p, by, caption, count }) => ({
+    subject: "Neues Foto an der Foto-Wand",
+    text: `Hallo ${p.name}!\n\n${by.name} hat ein Foto an die Foto-Wand gehängt${caption ? `:\n„${caption}“` : "."}\n${count > 1 ? `Inzwischen hängen dort ${count} Fotos.` : ""}`,
+    html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat ein Foto an die Foto-Wand gehängt${caption ? `: <em>„${esc(caption)}“</em>` : "."}</p>${count > 1 ? `<p style="color:#94a3b8">Inzwischen hängen dort ${count} Fotos.</p>` : ""}`,
+    push: `${by.name} hat ein Foto hochgeladen${caption ? `: ${caption.slice(0, 80)}` : ""}`,
+    anchor: "#rueckblick",
+  }),
   thanks: ({ p, by, text }) => ({
     subject: "Ein Dankeschön für die Runde",
     text: `Hallo ${p.name}!\n\n${by.name} hat sich bedankt:\n„${text}“`,
@@ -124,7 +133,7 @@ async function notify(event, ctx) {
   if (!p.email || p.notify?.email === false) return false;
   const text = `${n.text}\n\nDein persönlicher Wichtel-Bereich (dein Link):\n${link}`;
   const html = layout(group.title, `${n.html}<p style="margin-top:20px"><a href="${link}" style="background:#059669;color:#fff;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:600">Zum Wichtel-Bereich</a></p><p style="font-size:12px;color:#94a3b8">Dein persönlicher Link: <a href="${link}" style="color:#6ee7b7">${link}</a></p>`);
-  return sendMail({ to: p.email, subject: `[${group.title}] ${n.subject}`, text, html });
+  return mail.sendMail({ to: p.email, subject: `[${group.title}] ${n.subject}`, text, html });
 }
 
 module.exports = { notify, EVENTS };

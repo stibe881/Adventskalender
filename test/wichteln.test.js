@@ -304,3 +304,40 @@ test("Wichteln: Nutzungsbedingungen, Wortfilter, Melden, Blockieren und Löschen
   r = await call("DELETE", `/api/wichteln/groups/${gid}/thanks/${thanksId}`);
   assert.equal(r.status, 200); assert.equal(db.groups[gid].thanks.length, 0);
 });
+
+test("Wichteln: ein neues Foto an der Foto-Wand benachrichtigt alle anderen per Push und E-Mail", async (t) => {
+  const h = await startApp();
+  const { call, mails, pushed, db, base } = h;
+  t.after(h.stop);
+  let r = await call("POST", "/api/wichteln/groups", { title: "Team", organizerName: "Stefan", inviteMode: "email", organizerParticipates: true });
+  const gid = r.d.id;
+  for (const [name, email] of [["Anna", "anna@x.ch"], ["Ben", "ben@x.ch"]]) await call("POST", `/api/wichteln/groups/${gid}/participants`, { name, email });
+  await call("POST", `/api/wichteln/groups/${gid}/draw`);
+  const g = db.groups[gid];
+  const anna = g.participants.find((p) => p.name === "Anna");
+  const ben = g.participants.find((p) => p.name === "Ben");
+  ben.subscriptions = [{ endpoint: "https://push.example/ben", keys: {} }];
+  ben.notify = { email: true, push: true };
+  anna.termsAcceptedAt = new Date().toISOString();
+  await wait(150); // let fire-and-forget mails of the setup (and of earlier tests) land first
+  mails.length = 0; pushed.length = 0;
+  // 1x1 PNG
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+  const fd = new FormData();
+  fd.append("photo", new Blob([png], { type: "image/png" }), "foto.png");
+  fd.append("caption", "Prost!");
+  const res = await fetch(`${base}/api/wichteln/p/${anna.token}/photos`, { method: "POST", body: fd });
+  assert.equal(res.status, 201);
+  const view = await res.json();
+  assert.equal(view.photos.length, 1);
+  const toMail = mails.map((m) => m.to).sort();
+  assert.deepEqual(toMail, ["ben@x.ch", "orga@example.ch"], "everybody but the uploader gets a mail");
+  assert.ok(mails[0].subject.includes("Foto"), mails[0].subject);
+  assert.ok(mails[0].text.includes("Anna") && mails[0].text.includes("Prost!"));
+  assert.equal(pushed.length, 1, "Ben has a push subscription");
+  assert.ok(pushed[0].payload.body.includes("Anna"));
+  // Clean up the uploaded file
+  const fs = require("fs");
+  const config = require(path.join(SRC, "config"));
+  for (const ph of db.groups[gid].photos) fs.rmSync(path.join(config.paths.uploadsDir, path.basename(ph.url)), { force: true });
+});
