@@ -748,11 +748,12 @@ function recapCard() {
       <input name="text" maxlength="400" required class="w-input" placeholder="Danke an die Runde oder an deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
-    <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : ""}">
-        <span class="w-thanks__avatar" style="background:${avatarColor(t.mine ? data.me.name : t.from)}">${esc(initials(t.mine ? data.me.name : t.from))}</span>
-        <div class="min-w-0 flex-1">
-          <div class="w-thanks__head"><b>${t.mine ? "Du" : esc(t.from)}</b><span>${timeAgo(t.at)}</span>${t.mine ? `<button type="button" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : `<button type="button" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</div>
+    <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : "is-theirs"}">
+        ${t.mine ? "" : `<span class="w-thanks__avatar" style="background:${avatarColor(t.from)}">${esc(initials(t.from))}</span>`}
+        <div class="w-thanks__bubble">
+          ${t.mine ? "" : `<div class="w-thanks__name">${esc(t.from)}</div>`}
           <div class="w-thanks__text">${esc(t.text)}</div>
+          <div class="w-thanks__meta"><span>${timeAgo(t.at)}</span>${t.mine ? `<button type="button" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : `<button type="button" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</div>
         </div></div>`).join("") : ""}</div>
 
     <h3 class="font-semibold text-white mt-5 mb-2 flex items-center gap-2 flex-wrap"><i data-icon="image"></i> Foto-Wand <span class="w-pill-all"><i data-icon="users"></i> alle sehen das</span></h3>

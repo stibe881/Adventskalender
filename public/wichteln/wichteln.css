@@ -141,14 +141,17 @@ html.is-native-app .w-secnav { top: calc(env(safe-area-inset-top) + 8px); }
 .w-public-note i { flex-shrink: 0; margin-top: 2px; }
 .w-public-note b { color: #e0f2fe; }
 .w-thanks-list { display: flex; flex-direction: column; gap: 8px; }
-.w-thanks { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
-.w-thanks.is-mine { background: rgba(16,185,129,0.1); border-color: rgba(52,211,153,0.35); }
-.w-thanks__avatar { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: #fff; flex-shrink: 0; }
-.w-thanks__head { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; color: #94a3b8; }
-.w-thanks__head b { color: #fff; font-size: 0.8rem; }
-.w-thanks.is-mine .w-thanks__head b { color: #6ee7b7; }
-.w-thanks__head button { margin-left: auto; background: none; border: 0; padding: 0; color: #94a3b8; font-size: 0.7rem; text-decoration: underline; cursor: pointer; }
-.w-thanks__text { font-size: 0.9rem; line-height: 1.4; margin-top: 2px; white-space: pre-wrap; }
+.w-thanks { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+.w-thanks.is-theirs { align-self: flex-start; }
+.w-thanks.is-mine { align-self: flex-end; }
+.w-thanks__avatar { width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+.w-thanks__bubble { padding: 8px 12px; border-radius: 14px; min-width: 0; }
+.w-thanks.is-theirs .w-thanks__bubble { background: rgba(255,255,255,0.09); border-bottom-left-radius: 4px; }
+.w-thanks.is-mine .w-thanks__bubble { background: #065f46; color: #ecfdf5; border-bottom-right-radius: 4px; }
+.w-thanks__name { font-size: 0.72rem; font-weight: 600; color: #7dd3fc; margin-bottom: 2px; }
+.w-thanks__text { font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.w-thanks__meta { display: flex; justify-content: flex-end; gap: 10px; font-size: 0.68rem; opacity: 0.75; margin-top: 3px; }
+.w-thanks__meta button { background: none; border: 0; padding: 0; color: inherit; font-size: inherit; text-decoration: underline; cursor: pointer; }
 
 /* Collapsible lists */
 .w-details summary { cursor: pointer; font-weight: 600; color: #fff; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.05); }
