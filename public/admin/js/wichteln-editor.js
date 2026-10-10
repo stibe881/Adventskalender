@@ -100,35 +100,72 @@ function render() {
 }
 
 // ── Draw + checklist ────────────────────────────────────────────────────────
+const AVATAR_COLORS = ["#059669", "#2563eb", "#d946ef", "#f59e0b", "#ef4444", "#0ea5e9", "#8b5cf6", "#14b8a6"];
+const avatarColor = (name) => { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; };
+const initials = (name) => String(name).trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
+const personChip = (p) => `<span class="draw-person"><span class="draw-person__avatar" style="background:${avatarColor(p.name)}">${escapeHtml(initials(p.name))}</span>${escapeHtml(p.name)}</span>`;
+const drawDate = (iso) => new Date(iso).toLocaleString("de-CH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+// The draw is one or more closed rings: A gives to B, B to C, C back to A.
+function drawCycles(active) {
+  const byId = Object.fromEntries(active.map((p) => [p.id, p]));
+  const seen = new Set();
+  const cycles = [];
+  for (const start of active) {
+    if (seen.has(start.id) || !start.assignedTo) continue;
+    const ring = [];
+    let cur = start;
+    while (cur && !seen.has(cur.id)) { seen.add(cur.id); ring.push(cur); cur = byId[cur.assignedTo]; }
+    cycles.push(ring);
+  }
+  return cycles;
+}
+
 function renderDraw(active) {
   const hint = document.getElementById("draw-hint");
+  const status = document.getElementById("draw-status");
   const drawBtn = document.getElementById("draw-btn");
   const revealBtn = document.getElementById("reveal-btn");
+  const unrevealBtn = document.getElementById("unreveal-btn");
   const table = document.getElementById("reveal-table");
   const box = document.getElementById("checklist");
   const min = group.minParticipants || 3;
+  const revealed = group.status === "revealed";
   if (group.status === "draft") {
     hint.textContent = `Der Generator zieht kreuzungsfrei und schickt jedem sein Los${group.inviteMode === "names" ? " (ohne E-Mail: über die persönlichen Links)" : ""}. Vorher kurz die Checkliste:`;
-    drawBtn.textContent = "Jetzt auslosen";
+    hint.classList.remove("hidden");
+    status.classList.add("hidden");
+    drawBtn.innerHTML = `${icon("dices")} Jetzt auslosen`;
+    drawBtn.className = "btn btn-primary";
     drawBtn.disabled = active.length < min;
     revealBtn.classList.add("hidden");
-    document.getElementById("unreveal-btn").classList.add("hidden");
+    unrevealBtn.classList.add("hidden");
     table.classList.add("hidden");
     box.classList.remove("hidden");
     renderChecklist();
-  } else {
-    hint.textContent = `Ausgelost am ${new Date(group.drawnAt).toLocaleString("de-DE")}. ${group.status === "revealed" ? "Enthüllt – die Auflösung siehst nur du als Organisator." : "Wer wen gezogen hat, bleibt bis zur Enthüllung geheim – auch für dich."}`;
-    drawBtn.textContent = "Neu auslosen";
-    drawBtn.disabled = false;
-    revealBtn.classList.toggle("hidden", group.status === "revealed");
-    document.getElementById("unreveal-btn").classList.toggle("hidden", group.status !== "revealed");
-    box.classList.add("hidden");
-    if (group.status === "revealed") {
-      table.classList.remove("hidden");
-      table.innerHTML = `<h3 class="text-sm font-semibold text-amber-200 mb-2">Auflösung</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">${active.map((p) => `<div class="bg-black/20 rounded-lg px-3 py-1.5">${escapeHtml(p.name)} <span class="text-slate-500">→</span> <b>${escapeHtml(p.assignedToName || "?")}</b></div>`).join("")}</div>`;
-    } else {
-      table.classList.add("hidden");
-    }
+    return;
+  }
+  hint.classList.add("hidden");
+  box.classList.add("hidden");
+  status.classList.remove("hidden");
+  status.innerHTML = `<div class="draw-state ${revealed ? "draw-state--revealed" : "draw-state--secret"}">
+    <div class="draw-state__icon">${icon(revealed ? "eye" : "lock")}</div>
+    <div class="min-w-0">
+      <div class="draw-state__title">Ausgelost <span class="draw-state__pill">${revealed ? "Aufgelöst" : "Geheim"}</span></div>
+      <div class="draw-state__meta">${escapeHtml(drawDate(group.drawnAt))} · ${active.length} Lose verteilt${revealed && group.revealedAt ? ` · aufgelöst ${escapeHtml(drawDate(group.revealedAt))}` : ""}</div>
+      <p class="draw-state__text">${revealed ? "Die Auflösung siehst nur du als Organisator. Die Teilnehmenden sehen weiterhin nur ihr eigenes Los." : "Wer wen gezogen hat, bleibt geheim – auch für dich. Du kannst es jederzeit enthüllen und wieder verbergen."}</p>
+    </div>
+  </div>`;
+  drawBtn.innerHTML = `${icon("refresh-cw")} Neu auslosen`;
+  drawBtn.className = "btn btn-ghost is-danger";
+  drawBtn.disabled = false;
+  revealBtn.classList.toggle("hidden", revealed);
+  unrevealBtn.classList.toggle("hidden", !revealed);
+  table.classList.toggle("hidden", !revealed);
+  if (revealed) {
+    const cycles = drawCycles(active);
+    table.innerHTML = `<div class="mt-4">${cycles.map((ring) => `<div class="draw-chain">${ring.map((p) => `${personChip(p)}<span class="draw-arrow">${icon("arrow-right")}</span>`).join("")}<span class="draw-arrow is-loop" title="und wieder zurück zu ${escapeHtml(ring[0].name)}">${icon("refresh-cw")}</span></div>`).join("")}
+      <p class="draw-legend">Lesen von links nach rechts: jede Person beschenkt die nächste, die letzte wieder die erste.${cycles.length > 1 ? ` ${cycles.length} getrennte Kreise.` : ""}</p></div>`;
   }
 }
 
