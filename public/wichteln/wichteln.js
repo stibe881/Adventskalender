@@ -699,12 +699,12 @@ function chatSection() {
   const s = data.santa;
   return `${r ? `<div class="w-card w-card--gift" id="chat-with-recipient">
     <h2 class="w-title text-xl flex items-center gap-2"><i data-icon="gift"></i> Mit ${esc(r.name)} ${unreadRecipient() ? `<span class="ui-badge">${unreadRecipient()}</span>` : ""}</h2>
-    <p class="text-xs text-slate-400 mt-1 mb-2">Frag ${esc(r.name)} Löcher in den Bauch – ${esc(r.name)} sieht nur „Dein geheimer Wichtel“.</p>
+    <p class="text-xs text-slate-400 mt-1 mb-2"><i data-icon="lock"></i> Privat – nur ihr beide seht diesen Chat. Frag ${esc(r.name)} Löcher in den Bauch, ${esc(r.name)} sieht nur „Dein geheimer Wichtel“.</p>
     ${chatBlock(r.messages, "recipient", `Nachricht an ${r.name} …`)}
   </div>` : ""}
   ${s ? `<div class="w-card w-card--santa" id="chat-with-santa">
     <h2 class="w-title text-xl flex items-center gap-2"><i data-icon="drama"></i> Mit deinem geheimen Wichtel ${unreadSanta() ? `<span class="ui-badge">${unreadSanta()}</span>` : ""}</h2>
-    <p class="text-xs text-slate-400 mt-1 mb-2">Dein Wichtel fragt, du antwortest – wer es ist, bleibt geheim.</p>
+    <p class="text-xs text-slate-400 mt-1 mb-2"><i data-icon="lock"></i> Privat – nur ihr beide seht diesen Chat. Dein Wichtel fragt, du antwortest, wer es ist, bleibt geheim.</p>
     ${chatBlock(s.messages, "santa", "Antwort an deinen geheimen Wichtel …")}
   </div>` : ""}`;
 }
@@ -738,15 +738,20 @@ function recapCard() {
   const thanks = data.thanks || [];
   const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent) || window.__NATIVE_APP;
   return `<div class="w-card">
-    <h2 class="w-title text-xl"><i data-icon="camera"></i> Rückblick</h2>
-    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."}</p>
+    <h2 class="w-title text-xl"><i data-icon="camera"></i> Rückblick <span class="w-pill-all"><i data-icon="users"></i> für die ganze Runde</span></h2>
+    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."} Alles hier sehen alle Teilnehmenden.</p>
 
     <h3 class="font-semibold text-white mt-4 mb-2"><i data-icon="heart"></i> Danke sagen</h3>
     ${drawn ? `<form id="thanks-form" class="flex gap-2">
       <input name="text" maxlength="400" required class="w-input" placeholder="Ein paar Worte an die Runde oder deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
-    <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : "is-theirs"}">${esc(t.text)}<small>${t.mine ? "Du" : esc(t.from)} · ${timeAgo(t.at)}${t.mine ? ` · <button type="button" class="underline" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : ` · <button type="button" class="underline" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</small></div>`).join("") : ""}</div>
+    <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : ""}">
+        <span class="w-thanks__avatar" style="background:${avatarColor(t.mine ? data.me.name : t.from)}">${esc(initials(t.mine ? data.me.name : t.from))}</span>
+        <div class="min-w-0 flex-1">
+          <div class="w-thanks__head"><b>${t.mine ? "Du" : esc(t.from)}</b><span>${timeAgo(t.at)}</span>${t.mine ? `<button type="button" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : `<button type="button" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</div>
+          <div class="w-thanks__text">${esc(t.text)}</div>
+        </div></div>`).join("") : ""}</div>
 
     <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="image"></i> Foto-Wand</h3>
     <form id="photo-form" class="flex flex-wrap gap-2 items-center">
