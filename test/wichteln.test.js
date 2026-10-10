@@ -357,12 +357,14 @@ test("Wichteln: Runden, in denen ich mitwichtle, per E-Mail-Adresse gefunden (ei
     { id: "p1", name: "Stefan G.", email: "orga@example.ch", token: "tok_me_other", assignedTo: "p2", lastRead: {} },
     { id: "p2", name: "Petra", email: "petra@x.ch", token: "tok_petra", assignedTo: "p1", isOrganizer: true, lastRead: {} },
   ], messages: [{ id: "m1", channel: "p2", from: "p2", text: "Hallo!", at: new Date().toISOString() }], exclusions: [], photos: [], thanks: [] };
+  // Older own round: organizer entry without an e-mail address still counts
+  db.groups.legacy = { id: "legacy", ownerId: db.groups[own].ownerId, title: "Alte Runde", organizerName: "Stefan", organizerParticipates: true, status: "draft", inviteToken: "inv_l", participants: [{ id: "l1", name: "Stefan", email: "", token: "tok_legacy", isOrganizer: true }], exclusions: [], messages: [], photos: [], thanks: [] };
   // Pending participant must not count
   db.groups.pending = { id: "pending", ownerId: "u3", title: "Warteraum", organizerName: "X", status: "draft", inviteToken: "inv_p", participants: [{ id: "q1", name: "S", email: "orga@example.ch", token: "tok_pending", pending: true }], exclusions: [], messages: [], photos: [], thanks: [] };
   r = await call("GET", "/api/wichteln/participations");
   assert.equal(r.status, 200);
   const titles = r.d.map((x) => x.title).sort();
-  assert.deepEqual(titles, ["Eigene Runde", "Firma Meier"]);
+  assert.deepEqual(titles, ["Alte Runde", "Eigene Runde", "Firma Meier"]);
   const mine = r.d.find((x) => x.title === "Eigene Runde");
   assert.equal(mine.isOwn, true); assert.ok(mine.link.includes("/w/"));
   const other = r.d.find((x) => x.title === "Firma Meier");

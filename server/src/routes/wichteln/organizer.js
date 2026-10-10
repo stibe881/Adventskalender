@@ -23,7 +23,9 @@ router.get("/participations", async (req, res) => {
   const { participantLink, participantView } = require("./shared");
   const out = [];
   for (const g of await db.getAllWichtelGroups()) {
-    const me = (g.participants || []).find((p) => (p.email || "").toLowerCase() === email && !p.pending);
+    const mine = g.ownerId === req.user.id || (g.ownerEmail && String(g.ownerEmail).toLowerCase() === email);
+    // Invited with my address, or my own round where I play along.
+    const me = (g.participants || []).find((p) => !p.pending && ((email && (p.email || "").toLowerCase() === email) || (mine && p.isOrganizer)));
     if (!me) continue;
     const v = participantView(g, me, await isProItem(g));
     out.push({

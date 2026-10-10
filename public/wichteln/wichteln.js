@@ -739,10 +739,11 @@ function recapCard() {
   const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent) || window.__NATIVE_APP;
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="camera"></i> Rückblick <span class="w-pill-all"><i data-icon="users"></i> für die ganze Runde</span></h2>
-    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."} Alles hier sehen alle Teilnehmenden.</p>
+    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."}</p>
+    <div class="w-public-note"><i data-icon="users"></i> <span><b>Für alle sichtbar:</b> Danke sagen und die Foto-Wand sehen alle ${data.participants ? data.participants.length : ""} Teilnehmenden dieser Runde${feat().chat ? ` – privat mit deinem Wichtel schreibst du im <a href="#chat" class="underline">Chat</a>` : ""}.</span></div>
 
-    <h3 class="font-semibold text-white mt-4 mb-1"><i data-icon="heart"></i> Dankeschön an die Runde</h3>
-    <p class="text-xs text-slate-400 mb-2">Ein öffentlicher Eintrag, den alle in der Runde lesen – kein privater Chat.${feat().chat ? ` Mit deinem Wichtel schreibst du privat im <a href="#chat" class="underline">Chat</a>.` : ""}</p>
+    <h3 class="font-semibold text-white mt-4 mb-1 flex items-center gap-2 flex-wrap"><i data-icon="heart"></i> Danke sagen <span class="w-pill-all"><i data-icon="users"></i> alle sehen das</span></h3>
+    <p class="text-xs text-slate-400 mb-2">Ein Eintrag für die ganze Runde – wie ein Gästebuch.</p>
     ${drawn ? `<form id="thanks-form" class="flex gap-2">
       <input name="text" maxlength="400" required class="w-input" placeholder="Danke an die Runde oder an deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
@@ -754,13 +755,13 @@ function recapCard() {
           <div class="w-thanks__text">${esc(t.text)}</div>
         </div></div>`).join("") : ""}</div>
 
-    <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="image"></i> Foto-Wand</h3>
+    <h3 class="font-semibold text-white mt-5 mb-2 flex items-center gap-2 flex-wrap"><i data-icon="image"></i> Foto-Wand <span class="w-pill-all"><i data-icon="users"></i> alle sehen das</span></h3>
     <form id="photo-form" class="flex flex-wrap gap-2 items-center">
       <input name="caption" maxlength="140" class="w-input" style="flex:1;min-width:160px" placeholder="Bildunterschrift (optional)">
       ${mobile ? `<label class="w-btn w-btn--ghost"><i data-icon="camera"></i> Aufnehmen<input type="file" name="photo-camera" accept="image/*" capture="environment" class="sr-only"></label>` : ""}
       <label class="w-btn w-btn--primary"><i data-icon="image"></i> ${mobile ? "Galerie" : "Foto hochladen"}<input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp" class="sr-only"></label>
     </form>
-    <p class="text-xs text-slate-500 mt-1">Wird direkt nach der Auswahl hochgeladen. Nur für die Runde sichtbar, wird mit der Runde gelöscht.</p>
+    <p class="text-xs text-slate-500 mt-1">Wird direkt nach der Auswahl hochgeladen. Alle in der Runde sehen das Foto, es wird mit der Runde gelöscht.</p>
     <div class="w-photos mt-4">${data.photos.length ? data.photos.map((ph) => `<figure class="w-photo"><a href="${esc(ph.url)}" target="_blank"><img src="${esc(ph.url)}" alt="${esc(ph.caption || "")}" loading="lazy"></a>${ph.caption || ph.by ? `<figcaption>${esc(ph.caption || "")}${ph.by ? ` <span class="opacity-70">– ${esc(ph.by)}</span>` : ""}</figcaption>` : ""}${ph.mine ? `<button data-act="remove-photo" data-id="${esc(ph.id)}" title="Löschen"><i data-icon="x"></i></button>` : `<button data-act="report-photo" data-id="${esc(ph.id)}" title="Melden"><i data-icon="triangle-alert"></i></button>`}</figure>`).join("") : `<div class="col-span-full">${emptyState("image", "Noch keine Fotos – nach der Bescherung ist hier Platz.")}</div>`}</div>
   </div>`;
 }
