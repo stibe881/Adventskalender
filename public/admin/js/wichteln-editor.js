@@ -465,7 +465,7 @@ function renderRecap() {
   const thanks = document.getElementById("thanks-list");
   thanks.innerHTML = (group.thanks || []).length
     ? group.thanks.map((t) => `<div class="bg-black/20 border-l-2 border-rose-400 rounded-r-lg px-3 py-2 text-sm">${escapeHtml(t.text)}<div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(t.from)} · ${new Date(t.at).toLocaleDateString("de-DE")}</div></div>`).join("")
-    : `<p class="text-sm text-slate-500">Noch kein Dankeschön.</p>`;
+    : `<p class="text-sm text-slate-500">Noch keine Nachricht im Gruppenchat.</p>`;
   const grid = document.getElementById("photo-grid");
   grid.innerHTML = group.photos.length
     ? group.photos.map((ph) => `<a href="${escapeHtml(ph.url)}" target="_blank" class="block aspect-square rounded-lg overflow-hidden bg-black/30 border border-white/10" title="${escapeHtml(ph.caption || "")} – ${escapeHtml(ph.by)}"><img src="${escapeHtml(ph.url)}" alt="" class="w-full h-full object-cover" loading="lazy"></a>`).join("")
@@ -611,7 +611,7 @@ function openPrint(kind) {
     const chains = revealed ? drawCycles(active) : [];
     body = `${docHead("Rückblick")}
       ${revealed ? `<h2>Wer hat wen beschenkt?</h2>${chains.map((ring) => `<div class="chain">${ring.map((p) => `${who(p.name)}<span class="arrow">→</span>`).join("")}<span class="loop" title="und wieder zur ersten Person">↺</span></div>`).join("")}<p class="muted">Jede Person beschenkt die nächste, die letzte wieder die erste.</p>` : ""}
-      <h2>Dankeschöns <span class="count">${thanks.length}</span></h2>${thanks.length ? thanks.map((t) => `<div class="thanks">${escapeHtml(t.text)}<small>${escapeHtml(t.from)} · ${new Date(t.at).toLocaleDateString("de-CH")}</small></div>`).join("") : `<p class="empty">Noch keine Dankeschöns.</p>`}
+      <h2>Gruppenchat <span class="count">${thanks.length}</span></h2>${thanks.length ? thanks.map((t) => `<div class="thanks">${escapeHtml(t.text)}<small>${escapeHtml(t.from)} · ${new Date(t.at).toLocaleDateString("de-CH")}</small></div>`).join("") : `<p class="empty">Noch keine Nachrichten im Gruppenchat.</p>`}
       <h2>Fotos <span class="count">${photos.length}</span></h2>${photos.length ? `<div class="recap-photos">${photos.map((ph) => `<img src="${escapeHtml(ph.url)}" alt="${escapeHtml(ph.caption || "")}">`).join("")}</div>` : `<p class="empty">Noch keine Fotos.</p>`}${foot}`;
   }
   const w = window.open("", "_blank");

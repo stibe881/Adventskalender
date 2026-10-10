@@ -303,11 +303,11 @@ router.post("/p/:token/thanks", async (req, res) => {
     const { group } = found;
     if (!termsOk(found, req, res)) return false;
     if (!isDrawn(group)) {
-      res.status(400).json({ error: "Danke sagen geht nach der Auslosung." });
+      res.status(400).json({ error: "Der Gruppenchat öffnet nach der Auslosung." });
       return false;
     }
     if ((group.thanks || []).length >= cfg.maxThanks) {
-      res.status(400).json({ error: "Der Rückblick ist voll." });
+      res.status(400).json({ error: "Der Gruppenchat ist voll." });
       return false;
     }
     return (g, p) => {

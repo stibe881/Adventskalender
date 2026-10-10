@@ -108,9 +108,9 @@ const EVENTS = {
     anchor: "#rueckblick",
   }),
   thanks: ({ p, by, text }) => ({
-    subject: "Ein Dankeschön für die Runde",
-    text: `Hallo ${p.name}!\n\n${by.name} hat sich bedankt:\n„${text}“`,
-    html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat sich bedankt:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${esc(text)}</blockquote>`,
+    subject: "Neue Nachricht im Gruppenchat",
+    text: `Hallo ${p.name}!\n\n${by.name} hat im Gruppenchat geschrieben:\n„${text}“`,
+    html: `<p>Hallo ${esc(p.name)}!</p><p><strong>${esc(by.name)}</strong> hat im Gruppenchat geschrieben:</p><blockquote style="border-left:3px solid #34d399;padding-left:12px;color:#cbd5e1">${esc(text)}</blockquote>`,
     push: `${by.name}: ${text.slice(0, 120)}`,
     anchor: "#rueckblick",
   }),

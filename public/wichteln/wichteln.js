@@ -821,13 +821,13 @@ function recapCard() {
   const mobile = /Android|iPhone|iPad/i.test(navigator.userAgent) || window.__NATIVE_APP;
   return `<div class="w-card">
     <h2 class="w-title text-xl"><i data-icon="camera"></i> Rückblick <span class="w-pill-all"><i data-icon="users"></i> für die ganze Runde</span></h2>
-    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."}</p>
-    <div class="w-public-note"><i data-icon="users"></i> <span><b>Für alle sichtbar:</b> Danke sagen und die Foto-Wand sehen alle ${data.participants ? data.participants.length : ""} Teilnehmenden dieser Runde${feat().chat ? ` – privat mit deinem Wichtel schreibst du im <a href="#chat" class="underline">Chat</a>` : ""}.</span></div>
+    <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Schreibt in den Gruppenchat und hängt eure Fotos auf." : "Hier schreibt die ganze Runde mit, nach der Bescherung ist Platz für eure Fotos."}</p>
+    <div class="w-public-note"><i data-icon="users"></i> <span><b>Für alle sichtbar:</b> Gruppenchat und Foto-Wand sehen alle ${data.participants ? data.participants.length : ""} Teilnehmenden dieser Runde${feat().chat ? ` – privat mit deinem Wichtel schreibst du im <a href="#chat" class="underline">Chat</a>` : ""}.</span></div>
 
-    <h3 class="font-semibold text-white mt-4 mb-1 flex items-center gap-2 flex-wrap"><i data-icon="heart"></i> Danke sagen <span class="w-pill-all"><i data-icon="users"></i> alle sehen das</span></h3>
-    <p class="text-xs text-slate-400 mb-2">Ein Eintrag für die ganze Runde – wie ein Gästebuch.</p>
+    <h3 class="font-semibold text-white mt-4 mb-1 flex items-center gap-2 flex-wrap"><i data-icon="message-circle"></i> Gruppenchat <span class="w-pill-all"><i data-icon="users"></i> alle sehen das</span></h3>
+    <p class="text-xs text-slate-400 mb-2">Eine Nachricht an alle in der Runde – zum Beispiel ein Dankeschön.</p>
     ${drawn ? `<form id="thanks-form" class="flex gap-2">
-      <input name="text" maxlength="400" required class="w-input" placeholder="Danke an die Runde oder an deinen Wichtel …" autocomplete="off">
+      <input name="text" maxlength="400" required class="w-input" placeholder="Nachricht an die Runde …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
     <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : "is-theirs"}">
@@ -1047,7 +1047,7 @@ function bindEvents() {
       data = await req("POST", "/thanks", { text, acceptTerms: true });
       haptic("success");
       render();
-      toast("Danke gesagt");
+      toast("Gesendet");
     } catch (err) {
       toast(err.message, true);
     }
@@ -1095,7 +1095,7 @@ async function rulesOk() {
 function bindSafety() {
   const reportVia = (path) => async (payload) => { data = await req("POST", path, payload); render(); };
   document.querySelectorAll("[data-act='msg-report']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-message", label: "diese Nachricht", excerpt: b.dataset.text, send: reportVia(`/messages/${b.dataset.id}/report`) })));
-  document.querySelectorAll("[data-act='thanks-report']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-thanks", label: "diesen Eintrag", excerpt: b.dataset.text, send: reportVia(`/thanks/${b.dataset.id}/report`) })));
+  document.querySelectorAll("[data-act='thanks-report']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-thanks", label: "diese Nachricht im Gruppenchat", excerpt: b.dataset.text, send: reportVia(`/thanks/${b.dataset.id}/report`) })));
   document.querySelectorAll("[data-act='report-photo']").forEach((b) => b.addEventListener("click", () => Moderation.report({ kind: "wichteln-photo", label: "dieses Foto", send: reportVia(`/photos/${b.dataset.id}/report`) })));
   document.querySelectorAll("[data-act='msg-delete']").forEach((b) => b.addEventListener("click", async () => {
     if (!(await UI.confirm({ title: "Nachricht löschen?", text: "Sie verschwindet für beide Seiten.", ok: "Löschen", danger: true }))) return;
