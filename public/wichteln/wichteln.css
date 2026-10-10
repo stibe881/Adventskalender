@@ -144,3 +144,15 @@ html.is-native-app .w-secnav { top: calc(env(safe-area-inset-top) + 8px); }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 .w-btn--primary .ui-icon, .w-btn--ghost .ui-icon { flex-shrink: 0; }
+
+/* Participants inside the header card */
+.w-people__head { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 8px; }
+.w-people__list { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+.w-person { display: flex; flex-direction: column; align-items: center; width: 56px; text-align: center; }
+.w-person__avatar { position: relative; width: 38px; height: 38px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.12); }
+.w-person.is-me .w-person__avatar { box-shadow: 0 0 0 2px #34d399; }
+.w-person.is-pending { opacity: 0.45; }
+.w-person.is-pending .w-person__avatar { box-shadow: 0 0 0 2px rgba(255,255,255,0.12); border: 1px dashed rgba(255,255,255,0.5); }
+.w-person__crown { position: absolute; top: -7px; right: -5px; width: 14px; height: 14px; color: #fbbf24; filter: drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+.w-person__name { font-size: 0.66rem; color: #cbd5e1; margin-top: 4px; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-person.is-me .w-person__name { color: #6ee7b7; }

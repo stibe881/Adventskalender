@@ -341,11 +341,11 @@ function render() {
     stepper(),
     sectionNav(),
     `<div id="push-ask" class="hidden"></div>`,
-    `<section id="wichtelkind" class="w-section">${data.reveal ? revealCard() : ""}${drawn && data.recipient ? recipientCard() + todoCard() : notDrawnCard()}</section>`,
-    `<section id="wunschzettel" class="w-section">${feat().wishlist ? myWishlistCard() : ""}${myHintsCard()}${feat().wishlist ? sharedWishlistsCard() : ""}</section>`,
+    `<section id="wichtelkind" class="w-section">${data.reveal ? revealCard() : ""}${drawn && data.santa ? santaCard() : ""}${drawn && data.recipient ? recipientCard() + todoCard() : notDrawnCard()}</section>`,
+    feat().wishlist || feat().hints ? `<section id="wunschzettel" class="w-section">${feat().wishlist ? myWishlistCard() : ""}${myHintsCard()}${feat().wishlist ? sharedWishlistsCard() : ""}</section>` : "",
     feat().chat || !data.group.chatEnabled ? `<section id="chat" class="w-section">${chatSection()}</section>` : "",
-    `<section id="rueckblick" class="w-section">${drawn && data.santa ? santaCard() : ""}${recapCard()}</section>`,
-    participantsCard(),
+    `<section id="rueckblick" class="w-section">${recapCard()}</section>`,
+    notifyCard(),
     footerCard(),
   ].join("");
   bindEvents();
@@ -421,7 +421,25 @@ function headerCard() {
     </div>
     ${chips ? `<div class="flex flex-wrap gap-2 mt-3">${chips}</div>` : ""}
     ${g.description ? `<p class="text-sm text-slate-300 mt-3 whitespace-pre-line">${esc(g.description)}</p>` : ""}
+    ${peopleRow()}
     ${data.me.icsUrl ? `<div class="mt-4"><a href="${esc(data.me.icsUrl)}" class="w-btn w-btn--ghost w-btn--sm"><i data-icon="calendar"></i> In meinen Kalender eintragen</a><span class="text-xs text-slate-500 ml-2">mit Motto, Budget, Wichtelkind und Erinnerung am Vortag</span></div>` : ""}
+  </div>`;
+}
+
+// Everybody in the round as a row of initials inside the header card.
+const AVATAR_COLORS = ["#059669", "#2563eb", "#d946ef", "#f59e0b", "#ef4444", "#0ea5e9", "#8b5cf6", "#14b8a6"];
+function avatarColor(name) { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
+function initials(name) { return String(name).trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?"; }
+function peopleRow() {
+  const list = data.participants || [];
+  if (!list.length) return "";
+  const joined = list.filter((p) => p.joined).length;
+  return `<div class="w-people mt-4">
+    <div class="w-people__head"><span><i data-icon="users"></i> ${list.length} Teilnehmende</span>${joined < list.length ? `<span class="text-slate-500">${joined} schon dabei</span>` : ""}</div>
+    <div class="w-people__list">${list.map((p) => `<span class="w-person ${p.joined ? "" : "is-pending"} ${p.id === data.me.id ? "is-me" : ""}" title="${esc(p.name)}${p.isOrganizer ? " · Organisator" : ""}${p.joined ? "" : " · noch nicht dabei"}">
+        <span class="w-person__avatar" style="background:${avatarColor(p.name)}">${esc(initials(p.name))}${p.isOrganizer ? `<i class="w-person__crown" data-icon="crown"></i>` : ""}</span>
+        <span class="w-person__name">${esc(p.name.split(" ")[0])}${p.id === data.me.id ? " (du)" : ""}</span>
+      </span>`).join("")}</div>
   </div>`;
 }
 
@@ -475,9 +493,10 @@ function stepper() {
 function sectionNav() {
   const items = [
     ["#wichtelkind", "gift", "Wichtelkind", 0],
-    feat().wishlist || feat().hints ? ["#wunschzettel", "clipboard-list", "Wünsche", 0] : ["#wunschzettel", "bell", "Benachrichtigung", 0],
+    feat().wishlist || feat().hints ? ["#wunschzettel", "clipboard-list", "Wünsche", 0] : null,
     feat().chat || !data.group.chatEnabled ? ["#chat", "message-circle", "Chat", unreadTotal()] : null,
     ["#rueckblick", "camera", "Rückblick", 0],
+    feat().wishlist || feat().hints ? null : ["#benachrichtigungen", "bell", "Benachrichtigung", 0],
   ].filter(Boolean);
   return `<nav class="w-secnav" aria-label="Bereiche">${items.map(([href, ic, label, badge]) => `<a href="${href}" class="w-secnav__item"><i data-icon="${ic}"></i><span>${label}</span>${badge ? `<span class="ui-badge">${badge}</span>` : ""}</a>`).join("")}</nav>`;
 }
@@ -623,23 +642,34 @@ function myWishlistCard() {
 }
 
 function myHintsCard() {
-  const me = data.me;
-  const h = me.hints || {};
-  const pro = feat().hints;
+  if (!feat().hints) return "";
+  const h = data.me.hints || {};
   return `<div class="w-card">
-    <h2 class="w-title text-xl"><i data-icon="${pro ? "lightbulb" : "bell"}"></i> ${pro ? "Hinweise für deinen Wichtel" : "Benachrichtigungen"}</h2>
-    <p class="text-sm text-slate-400 mt-1">${pro ? "Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte." : "Wir sagen dir Bescheid, wenn es in der Runde etwas Neues gibt."}</p>
+    <h2 class="w-title text-xl"><i data-icon="lightbulb"></i> Hinweise für deinen Wichtel</h2>
+    <p class="text-sm text-slate-400 mt-1">Leerer Wunschzettel? Allergien, Lieblingsgeschmack und Hobbys geben deinem Wichtel Anhaltspunkte.</p>
     <form id="hints-form" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-      ${pro ? `<input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
+      <input name="allergies" maxlength="300" class="w-input" placeholder="Allergien / No-Gos" value="${esc(h.allergies || "")}">
       <input name="favorites" maxlength="300" class="w-input" placeholder="Lieblingsgeschmack" value="${esc(h.favorites || "")}">
       <input name="hobbies" maxlength="300" class="w-input" placeholder="Hobbys" value="${esc(h.hobbies || "")}">
-      <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">` : ""}
-      <div class="sm:col-span-2 ${pro ? "border-t border-white/10 pt-3 mt-1" : ""} grid sm:grid-cols-2 gap-2 items-center">
-        <input name="email" type="email" class="w-input" placeholder="E-Mail für Benachrichtigungen" value="${esc(me.email || "")}">
-        <label class="w-check"><input type="checkbox" name="notifyEmail" ${me.notify.email !== false ? "checked" : ""}> <span class="text-sm">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin informieren (E-Mail und, falls aktiv, Push)</span></label>
-      </div>
+      <input name="notes" maxlength="500" class="w-input" placeholder="Sonstiges" value="${esc(h.notes || "")}">
       <div class="sm:col-span-2 flex items-center gap-3"><button class="w-btn w-btn--primary">Speichern</button><span id="hints-saved" class="hidden text-sm text-emerald-300">Gespeichert <i data-icon="check"></i></span></div>
     </form>
+  </div>`;
+}
+
+// Quiet settings card at the very end: e-mail and whether to be notified.
+function notifyCard() {
+  const me = data.me;
+  const on = me.notify.email !== false;
+  return `<div class="w-card w-card--soft" id="benachrichtigungen">
+    <details class="w-details" ${!me.email ? "open" : ""}>
+      <summary class="flex items-center gap-2 text-sm text-slate-300"><i data-icon="bell"></i> Benachrichtigungen <span class="text-xs text-slate-500 ml-auto">${me.email ? (on ? `an ${esc(me.email)}` : "aus") : "keine E-Mail hinterlegt"}</span></summary>
+      <form id="notify-form" class="mt-3 space-y-2">
+        <input name="email" type="email" class="w-input" placeholder="E-Mail für Benachrichtigungen" value="${esc(me.email || "")}">
+        <label class="w-check"><input type="checkbox" name="notifyEmail" ${on ? "checked" : ""}> <span class="text-xs text-slate-300">Bei neuer Nachricht, geändertem Wunschzettel oder neuem Termin informieren (E-Mail und, falls aktiv, Push)</span></label>
+        <div class="flex items-center gap-3"><button class="w-btn w-btn--ghost w-btn--sm">Speichern</button><span id="notify-saved" class="hidden text-xs text-emerald-300">Gespeichert <i data-icon="check"></i></span></div>
+      </form>
+    </details>
   </div>`;
 }
 
@@ -694,12 +724,6 @@ function revealCard() {
   </div>`;
 }
 
-function participantsCard() {
-  return `<div class="w-card">
-    <h2 class="w-title text-xl"><i data-icon="users"></i> Teilnehmende <span class="text-sm font-normal text-slate-400">(${data.participants.length})</span></h2>
-    <div class="flex flex-wrap gap-2 mt-3">${data.participants.map((p) => `<span class="w-chip">${p.joined ? icon("circle-check", "text-emerald-300") : icon("circle", "text-slate-500")} ${esc(p.name)}${p.isOrganizer ? " <span class='text-slate-500'>· Orga</span>" : ""}${p.id === data.me.id ? " <span class='text-emerald-300'>(du)</span>" : ""}</span>`).join("")}</div>
-  </div>`;
-}
 
 // Recap: thank-you notes and the photo wall.
 function recapCard() {
@@ -892,18 +916,25 @@ function bindEvents() {
     });
   }
 
-  document.getElementById("hints-form").addEventListener("submit", async (e) => {
+  const flash = (id) => { const ok = document.getElementById(id); if (!ok) return; ok.classList.remove("hidden"); setTimeout(() => ok.classList.add("hidden"), 1500); };
+  const hintsForm = document.getElementById("hints-form");
+  if (hintsForm) hintsForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target.elements;
     try {
-      data = await req("PUT", "/profile", {
-        email: f.email.value.trim(),
-        ...(f.allergies ? { hints: { allergies: f.allergies.value, favorites: f.favorites.value, hobbies: f.hobbies.value, notes: f.notes.value } } : {}),
-        notify: { email: f.notifyEmail.checked, push: f.notifyEmail.checked },
-      });
-      const ok = document.getElementById("hints-saved");
-      ok.classList.remove("hidden");
-      setTimeout(() => ok.classList.add("hidden"), 1500);
+      data = await req("PUT", "/profile", { hints: { allergies: f.allergies.value, favorites: f.favorites.value, hobbies: f.hobbies.value, notes: f.notes.value } });
+      flash("hints-saved");
+    } catch (err) {
+      toast(err.message, true);
+    }
+  });
+  const notifyForm = document.getElementById("notify-form");
+  if (notifyForm) notifyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target.elements;
+    try {
+      data = await req("PUT", "/profile", { email: f.email.value.trim(), notify: { email: f.notifyEmail.checked, push: f.notifyEmail.checked } });
+      flash("notify-saved");
       maybeAskPush();
     } catch (err) {
       toast(err.message, true);

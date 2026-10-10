@@ -42,6 +42,8 @@
       .wl-apps p{font-size:.78rem;color:#94a3b8;margin:0 0 8px}
       .wl-apps div{display:flex;gap:8px}
       .wl-apps a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:10px;background:#0f172a;color:#fff;font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.14)}
+      .wl-apps a.is-soon{flex-direction:column;gap:2px;opacity:.6;cursor:default}
+      .wl-apps a.is-soon small{font-size:.66rem;font-weight:500;color:#cbd5e1;letter-spacing:.02em}
       @media(min-width:640px){.wl-backdrop{align-items:center}}`;
     document.head.appendChild(st);
   }
@@ -59,7 +61,11 @@
     const links = window.APP_LINKS || {};
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const android = /Android/i.test(navigator.userAgent);
-    const apps = [links.ios ? `<a href="${esc(links.ios)}" target="_blank" rel="noopener" data-app="ios"> App Store</a>` : "", links.android ? `<a href="${esc(links.android)}" target="_blank" rel="noopener" data-app="android">▶ Google Play</a>` : ""];
+    const avail = links.available || {};
+    const storeBtn = (key, label) => !links[key] ? "" : avail[key] !== false
+      ? `<a href="${esc(links[key])}" target="_blank" rel="noopener" data-app="${key}">${label}</a>`
+      : `<a href="#" data-app="${key}" class="is-soon" aria-disabled="true" onclick="return false">${label}<small>Coming soon</small></a>`;
+    const apps = [storeBtn("ios", " App Store"), storeBtn("android", "▶ Google Play")];
     if (android) apps.reverse();
     const wrap = document.createElement("div");
     wrap.className = "wl-backdrop";
