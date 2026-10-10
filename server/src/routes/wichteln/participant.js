@@ -190,10 +190,21 @@ router.put("/p/:token/wishlist", async (req, res) => {
 router.put("/p/:token/gift-status", async (req, res) => {
   const method = req.body?.method === "post" ? "post" : "personal";
   const allowed = cfg.giftSteps[method];
-  const steps = Array.isArray(req.body?.steps) ? req.body.steps.filter((s) => allowed.includes(s)) : [];
-  await mutateAndRespond(req, res, () => (g, p) => {
-    p.giftStatus = { method, steps: [...new Set(steps)], updatedAt: new Date().toISOString() };
+  const steps = [...new Set(Array.isArray(req.body?.steps) ? req.body.steps.filter((s) => allowed.includes(s)) : [])];
+  let newly = [];
+  const done = await mutateAndRespond(req, res, () => (g, p) => {
+    const before = p.giftStatus?.steps || [];
+    newly = steps.filter((st) => !before.includes(st));
+    p.giftStatus = { method, steps, updatedAt: new Date().toISOString() };
   });
+  if (!done || !newly.length) return;
+  // The recipient sees the anticipation grow (anonymously), at most once per hour.
+  const { group, me } = done;
+  const recipient = findParticipant(group, me.assignedTo);
+  if (!recipient) return;
+  if (me.giftNotifiedAt && Date.now() - new Date(me.giftNotifiedAt).getTime() <= cfg.wishlistNotifyThrottleMs) return;
+  await db.updateWichtelGroup(group.id, (g) => { findParticipant(g, me.id).giftNotifiedAt = new Date().toISOString(); return g; });
+  notify("giftProgress", { group, p: recipient, step: cfg.giftStepLabels[newly[newly.length - 1]], done: steps.length, total: allowed.length }).catch(() => {});
 });
 
 // Marks a chat channel as read ("recipient" = my chat with my recipient,

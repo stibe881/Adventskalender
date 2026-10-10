@@ -58,6 +58,13 @@ const EVENTS = {
       anchor: "#wichtelkind",
     };
   },
+  giftProgress: ({ p, step, done, total }) => ({
+    subject: done >= total ? "Dein Geschenk ist bereit" : "Dein Wichtel ist dran",
+    text: `Hallo ${p.name}!\n\nDein geheimer Wichtel hat „${step}“ abgehakt. ${done} von ${total} Schritten sind erledigt${done >= total ? " – die Vorfreude darf steigen!" : "."}`,
+    html: `<p>Hallo ${esc(p.name)}!</p><p>Dein geheimer Wichtel hat <strong>„${esc(step)}“</strong> abgehakt.</p><p>${done} von ${total} Schritten sind erledigt${done >= total ? " – die Vorfreude darf steigen!" : "."}</p>`,
+    push: `Dein geheimer Wichtel hat „${step}“ abgehakt (${done}/${total}).`,
+    anchor: "#wichtelkind",
+  }),
   hintsChanged: ({ p, by }) => ({
     subject: "Neue Hinweise für dich",
     text: `Hallo ${p.name}!\n\n${by.name} hat die Hinweise für den Wichtel ausgefüllt (Allergien, Lieblingssachen, Hobbys oder Notizen). Schau mal rein.`,

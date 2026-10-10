@@ -305,7 +305,7 @@ test("Wichteln: Nutzungsbedingungen, Wortfilter, Melden, Blockieren und Löschen
   assert.equal(r.status, 200); assert.equal(db.groups[gid].thanks.length, 0);
 });
 
-test("Wichteln: neue Wünsche und Hinweise benachrichtigen den Wichtel per Push und E-Mail", async (t) => {
+test("Wichteln: neue Wünsche, Hinweise und Geschenk-Schritte lösen Push und E-Mail aus", async (t) => {
   const h = await startApp();
   const { call, anon, mails, pushed, db } = h;
   t.after(h.stop);
@@ -338,6 +338,24 @@ test("Wichteln: neue Wünsche und Hinweise benachrichtigen den Wichtel per Push 
   assert.equal(mails.length, 1);
   assert.ok(mails[0].subject.includes("Hinweise"), mails[0].subject);
   assert.equal(pushed.length, 1);
+  // Gift status: the recipient hears (anonymously) when a step is ticked
+  const target = db.groups[gid].participants.find((p) => p.id === anna.assignedTo); // fresh object: updates replace the stored group
+  target.subscriptions = [{ endpoint: "https://push.example/target", keys: {} }];
+  target.notify = { email: true, push: true };
+  target.email = "target@x.ch";
+  mails.length = 0; pushed.length = 0;
+  r = await anon("PUT", `/api/wichteln/p/${anna.token}/gift-status`, { method: "personal", steps: ["bought", "wrapped"] });
+  assert.equal(r.status, 200);
+  await wait(150);
+  assert.equal(mails.length, 1, "the recipient gets a mail");
+  assert.equal(mails[0].to, "target@x.ch");
+  assert.ok(mails[0].text.includes("Eingepackt") && mails[0].text.includes("2 von 3") && !mails[0].text.includes("Anna"), mails[0].text);
+  assert.equal(pushed.length, 1);
+  assert.ok(!pushed[0].payload.body.includes("Anna"), "stays anonymous");
+  mails.length = 0; pushed.length = 0;
+  await anon("PUT", `/api/wichteln/p/${anna.token}/gift-status`, { method: "personal", steps: ["bought"] });
+  await wait(150);
+  assert.equal(mails.length, 0, "unticking is silent");
   // Unchanged hints and a second change within the hour stay quiet
   mails.length = 0; pushed.length = 0;
   await anon("PUT", `/api/wichteln/p/${anna.token}/profile`, { hints: { allergies: "Nüsse", hobbies: "Wandern" } });
