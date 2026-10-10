@@ -741,9 +741,10 @@ function recapCard() {
     <h2 class="w-title text-xl"><i data-icon="camera"></i> Rückblick <span class="w-pill-all"><i data-icon="users"></i> für die ganze Runde</span></h2>
     <p class="text-sm text-slate-400 mt-1">${g.eventPassed ? "Wie war's? Fotos und ein Dankeschön für die Runde." : "Nach der Bescherung ist hier Platz für Fotos und ein Dankeschön."} Alles hier sehen alle Teilnehmenden.</p>
 
-    <h3 class="font-semibold text-white mt-4 mb-2"><i data-icon="heart"></i> Danke sagen</h3>
+    <h3 class="font-semibold text-white mt-4 mb-1"><i data-icon="heart"></i> Dankeschön an die Runde</h3>
+    <p class="text-xs text-slate-400 mb-2">Ein öffentlicher Eintrag, den alle in der Runde lesen – kein privater Chat.${feat().chat ? ` Mit deinem Wichtel schreibst du privat im <a href="#chat" class="underline">Chat</a>.` : ""}</p>
     ${drawn ? `<form id="thanks-form" class="flex gap-2">
-      <input name="text" maxlength="400" required class="w-input" placeholder="Ein paar Worte an die Runde oder deinen Wichtel …" autocomplete="off">
+      <input name="text" maxlength="400" required class="w-input" placeholder="Danke an die Runde oder an deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
     <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : ""}">

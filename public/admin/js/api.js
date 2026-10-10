@@ -77,6 +77,7 @@ const api = {
 
   // Wichteln (Secret Santa)
   listWichtelGroups: () => request("GET", "/wichteln/groups"),
+  listWichtelParticipations: () => request("GET", "/wichteln/participations"),
   createWichtelGroup: (data) => request("POST", "/wichteln/groups", data),
   getWichtelGroup: (id) => request("GET", `/wichteln/groups/${id}`),
   updateWichtelGroup: (id, data) => request("PUT", `/wichteln/groups/${id}`, data),

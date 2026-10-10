@@ -14,6 +14,29 @@ const {
 
 const router = express.Router();
 router.use("/groups", requireAuth);
+router.use("/participations", requireAuth);
+
+// Rounds I take part in (as invited participant or as organizer who plays
+// along): found by my account's e-mail address. Opens the participant view.
+router.get("/participations", async (req, res) => {
+  const email = String(req.user.email || "").trim().toLowerCase();
+  const { participantLink, participantView } = require("./shared");
+  const out = [];
+  for (const g of await db.getAllWichtelGroups()) {
+    const me = (g.participants || []).find((p) => (p.email || "").toLowerCase() === email && !p.pending);
+    if (!me) continue;
+    const v = participantView(g, me, await isProItem(g));
+    out.push({
+      id: g.id, title: g.title, organizerName: g.organizerName || "", status: g.status || "draft",
+      eventDate: g.eventDate || "", eventTime: g.eventTime || "", eventPlace: g.eventPlace || "", budget: g.budget || "", currency: g.currency || "CHF",
+      participantCount: activeParticipants(g).length, isOwn: g.ownerId === req.user.id, isPro: v.group.isPro,
+      link: participantLink(me), unread: (v.recipient?.unread || 0) + (v.santa?.unread || 0),
+      recipientName: v.recipient?.name || null,
+    });
+  }
+  out.sort((a, b) => (a.eventDate || "9999") < (b.eventDate || "9999") ? -1 : 1);
+  res.json(out);
+});
 
 const view = async (group) => organizerView(group, await isProItem(group));
 

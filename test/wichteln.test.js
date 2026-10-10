@@ -341,3 +341,33 @@ test("Wichteln: ein neues Foto an der Foto-Wand benachrichtigt alle anderen per 
   const config = require(path.join(SRC, "config"));
   for (const ph of db.groups[gid].photos) fs.rmSync(path.join(config.paths.uploadsDir, path.basename(ph.url)), { force: true });
 });
+
+test("Wichteln: Runden, in denen ich mitwichtle, per E-Mail-Adresse gefunden (eigene und fremde)", async (t) => {
+  const h = await startApp();
+  const { call, db } = h;
+  t.after(h.stop);
+  // Own round, organizer plays along
+  let r = await call("POST", "/api/wichteln/groups", { title: "Eigene Runde", organizerName: "Stefan", inviteMode: "email", organizerParticipates: true });
+  const own = r.d.id;
+  await call("POST", `/api/wichteln/groups/${own}/participants`, { name: "Anna", email: "anna@x.ch" });
+  // Own round without taking part
+  r = await call("POST", "/api/wichteln/groups", { title: "Nur organisiert", organizerName: "Stefan", inviteMode: "email", organizerParticipates: false });
+  // Somebody else's round where my address was entered
+  db.groups.other = { id: "other", ownerId: "u2", title: "Firma Meier", organizerName: "Petra", status: "drawn", eventDate: "2026-12-18", inviteToken: "inv_other", participants: [
+    { id: "p1", name: "Stefan G.", email: "orga@example.ch", token: "tok_me_other", assignedTo: "p2", lastRead: {} },
+    { id: "p2", name: "Petra", email: "petra@x.ch", token: "tok_petra", assignedTo: "p1", isOrganizer: true, lastRead: {} },
+  ], messages: [{ id: "m1", channel: "p2", from: "p2", text: "Hallo!", at: new Date().toISOString() }], exclusions: [], photos: [], thanks: [] };
+  // Pending participant must not count
+  db.groups.pending = { id: "pending", ownerId: "u3", title: "Warteraum", organizerName: "X", status: "draft", inviteToken: "inv_p", participants: [{ id: "q1", name: "S", email: "orga@example.ch", token: "tok_pending", pending: true }], exclusions: [], messages: [], photos: [], thanks: [] };
+  r = await call("GET", "/api/wichteln/participations");
+  assert.equal(r.status, 200);
+  const titles = r.d.map((x) => x.title).sort();
+  assert.deepEqual(titles, ["Eigene Runde", "Firma Meier"]);
+  const mine = r.d.find((x) => x.title === "Eigene Runde");
+  assert.equal(mine.isOwn, true); assert.ok(mine.link.includes("/w/"));
+  const other = r.d.find((x) => x.title === "Firma Meier");
+  assert.equal(other.isOwn, false); assert.equal(other.organizerName, "Petra"); assert.ok(other.link.endsWith("/w/tok_me_other"));
+  assert.equal(other.unread, 1, "unread message from my secret santa");
+  assert.equal(other.recipientName, "Petra");
+  assert.equal((await h.anon("GET", "/api/wichteln/participations")).status, 401);
+});

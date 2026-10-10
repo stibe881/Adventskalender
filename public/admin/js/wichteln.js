@@ -25,7 +25,9 @@ async function init() {
   });
   const orgInput = document.querySelector('#create-form [name="organizerName"]');
   if (orgInput && user.username) orgInput.value = user.username;
+  initTabs();
   await loadGroups();
+  await loadParticipations();
 }
 
 let groupsCache = [];
@@ -84,6 +86,59 @@ async function loadGroups() {
   groupsCache = await api.listWichtelGroups();
   document.getElementById("empty-state").classList.toggle("hidden", groupsCache.length > 0);
   renderGroups(groupsCache);
+}
+
+// ---------- Rounds I take part in ----------
+let currentTab = "own";
+function showTab(tab) {
+  currentTab = tab === "part" ? "part" : "own";
+  try { localStorage.setItem("wichtelnTab", currentTab); } catch (_) {}
+  document.getElementById("own-section").classList.toggle("hidden", currentTab !== "own");
+  document.getElementById("own-actions").classList.toggle("hidden", currentTab !== "own");
+  document.getElementById("part-section").classList.toggle("hidden", currentTab !== "part");
+  document.querySelectorAll("#tab-switch [data-tab]").forEach((b) => {
+    const on = b.dataset.tab === currentTab;
+    b.classList.toggle("bg-emerald-600", on); b.classList.toggle("text-white", on); b.classList.toggle("shadow", on);
+    b.classList.toggle("hover:bg-slate-700", !on); b.classList.toggle("text-slate-400", !on);
+  });
+}
+function initTabs() {
+  document.querySelectorAll("#tab-switch [data-tab]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  showTab(new URLSearchParams(window.location.search).get("tab") || localStorage.getItem("wichtelnTab") || "own");
+}
+
+function participationCard(g) {
+  const st = STATUS_LABELS[g.status] || STATUS_LABELS.draft;
+  const card = document.createElement("a");
+  card.href = g.link;
+  card.className = "block bg-white/5 border border-white/10 hover:border-emerald-500/50 rounded-2xl p-5 transition-colors";
+  card.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="font-display font-semibold text-lg text-white truncate">${escapeHtml(g.title)}</h3>
+        <p class="text-xs text-slate-400 mt-1">${g.isOwn ? "Du organisierst diese Runde und machst selbst mit" : g.organizerName ? `Organisiert von ${escapeHtml(g.organizerName)}` : "Du bist eingeladen"}</p>
+      </div>
+      <span class="flex items-center gap-1">${g.unread ? `<span class="ui-badge">${g.unread}</span>` : ""}${g.isPro ? `<span class="ui-pro-badge">PRO</span>` : ""}<span class="text-[11px] font-semibold px-2 py-1 rounded-full ${st.cls}">${st.text}</span></span>
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-4 text-sm text-slate-300">
+      <span><i data-icon="calendar"></i> ${g.eventDate ? `Bescherung am ${formatDate(g.eventDate)}${g.eventTime ? `, ${escapeHtml(g.eventTime)} Uhr` : ""}` : "Noch kein Termin"}</span>
+      <span><i data-icon="users"></i> ${g.participantCount} Teilnehmende</span>
+      ${g.recipientName ? `<span class="text-emerald-300"><i data-icon="gift"></i> Du beschenkst ${escapeHtml(g.recipientName)}</span>` : ""}
+    </div>
+    <div class="mt-4"><span class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 group-hover:bg-emerald-500 text-white text-sm font-semibold px-3 py-1.5"><i data-icon="drama"></i> Meinen Wichtel-Bereich öffnen</span></div>`;
+  return card;
+}
+
+async function loadParticipations() {
+  let list = [];
+  try { list = await api.listWichtelParticipations(); } catch (err) { console.warn("Teilnahmen:", err.message); }
+  const el = document.getElementById("part-list");
+  const badge = document.getElementById("part-count");
+  el.innerHTML = "";
+  document.getElementById("part-empty").classList.toggle("hidden", list.length > 0);
+  badge.textContent = String(list.length);
+  badge.classList.toggle("hidden", !list.length);
+  for (const g of list) el.appendChild(participationCard(g));
 }
 
 const createModal = document.getElementById("create-modal");
