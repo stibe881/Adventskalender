@@ -43,6 +43,7 @@ router.get("/join/:inviteToken", joinLimiter, async (req, res) => {
     organizerName: group.organizerName,
     motto: group.motto || "",
     budget: group.budget || "",
+    currency: group.currency || "CHF",
     eventDate: group.eventDate || "",
     eventTime: group.eventTime || "",
     eventPlace: group.eventPlace || "",
@@ -366,7 +367,7 @@ router.get("/p/:token/event.ics", async (req, res) => {
   const target = isDrawn(group) ? findParticipant(group, me.assignedTo) : null;
   const description = [
     group.motto ? `Motto: ${group.motto}` : null,
-    group.budget ? `Budget: ${group.budget}` : null,
+    group.budget ? `Budget: ${/CHF|EUR|€/i.test(group.budget) ? group.budget : `${group.budget} ${group.currency || "CHF"}`}` : null,
     target ? `Du beschenkst: ${target.name}` : null,
     `Wichtel-Bereich: ${participantLink(me)}`,
   ].filter(Boolean).join("\n");

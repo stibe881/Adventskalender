@@ -20,6 +20,12 @@ function formatDate(iso) {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
 }
+// "20–25" becomes "20–25 CHF"; a budget that already names a currency stays as it is.
+function fmtBudget(g) {
+  const b = String(g.budget || "").trim();
+  if (!b) return "";
+  return /CHF|EUR|€|Fr\.|USD|\$/i.test(b) ? b : `${b} ${g.currency || "CHF"}`;
+}
 function eventLine(g) {
   if (!g.eventDate) return "";
   return `${formatDate(g.eventDate)}${g.eventTime ? ` um ${g.eventTime} Uhr` : ""}${g.eventPlace ? `, ${g.eventPlace}` : ""}`;
@@ -28,15 +34,17 @@ const toast = (msg, isError = false) => UI.toast(msg, { error: isError });
 const copyText = (text) => UI.copy(text);
 function inviteText() {
   const g = group;
-  return [`${g.organizerName ? `${g.organizerName} lädt dich` : "Du bist"} zum Wichteln eingeladen: „${g.title}“`, g.eventDate ? `Bescherung: ${eventLine(g)}` : "", g.budget ? `Budget: ${g.budget}` : "", g.motto ? `Motto: ${g.motto}` : "", "Hier eintragen:"].filter(Boolean).join("\n");
+  return [`${g.organizerName ? `${g.organizerName} lädt dich` : "Du bist"} zum Wichteln eingeladen: „${g.title}“`, g.eventDate ? `Bescherung: ${eventLine(g)}` : "", g.budget ? `Budget: ${fmtBudget(g)}` : "", g.motto ? `Motto: ${g.motto}` : "", "Hier eintragen:"].filter(Boolean).join("\n");
 }
 async function shareInvite() {
   const r = await UI.share({ title: `Wichteln: ${group.title}`, text: inviteText(), url: group.inviteLink });
   if (r === "copied") toast("Link kopiert – teilen geht auf diesem Gerät nicht direkt.");
 }
 
+let profileCurrency = "";
 async function load() {
   group = await api.getWichtelGroup(groupId);
+  try { profileCurrency = (await api.me()).currency || ""; } catch (_) { profileCurrency = ""; }
   render();
   const payment = new URLSearchParams(window.location.search).get("payment");
   if (payment) {
@@ -343,6 +351,7 @@ function renderSettings() {
   f.elements.waitingRoom.checked = group.waitingRoom;
   f.elements.wishlistsShared.checked = Boolean(group.wishlistsShared);
   f.elements.budget.value = group.budget;
+  document.getElementById("budget-currency").textContent = profileCurrency || group.currency || "CHF";
   f.elements.motto.value = group.motto;
   f.elements.eventDate.value = group.eventDate;
   f.elements.eventTime.value = group.eventTime;
@@ -370,6 +379,7 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
       waitingRoom: f.elements.waitingRoom.checked,
       wishlistsShared: f.elements.wishlistsShared.checked,
       budget: f.elements.budget.value,
+      currency: profileCurrency || group.currency || "CHF",
       motto: f.elements.motto.value,
       eventDate: f.elements.eventDate.value,
       eventTime: f.elements.eventTime.value,
@@ -490,11 +500,51 @@ document.querySelectorAll(".print-btn").forEach((b) => b.addEventListener("click
 function printShell(title, body) {
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
   <style>
-    body{font-family:Inter,Segoe UI,Arial,sans-serif;color:#111;margin:32px;font-size:14px}
-    h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
-    .muted{color:#666;font-size:12px}table{border-collapse:collapse;width:100%;margin-top:8px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f3f3f3}
-    .matrix td,.matrix th{text-align:center;width:28px;padding:4px}.matrix th.row{text-align:left;width:auto}
-    ul{margin:4px 0 0 18px;padding:0}.x{color:#b91c1c;font-weight:700}
+    :root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;--green:#059669;--amber:#d97706;--rose:#e11d48}
+    *{box-sizing:border-box}
+    body{font-family:Inter,"Segoe UI",Arial,sans-serif;color:var(--ink);margin:0;padding:28px 32px;font-size:13px;line-height:1.45;background:#fff}
+    .doc{max-width:860px;margin:0 auto}
+    .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-bottom:22px}
+    .head .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--green);font-weight:700}
+    .head h1{font-family:Georgia,"Times New Roman",serif;font-size:28px;margin:2px 0 8px;line-height:1.1}
+    .head .doc-type{text-align:right;color:var(--muted);font-size:11px}.head .doc-type b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:3px 10px;font-size:11.5px;color:#334155}
+    .chip b{color:var(--ink);font-weight:600}
+    h2{font-size:16px;margin:22px 0 10px;display:flex;align-items:baseline;gap:8px}h2 .count{font-size:12px;color:var(--muted);font-weight:500}
+    .muted{color:var(--muted);font-size:12px}
+    table{border-collapse:separate;border-spacing:0;width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    th,td{padding:9px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
+    tr:last-child td{border-bottom:0}th{background:var(--soft);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+    tbody tr:nth-child(even) td{background:#fcfdfe}
+    .who{display:flex;align-items:center;gap:10px;font-weight:600}
+    .avatar{width:28px;height:28px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .pill-ok{background:#d1fae5;color:#065f46}.pill-wait{background:#fef3c7;color:#92400e}.pill-soft{background:#e2e8f0;color:#334155}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:#475569;word-break:break-all}
+    .num{color:var(--muted);font-variant-numeric:tabular-nums;width:36px}
+    /* Wish lists */
+    .person{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;page-break-inside:avoid}
+    .person .who{margin-bottom:6px}
+    .wish{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px dashed var(--line)}
+    .wish:first-of-type{border-top:0}.wish .price{white-space:nowrap;font-weight:600}.wish .url{display:block}
+    .hints{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .empty{color:var(--muted);font-style:italic}
+    /* Matrix */
+    .matrix{width:auto}.matrix th,.matrix td{text-align:center;padding:6px 8px}
+    .matrix th.row{text-align:left;padding-right:16px;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink)}
+    .matrix th.col{vertical-align:bottom;height:92px}.matrix th.col span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink)}
+    .dot{display:inline-block;width:12px;height:12px;border-radius:999px;background:var(--green);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .x{color:var(--rose);font-weight:700;font-size:15px}.self{color:#cbd5e1}
+    .legend{display:flex;gap:16px;margin-top:10px;font-size:11.5px;color:var(--muted);align-items:center}
+    /* Recap */
+    .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}
+    .chain .who{border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 3px;font-size:12px}
+    .arrow{color:var(--amber);font-size:16px}.loop{color:#94a3b8;font-size:13px}
+    .thanks{border-left:3px solid var(--rose);background:#fff1f2;border-radius:0 10px 10px 0;padding:8px 12px;margin:8px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .thanks small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+    .recap-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.recap-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+    .foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}
     /* Festive invitation card */
     .card{position:relative;border:3px double #b91c1c;border-radius:18px;padding:36px 32px 28px;text-align:center;max-width:520px;margin:40px auto;background:#fffaf5;color:#1f2937}
     .card::before{content:"";position:absolute;inset:8px;border:1px solid #d4a373;border-radius:12px;pointer-events:none}
@@ -505,44 +555,64 @@ function printShell(title, body) {
     .card .facts{display:inline-block;text-align:left;margin:8px auto 0;font-size:14px;line-height:1.6}
     .card .facts b{display:inline-block;min-width:78px;color:#b91c1c}
     .card .link{font-size:11px;color:#555;word-break:break-all;margin-top:12px;font-family:ui-monospace,monospace}
-    .recap-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.recap-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
-    .thanks{border-left:3px solid #b91c1c;padding:6px 10px;margin:6px 0;background:#fff7f7}.thanks small{display:block;color:#666;font-size:11px}
-    @media print{body{margin:12mm}.card{margin:0 auto;page-break-inside:avoid}}
-  </style></head><body>${body}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+    @media print{body{padding:10mm 12mm}.card{margin:0 auto;page-break-inside:avoid}tr{page-break-inside:avoid}}
+  </style></head><body><div class="doc">${body}</div><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
 }
+
+const PRINT_COLORS = ["#059669", "#2563eb", "#d946ef", "#d97706", "#e11d48", "#0ea5e9", "#7c3aed", "#0d9488"];
+const printColor = (name) => { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PRINT_COLORS[h % PRINT_COLORS.length]; };
+const printInitials = (name) => String(name).trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
+const who = (name) => `<span class="who"><span class="avatar" style="background:${printColor(name)}">${escapeHtml(printInitials(name))}</span>${escapeHtml(name)}</span>`;
 
 function openPrint(kind) {
   const g = group;
   const active = g.participants.filter((p) => !p.pending);
-  const head = `<h1>${escapeHtml(g.title)}</h1><p class="muted">${[g.organizerName ? `Organisation: ${escapeHtml(g.organizerName)}` : "", g.eventDate ? `Bescherung: ${escapeHtml(eventLine(g))}` : "", g.budget ? `Budget: ${escapeHtml(g.budget)}` : "", g.motto ? `Motto: ${escapeHtml(g.motto)}` : ""].filter(Boolean).join(" · ")}</p>`;
+  const today = new Date().toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" });
+  const docHead = (type) => `<div class="head"><div><div class="kicker">Wichteln</div><h1>${escapeHtml(g.title)}</h1><div class="chips">${[
+    g.organizerName ? `<span class="chip">Organisation <b>${escapeHtml(g.organizerName)}</b></span>` : "",
+    g.eventDate ? `<span class="chip">Bescherung <b>${escapeHtml(eventLine(g))}</b></span>` : "",
+    g.budget ? `<span class="chip">Budget <b>${escapeHtml(fmtBudget(g))}</b></span>` : "",
+    g.motto ? `<span class="chip">Motto <b>${escapeHtml(g.motto)}</b></span>` : "",
+    `<span class="chip">${active.length} Teilnehmende</span>`,
+  ].filter(Boolean).join("")}</div></div><div class="doc-type"><b>${escapeHtml(type)}</b>${escapeHtml(today)}</div></div>`;
+  const foot = `<div class="foot"><span>${escapeHtml(g.title)} · ${escapeHtml(today)}</span><span>Erstellt mit Advently · mein-adventskalender.ch</span></div>`;
+  const revealed = g.status === "revealed";
   let title = g.title;
   let body = "";
   if (kind === "participants") {
     title = `Teilnehmerliste – ${g.title}`;
-    body = `${head}<h2>Teilnehmerliste (${active.length})</h2><table><tr><th>#</th><th>Name</th><th>E-Mail</th><th>Status</th><th>Persönlicher Link</th></tr>${active.map((p, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.email || "–")}</td><td>${p.joinedAt ? "dabei" : p.invitedAt ? "eingeladen" : "eingetragen"}</td><td style="font-size:11px">${escapeHtml(p.link)}</td></tr>`).join("")}</table>`;
+    const status = (p) => p.joinedAt ? `<span class="pill pill-ok">dabei</span>` : p.invitedAt ? `<span class="pill pill-wait">eingeladen</span>` : `<span class="pill pill-soft">eingetragen</span>`;
+    body = `${docHead("Teilnehmerliste")}<h2>Teilnehmende <span class="count">${active.length} Personen · ${active.filter((p) => p.joinedAt).length} schon dabei</span></h2>
+      <table><thead><tr><th class="num">#</th><th>Name</th><th>E-Mail</th><th>Status</th><th>Persönlicher Link</th></tr></thead><tbody>${active.map((p, i) => `<tr><td class="num">${i + 1}</td><td>${who(p.name)}${p.isOrganizer ? ` <span class="pill pill-soft" style="margin-left:6px">Orga</span>` : ""}</td><td>${escapeHtml(p.email || "–")}</td><td>${status(p)}</td><td class="mono">${escapeHtml(p.link)}</td></tr>`).join("")}</tbody></table>
+      <p class="muted" style="margin-top:10px">Der persönliche Link ist der Zugang zur Runde – bitte nur der jeweiligen Person geben.</p>${foot}`;
   } else if (kind === "wishlists") {
     title = `Wunschzettel – ${g.title}`;
-    body = `${head}<h2>Wunschzettel</h2>${active.map((p) => `<h3 style="margin:16px 0 2px">${escapeHtml(p.name)}</h3>${p.wishlist.length ? `<ul>${p.wishlist.map((w) => `<li>${escapeHtml(w.title || w.url)}${w.price ? ` – ${escapeHtml(w.price)}` : ""}${w.note ? ` <span class="muted">(${escapeHtml(w.note)})</span>` : ""}${w.url ? `<br><span class="muted">${escapeHtml(w.url)}</span>` : ""}</li>`).join("")}</ul>` : `<p class="muted">Leerer Wunschzettel.${[p.hints.allergies, p.hints.favorites, p.hints.hobbies].some(Boolean) ? ` Hinweise: ${escapeHtml([p.hints.allergies && `Allergien: ${p.hints.allergies}`, p.hints.favorites && `Lieblingsgeschmack: ${p.hints.favorites}`, p.hints.hobbies && `Hobbys: ${p.hints.hobbies}`].filter(Boolean).join("; "))}` : ""}</p>`}`).join("")}`;
+    const hints = (p) => [p.hints.allergies && `Allergien: ${p.hints.allergies}`, p.hints.favorites && `Lieblingsgeschmack: ${p.hints.favorites}`, p.hints.hobbies && `Hobbys: ${p.hints.hobbies}`, p.hints.notes && `Sonstiges: ${p.hints.notes}`].filter(Boolean);
+    body = `${docHead("Wunschzettel")}<h2>Wunschzettel <span class="count">${active.filter((p) => p.wishlist.length).length} von ${active.length} ausgefüllt</span></h2>
+      ${active.map((p) => `<div class="person">${who(p.name)}${p.wishlist.length
+        ? p.wishlist.map((w) => `<div class="wish"><div><div>${escapeHtml(w.title || w.url)}${w.note ? ` <span class="muted">– ${escapeHtml(w.note)}</span>` : ""}</div>${w.url ? `<span class="mono url">${escapeHtml(w.url)}</span>` : ""}</div>${w.price ? `<span class="price">${escapeHtml(w.price)}</span>` : ""}</div>`).join("")
+        : `<div class="empty">Noch keine Wünsche eingetragen.</div>`}${hints(p).length ? `<div class="hints">${hints(p).map((h) => `<span class="chip">${escapeHtml(h)}</span>`).join("")}</div>` : ""}</div>`).join("")}${foot}`;
   } else if (kind === "matrix") {
     title = `Ziehungsmatrix – ${g.title}`;
-    const revealed = g.status === "revealed";
     const excluded = (a, b) => g.exclusions.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
-    body = `${head}<h2>${revealed ? "Ziehungsmatrix (Auflösung)" : "Ausschluss-Matrix"}</h2><p class="muted">${revealed ? "Zeile = zieht, Spalte = beschenkt. ● markiert das Los, × einen Ausschluss." : "× = darf sich nicht ziehen (in beide Richtungen). Die Lose werden erst nach der Enthüllung gezeigt."}</p>
-      <table class="matrix"><tr><th class="row">zieht ↓ / beschenkt →</th>${active.map((p) => `<th title="${escapeHtml(p.name)}">${escapeHtml(p.name.slice(0, 3))}</th>`).join("")}</tr>
-      ${active.map((row) => `<tr><th class="row">${escapeHtml(row.name)}</th>${active.map((col) => `<td>${row.id === col.id ? "–" : revealed && row.assignedTo === col.id ? "●" : excluded(row.id, col.id) ? '<span class="x">×</span>' : ""}</td>`).join("")}</tr>`).join("")}</table>`;
+    body = `${docHead(revealed ? "Ziehungsmatrix" : "Ausschluss-Matrix")}<h2>${revealed ? "Wer zieht wen" : "Ausschlüsse"} <span class="count">Zeile zieht, Spalte wird beschenkt</span></h2>
+      <table class="matrix"><thead><tr><th class="row"></th>${active.map((p) => `<th class="col"><span>${escapeHtml(p.name)}</span></th>`).join("")}</tr></thead><tbody>
+      ${active.map((row) => `<tr><th class="row">${who(row.name)}</th>${active.map((col) => `<td>${row.id === col.id ? `<span class="self">–</span>` : revealed && row.assignedTo === col.id ? `<span class="dot"></span>` : excluded(row.id, col.id) ? `<span class="x">×</span>` : ""}</td>`).join("")}</tr>`).join("")}</tbody></table>
+      <div class="legend">${revealed ? `<span><span class="dot"></span> Los: diese Person wird beschenkt</span>` : ""}<span><span class="x">×</span> Ausschluss (in beide Richtungen)</span>${revealed ? "" : `<span>Die Lose erscheinen nach der Enthüllung.</span>`}</div>${foot}`;
   } else if (kind === "card") {
     title = `Einladungskarte – ${g.title}`;
     const qr = inviteCard?.qr || "";
-    const facts = [g.eventDate ? `<b>Wann</b> ${escapeHtml(eventLine(g))}` : "", g.budget ? `<b>Budget</b> ${escapeHtml(g.budget)}` : "", g.motto ? `<b>Motto</b> ${escapeHtml(g.motto)}` : ""].filter(Boolean);
+    const facts = [g.eventDate ? `<b>Wann</b> ${escapeHtml(eventLine(g))}` : "", g.budget ? `<b>Budget</b> ${escapeHtml(fmtBudget(g))}` : "", g.motto ? `<b>Motto</b> ${escapeHtml(g.motto)}` : ""].filter(Boolean);
     body = `<div class="card"><div class="kicker">Einladung zum Wichteln</div><div class="title">${escapeHtml(g.title)}</div><div class="stars">✦ ✦ ✦</div><div>${g.organizerName ? `${escapeHtml(g.organizerName)} lädt dich herzlich ein.` : "Du bist herzlich eingeladen."}</div>${qr ? `<img src="${qr}" alt="QR-Code">` : ""}${facts.length ? `<div class="facts">${facts.join("<br>")}</div>` : ""}<div style="margin-top:14px">QR-Code scannen oder Link öffnen und eintragen:</div><div class="link">${escapeHtml(g.inviteLink)}</div></div>`;
   } else if (kind === "recap") {
     title = `Rückblick – ${g.title}`;
     const thanks = g.thanks || [];
-    const revealed = g.status === "revealed";
-    body = `${head}<h2>Rückblick</h2>
-      ${revealed ? `<h3>Wer hat wen beschenkt?</h3><table><tr><th>Wichtel</th><th>hat beschenkt</th></tr>${active.map((p) => `<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.assignedToName || "?")}</td></tr>`).join("")}</table>` : ""}
-      <h3>Dankeschöns (${thanks.length})</h3>${thanks.length ? thanks.map((t) => `<div class="thanks">${escapeHtml(t.text)}<small>${escapeHtml(t.from)} · ${new Date(t.at).toLocaleDateString("de-DE")}</small></div>`).join("") : `<p class="muted">Noch keine.</p>`}
-      <h3>Fotos (${g.photos.length})</h3>${g.photos.length ? `<div class="recap-photos">${g.photos.map((ph) => `<img src="${escapeHtml(ph.url)}" alt="${escapeHtml(ph.caption || "")}">`).join("")}</div>` : `<p class="muted">Noch keine.</p>`}`;
+    const photos = g.photos || [];
+    const chains = revealed ? drawCycles(active) : [];
+    body = `${docHead("Rückblick")}
+      ${revealed ? `<h2>Wer hat wen beschenkt?</h2>${chains.map((ring) => `<div class="chain">${ring.map((p) => `${who(p.name)}<span class="arrow">→</span>`).join("")}<span class="loop" title="und wieder zur ersten Person">↺</span></div>`).join("")}<p class="muted">Jede Person beschenkt die nächste, die letzte wieder die erste.</p>` : ""}
+      <h2>Dankeschöns <span class="count">${thanks.length}</span></h2>${thanks.length ? thanks.map((t) => `<div class="thanks">${escapeHtml(t.text)}<small>${escapeHtml(t.from)} · ${new Date(t.at).toLocaleDateString("de-CH")}</small></div>`).join("") : `<p class="empty">Noch keine Dankeschöns.</p>`}
+      <h2>Fotos <span class="count">${photos.length}</span></h2>${photos.length ? `<div class="recap-photos">${photos.map((ph) => `<img src="${escapeHtml(ph.url)}" alt="${escapeHtml(ph.caption || "")}">`).join("")}</div>` : `<p class="empty">Noch keine Fotos.</p>`}${foot}`;
   }
   const w = window.open("", "_blank");
   if (!w) return toast("Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.", true);

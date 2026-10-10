@@ -58,7 +58,7 @@ function formatDate(iso) {
 const weekdayLong = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("de-DE", { weekday: "long" });
 const initials = (name) => String(name || "?").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
 const catIcon = { streich: "drama", brief: "mail", geschenk: "gift", aufgabe: "clipboard-list", basteln: "scissors", ruhe: "clock" };
-const money = (n) => `CHF ${(Number(n) || 0).toFixed(2).replace(".00", ".–")}`;
+const money = (n) => `${(typeof data !== "undefined" && data?.currency) || "CHF"} ${(Number(n) || 0).toFixed(2).replace(".00", ".–")}`;
 const WEEKDAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
 async function req(method, path, body, isForm = false) {
@@ -483,7 +483,7 @@ function settingsCard() {
         <p class="text-xs text-slate-500 mt-1">„Jetzt verteilen“ füllt nur Tage ohne Zuteilung. Beim Speichern mit einer Regel ebenfalls.</p>
       </div>` : ""}
       <div class="border-t border-white/10 pt-3 grid sm:grid-cols-2 gap-2">
-        <label class="ui-field"><span class="ui-field__label">Budget für den Monat (CHF, optional)</span><input name="budget" type="number" min="0" step="1" value="${d.budget || ""}" class="w-input" placeholder="z. B. 80"></label>
+        <label class="ui-field"><span class="ui-field__label">Budget für den Monat (${esc(d.currency || "CHF")}, optional)</span><input name="budget" type="number" min="0" step="1" value="${d.budget || ""}" class="w-input" placeholder="z. B. 80"></label>
         <p class="text-xs text-slate-500 self-end pb-2">Kosten trägst du pro Tag im Tagesdialog ein. Die Summe steht in der Einkaufsliste.</p>
       </div>
       <div class="border-t border-white/10 pt-3">
@@ -555,7 +555,7 @@ async function openDay(date) {
     <div data-more-box class="${hasMore ? "" : "hidden"} space-y-2 mt-2">
       <div class="grid grid-cols-3 gap-2">
         <label class="ui-field"><span class="ui-field__label">Aufwand (Min.)</span><input name="minutes" type="number" min="0" max="600" class="ui-input" value="${e.minutes || 0}"></label>
-        <label class="ui-field"><span class="ui-field__label">Kosten (CHF)</span><input name="price" type="number" min="0" step="0.5" class="ui-input" value="${e.price || ""}" placeholder="0"></label>
+        <label class="ui-field"><span class="ui-field__label">Kosten (${esc(data.currency || "CHF")})</span><input name="price" type="number" min="0" step="0.5" class="ui-input" value="${e.price || ""}" placeholder="0"></label>
         <label class="ui-check" style="margin-top:18px"><input type="checkbox" name="prepDayBefore" ${e.prepDayBefore ? "checked" : ""}> <span>Vortag</span></label>
       </div>
       <label class="ui-field"><span class="ui-field__label">Vorbereitung – ein Schritt pro Zeile</span><textarea name="steps" class="ui-input" rows="3" maxlength="1500" placeholder="Teig vorbereiten&#10;Zettel schreiben&#10;Kamera bereitlegen">${esc((e.steps || []).map((s) => s.text).join("\n"))}</textarea></label>

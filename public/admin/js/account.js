@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (user.username) profileForm.elements["username"].value = user.username;
       if (user.company) profileForm.elements["company"].value = user.company;
       profileForm.elements["defaultApp"].value = ["wichteln", "wichteltuer"].includes(user.defaultApp) ? user.defaultApp : "calendar";
+      profileForm.elements["currency"].value = user.currency === "EUR" ? "EUR" : "CHF";
     }).catch(console.error);
 
     profileForm.addEventListener("submit", async (e) => {
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const company = formData.get("company");
 
       try {
-        const res = await api.updateProfile(username, company, formData.get("defaultApp"));
+        const res = await api.updateProfile(username, company, formData.get("defaultApp"), formData.get("currency"));
         profileSuccess.textContent = res.message || "Profil aktualisiert.";
         profileSuccess.classList.remove("hidden");
       } catch (err) {

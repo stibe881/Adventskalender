@@ -30,6 +30,7 @@ function blankGroup(user, owner, b = {}) {
     waitingRoom: true,
     wishlistsShared: false,
     budget: "",
+    currency: require("../../utils/currency").normCurrency(owner?.currency),
     motto: "",
     eventDate: "",
     eventTime: "",
@@ -290,7 +291,7 @@ router.get("/groups/:id/checklist", async (req, res) => {
     { key: "pending", ok: pending.length === 0, label: pending.length ? `${pending.length} im Warteraum – freigeben oder entfernen` : "Niemand wartet im Warteraum", blocking: false },
     { key: "exclusions", ok: possible, label: possible ? "Ausschlüsse lassen eine Auslosung zu" : "Mit diesen Ausschlüssen ist keine Auslosung möglich", blocking: true },
     { key: "date", ok: Boolean(group.eventDate), label: group.eventDate ? `Termin: ${eventLine(group)}` : "Termin der Bescherung fehlt", blocking: false },
-    { key: "budget", ok: Boolean(group.budget), label: group.budget ? `Budget: ${group.budget}` : "Budget ist nicht festgelegt", blocking: false },
+    { key: "budget", ok: Boolean(group.budget), label: group.budget ? `Budget: ${group.budget}${/CHF|EUR|€/i.test(group.budget) ? "" : ` ${group.currency || "CHF"}`}` : "Budget ist nicht festgelegt", blocking: false },
     { key: "email", ok: withoutEmail.length === 0, label: withoutEmail.length ? `${withoutEmail.length} ohne E-Mail – Link direkt teilen` : "Alle haben eine E-Mail-Adresse", blocking: false },
     { key: "invited", ok: notInvited.length === 0, label: notInvited.length ? `${notInvited.length} noch nicht eingeladen` : "Alle sind eingeladen", blocking: false },
   ];

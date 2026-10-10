@@ -1068,8 +1068,8 @@ function renderProductFields(c) {
     fieldWrap("Produkt-Name", `<input id="f-title" value="${escapeHtml(c.title || '')}" class="${inputClass}" />`) +
     getDropzoneHtml("f-product", "Produkt-Bild hochladen (Drag & Drop)", false) +
     `<div id="f-product-preview" class="mt-2 text-sm text-emerald-400 font-bold mb-4">${c.image ? 'Aktuell: Bild vorhanden' : ''}</div>` +
-    fieldWrap("Streichpreis (z.B. 49,99 CHF)", `<input id="f-oldPrice" value="${escapeHtml(c.oldPrice || '')}" class="${inputClass}" />`) +
-    fieldWrap("Aktionspreis (z.B. 29,99 CHF)", `<input id="f-newPrice" value="${escapeHtml(c.newPrice || '')}" class="${inputClass}" />`) +
+    fieldWrap("Streichpreis (nur Zahl, z. B. 49.90 – die Währung kommt aus deinem Profil)", `<input id="f-oldPrice" value="${escapeHtml(c.oldPrice || '')}" class="${inputClass}" />`) +
+    fieldWrap("Aktionspreis (nur Zahl, z. B. 29.90)", `<input id="f-newPrice" value="${escapeHtml(c.newPrice || '')}" class="${inputClass}" />`) +
     fieldWrap("Rabattcode (optional)", `<input id="f-discount" value="${escapeHtml(c.discount || '')}" placeholder="XMAS20" class="${inputClass}" />`) +
     fieldWrap("Kaufen-Button Link", `<input id="f-url" value="${escapeHtml(c.url || '')}" placeholder="https://..." class="${inputClass}" />`);
 

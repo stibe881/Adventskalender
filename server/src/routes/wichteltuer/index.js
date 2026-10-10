@@ -46,7 +46,7 @@ router.get("/plans", requireAuth, async (req, res) => {
 
 router.post("/plans", requireAuth, async (req, res) => {
   const owner = await db.getUserById(req.user.id);
-  const plan = S.newPlan({ ...req.user, username: owner?.username || req.user.username }, req.body || {});
+  const plan = S.newPlan({ ...req.user, username: owner?.username || req.user.username, currency: owner?.currency }, req.body || {});
   const pro = Boolean(owner?.isPro);
   // The automatic plan draws on the idea library, which is a PRO feature.
   if (req.body?.autoplan && pro) S.autoplan(plan);

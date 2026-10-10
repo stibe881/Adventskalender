@@ -927,6 +927,7 @@ router.get("/calendars/:id/preview", async (req, res) => {
   res.json({
     recipientName: calendar.recipientName,
     ownerName: calendar.ownerName,
+    currency: require("../utils/currency").normCurrency((await db.getUserById(calendar.ownerId).catch(() => null))?.currency),
     theme: calendar.theme,
     customConfig: calendar.customConfig,
     randomLayout: calendar.randomLayout,

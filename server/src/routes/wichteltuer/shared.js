@@ -63,6 +63,7 @@ function newPlan(user, b = {}) {
     customIdeas: [],
     assignRule: { mode: "manual", weekdays: {} },
     budget: null,
+    currency: require("../../utils/currency").normCurrency(user?.currency),
     notify: { enabled: true, time: cfg.reminderTimeDefault, emails: [], subscriptions: [] },
     reminderSentFor: [],
     createdAt: new Date().toISOString(),
@@ -378,6 +379,7 @@ function planView(plan, { owner = false, now = new Date(), pro = Boolean(plan.is
     viewLink: viewLink(plan),
     assignRule: plan.assignRule || { mode: "manual", weekdays: {} },
     budget: plan.budget || null,
+    currency: plan.currency || "CHF",
     customIdeas: plan.customIdeas || [],
     notify: { enabled: plan.notify?.enabled !== false, time: plan.notify?.time || cfg.reminderTimeDefault, emails: plan.notify?.emails || [], pushDevices: (plan.notify?.subscriptions || []).length },
     today,
@@ -497,6 +499,7 @@ function rolloverPlan(plan, user, { year, autoplan: doAutoplan = false, set } = 
   next.notify = { ...next.notify, enabled: plan.notify?.enabled !== false, time: plan.notify?.time || cfg.reminderTimeDefault, emails: plan.notify?.emails || [] };
   next.assignRule = plan.assignRule || { mode: "manual", weekdays: {} };
   next.budget = plan.budget || null;
+  next.currency = plan.currency || "CHF";
   next.customIdeas = (plan.customIdeas || []).map((i) => ({ ...i }));
   next.isPro = Boolean(plan.isPro);
   if (doAutoplan) autoplan(next, { set });

@@ -88,7 +88,7 @@ async function renderJoin() {
   document.title = `Wichteln: ${info.title}`;
   const details = [
     info.eventDate ? `<span class="w-chip"><i data-icon="calendar"></i> ${esc(eventLine(info))}</span>` : "",
-    info.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(info.budget)}</span>` : "",
+    info.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(fmtBudget(info))}</span>` : "",
     info.motto ? `<span class="w-chip"><i data-icon="palette"></i> ${esc(info.motto)}</span>` : "",
     `<span class="w-chip"><i data-icon="users"></i> ${info.participantCount} dabei</span>`,
   ].filter(Boolean).join(" ");
@@ -264,9 +264,15 @@ function currencyOf(s) {
   const m = String(s || "").match(/CHF|EUR|€|Fr\.|USD|\$/i);
   return m ? m[0] : "";
 }
+// "20–25" is shown as "20–25 CHF" (or EUR, as the organizer chose in the profile).
+function fmtBudget(g) {
+  const b = String(g?.budget || "").trim();
+  if (!b) return "";
+  return currencyOf(b) ? b : `${b} ${g.currency || "CHF"}`;
+}
 function budgetInfo() {
   const max = parseAmount(data.group.budget);
-  return max ? { max, currency: currencyOf(data.group.budget) } : null;
+  return max ? { max, currency: currencyOf(data.group.budget) || data.group.currency || "CHF" } : null;
 }
 function priceTag(w) {
   const b = budgetInfo();
@@ -410,7 +416,7 @@ function headerCard() {
   const g = data.group;
   const chips = [
     g.eventDate ? `<span class="w-chip"><i data-icon="calendar"></i> ${esc(eventLine(g))}</span>` : "",
-    g.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(g.budget)}</span>` : "",
+    g.budget ? `<span class="w-chip"><i data-icon="wallet"></i> ${esc(fmtBudget(g))}</span>` : "",
     g.motto ? `<span class="w-chip"><i data-icon="palette"></i> ${esc(g.motto)}</span>` : "",
   ].filter(Boolean).join(" ");
   return `<div class="w-card" id="start">
@@ -571,7 +577,7 @@ function recipientCard() {
     <div class="w-big-name mt-1"><i data-icon="gift"></i> ${esc(r.name)}</div>
     <p class="text-xs text-slate-400 mt-1">Psst – das bleibt unter uns.</p>
 
-    ${b ? `<div class="w-budget mt-4"><i data-icon="wallet"></i> <span>Budget <b>${esc(data.group.budget)}</b>${r.wishlist.length ? ` · ${inBudget} von ${r.wishlist.length} Wünschen ${inBudget === 1 ? "passt" : "passen"} ins Budget` : ""}</span></div>` : ""}
+    ${b ? `<div class="w-budget mt-4"><i data-icon="wallet"></i> <span>Budget <b>${esc(fmtBudget(data.group))}</b>${r.wishlist.length ? ` · ${inBudget} von ${r.wishlist.length} Wünschen ${inBudget === 1 ? "passt" : "passen"} ins Budget` : ""}</span></div>` : ""}
 
     ${feat().wishlist ? `<h3 class="font-semibold text-white mt-5 mb-2">Wunschzettel von ${esc(r.name)}</h3>
     ${r.wishlist.length ? `<div class="space-y-2">${r.wishlist.map((w) => wishItem(w, false)).join("")}</div>` : emptyState("clipboard-list", `Noch leer. Die Hinweise helfen dir, nicht ins Blaue zu kaufen${feat().chat ? ` – oder <a href="#chat" class="text-emerald-300 underline">frag anonym nach</a>` : ""}.`)}` : ""}

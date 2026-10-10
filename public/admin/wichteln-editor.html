@@ -97,7 +97,7 @@
         <div class="flex items-end pb-2"><label class="flex items-center gap-2 text-sm text-slate-300"><input type="checkbox" name="organizerParticipates" class="w-4 h-4 rounded bg-slate-900 border-white/10"> Organisator wichtelt mit</label></div>
 
         <div class="sm:col-span-2 border-t border-white/10 pt-4 grid sm:grid-cols-2 gap-4">
-          <div><label class="block text-sm text-slate-300 mb-1">Budget</label><input name="budget" maxlength="40" placeholder="z. B. 20–25 CHF" class="field" /></div>
+          <div><label class="block text-sm text-slate-300 mb-1">Budget</label><div class="flex"><input name="budget" maxlength="40" placeholder="z. B. 20–25" class="field rounded-r-none" /><span id="budget-currency" class="inline-flex items-center px-3 rounded-r-lg border border-l-0 border-white/10 bg-slate-800 text-sm text-slate-300">CHF</span></div><p class="text-xs text-slate-500 mt-1">Währung änderst du in deinem <a href="/admin/account.html" class="underline">Profil</a>.</p></div>
           <div><label class="block text-sm text-slate-300 mb-1">Motto</label><input name="motto" maxlength="120" placeholder="z. B. Selbstgemachtes, Schrottwichteln …" class="field" /></div>
           <div><label class="block text-sm text-slate-300 mb-1">Tag der Bescherung</label><input name="eventDate" type="date" class="field" /></div>
           <div><label class="block text-sm text-slate-300 mb-1">Uhrzeit</label><input name="eventTime" type="time" class="field" /></div>

@@ -135,6 +135,7 @@ function organizerView(group, pro = Boolean(group.isPro)) {
     waitingRoom: group.waitingRoom !== false,
     wishlistsShared: Boolean(group.wishlistsShared),
     budget: group.budget || "",
+    currency: group.currency || "CHF",
     motto: group.motto || "",
     eventDate: group.eventDate || "",
     eventTime: group.eventTime || "",
@@ -187,6 +188,7 @@ function participantView(group, me, pro = Boolean(group.isPro)) {
       title: group.title,
       organizerName: group.organizerName,
       budget: group.budget || "",
+    currency: group.currency || "CHF",
       motto: group.motto || "",
       eventDate: group.eventDate || "",
       eventTime: group.eventTime || "",
@@ -279,6 +281,7 @@ function applySettings(group, body) {
   if (b.waitingRoom !== undefined) group.waitingRoom = Boolean(b.waitingRoom);
   if (b.wishlistsShared !== undefined) group.wishlistsShared = Boolean(b.wishlistsShared);
   if (b.budget !== undefined) group.budget = cleanText(b.budget, cfg.budgetMax);
+  if (b.currency !== undefined) group.currency = require("../../utils/currency").normCurrency(b.currency);
   if (b.motto !== undefined) group.motto = cleanText(b.motto, cfg.mottoMax);
   if (b.eventDate !== undefined) group.eventDate = /^\d{4}-\d{2}-\d{2}$/.test(b.eventDate) ? b.eventDate : "";
   if (b.eventTime !== undefined) group.eventTime = /^\d{2}:\d{2}$/.test(b.eventTime) ? b.eventTime : "";
