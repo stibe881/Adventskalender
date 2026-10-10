@@ -541,12 +541,19 @@ router.post("/calendars/:id/send", async (req, res) => {
   });
   const subject = `${sender} hat dir einen Adventskalender geschenkt`;
   const intro = `${sender} hat einen persönlichen Adventskalender für dich erstellt${calendar.recipientName ? ` – für ${calendar.recipientName}` : ""}.`;
-  const text = `${intro}\n\n${message ? message + "\n\n" : ""}Hier geht es zu deinem Kalender:\n${summary.shareUrl}\n\nTipp: Mit einem kostenlosen Konto unter ${config.baseUrl}/admin/index.html?mode=register&next=${encodeURIComponent(`/c/${calendar.token}`)} findest du den Kalender jederzeit unter „Erhalten“ wieder.`;
+  const accountUrl = `${config.baseUrl}/admin/index.html?mode=register&next=${encodeURIComponent(`/c/${calendar.token}`)}`;
+  const loginUrl = `${config.baseUrl}/admin/index.html?next=${encodeURIComponent(`/c/${calendar.token}`)}`;
+  const text = `${intro}\n\n${message ? message + "\n\n" : ""}Hier geht es zu deinem Kalender:\n${summary.shareUrl}\n\nRegistrieren oder anmelden, damit du den Kalender jederzeit unter „Erhalten“ wiederfindest:\nKonto erstellen: ${accountUrl}\nAnmelden: ${loginUrl}`;
   const html = mail.layout("Ein Adventskalender für dich", `
     <p>${mail.escapeHtml(intro)}</p>
     ${message ? `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #34d399;background:rgba(255,255,255,.04);white-space:pre-wrap">${mail.escapeHtml(message)}</blockquote>` : ""}
-    <p style="margin:24px 0"><a href="${summary.shareUrl}" style="background:#059669;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700">Kalender öffnen</a></p>
-    <p style="font-size:13px;color:#94a3b8">Mit einem kostenlosen Konto findest du den Kalender jederzeit unter „Erhalten“ wieder: <a href="${config.baseUrl}/admin/index.html?mode=register&amp;next=${encodeURIComponent(`/c/${calendar.token}`)}" style="color:#6ee7b7">Konto erstellen</a></p>`);
+    <p style="margin:24px 0"><a href="${summary.shareUrl}" style="background:#059669;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">Kalender öffnen</a></p>
+    <div style="margin:20px 0;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04)">
+      <p style="margin:0 0 12px;font-weight:600;color:#e2e8f0">Kalender in der App behalten</p>
+      <p style="margin:0 0 14px;font-size:13px;color:#94a3b8">Mit einem kostenlosen Konto findest du diesen Kalender jederzeit unter „Erhalten“ wieder, auf dem Handy und am Computer.</p>
+      <a href="${accountUrl.replace(/&/g, "&amp;")}" style="background:#1e293b;border:1px solid #34d399;color:#6ee7b7;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;margin:0 8px 8px 0">Registrieren</a>
+      <a href="${loginUrl.replace(/&/g, "&amp;")}" style="background:#1e293b;border:1px solid rgba(255,255,255,.25);color:#e2e8f0;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;margin:0 0 8px 0">Anmelden</a>
+    </div>`);
   const sent = await mail.sendMail({ to: email, subject, text, html });
   res.json({ ok: true, sent, email, sentTo: [...new Set([...(calendar.sentTo || []), email])] });
 });
