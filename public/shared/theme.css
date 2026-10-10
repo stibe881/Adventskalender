@@ -21,23 +21,30 @@
   --muted: #b4bfd6;
 }
 
+/* The gradient sits on <body>, which grows with the content, and never
+ * repeats: on <html> iOS tiles it once per viewport height, which shows up
+ * as a bright seam on long lists. <html> only carries the bottom colour,
+ * so rubber-band scrolling blends in. */
 html {
   min-height: 100%;
-  background-color: var(--bg-2);
+  background: var(--bg-3);
+}
+body,
+body.bg-slate-950,
+body.bg-slate-900 {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--ink);
+  background-color: transparent !important;
   background-image:
     radial-gradient(900px 520px at 8% -10%, var(--glow-green), transparent 60%),
     radial-gradient(760px 480px at 100% 4%, var(--glow-amber), transparent 60%),
     radial-gradient(700px 500px at 50% 110%, var(--glow-rose), transparent 60%),
-    linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
-  background-attachment: fixed;
+    linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: scroll !important;
+  background-size: 100% 100% !important;
 }
-@supports (-webkit-touch-callout: none) {
-  /* iOS ignores fixed backgrounds: paint the gradient once on the canvas instead. */
-  html { background-attachment: scroll; }
-}
-body,
-body.bg-slate-950,
-body.bg-slate-900 { background: transparent !important; color: var(--ink); }
 
 /* Tailwind surfaces used across the admin pages. */
 .bg-slate-950 { background-color: var(--surface-solid) !important; }
