@@ -135,8 +135,12 @@ html.is-native-app .w-secnav { top: calc(env(safe-area-inset-top) + 8px); }
 .w-todo a:hover { text-decoration: underline; }
 
 /* Thanks */
-.w-thanks { background: rgba(255,255,255,0.05); border-left: 3px solid #f43f5e; border-radius: 0 12px 12px 0; padding: 8px 12px; font-size: 0.9rem; }
-.w-thanks small { display: block; font-size: 0.7rem; color: #94a3b8; margin-top: 2px; }
+/* Thank-you notes read like a chat: others on the left, my own on the right. */
+.w-thanks-list { display: flex; flex-direction: column; gap: 6px; }
+.w-thanks { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: 0.9rem; line-height: 1.4; }
+.w-thanks small { display: block; font-size: 0.68rem; opacity: 0.75; margin-top: 2px; }
+.w-thanks.is-theirs { align-self: flex-start; background: rgba(255,255,255,0.09); border-bottom-left-radius: 4px; }
+.w-thanks.is-mine { align-self: flex-end; background: #065f46; color: #ecfdf5; border-bottom-right-radius: 4px; text-align: right; }
 
 /* Collapsible lists */
 .w-details summary { cursor: pointer; font-weight: 600; color: #fff; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.05); }

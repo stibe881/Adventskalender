@@ -746,7 +746,7 @@ function recapCard() {
       <input name="text" maxlength="400" required class="w-input" placeholder="Ein paar Worte an die Runde oder deinen Wichtel …" autocomplete="off">
       <button class="w-btn w-btn--primary" aria-label="Senden"><i data-icon="check"></i></button>
     </form>` : `<p class="text-xs text-slate-500">Nach der Auslosung freigeschaltet.</p>`}
-    <div class="space-y-2 mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks">${esc(t.text)}<small>${esc(t.from)} · ${timeAgo(t.at)}${t.mine ? ` · <button type="button" class="underline" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : ` · <button type="button" class="underline" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</small></div>`).join("") : ""}</div>
+    <div class="w-thanks-list mt-3" id="thanks-list">${thanks.length ? thanks.map((t) => `<div class="w-thanks ${t.mine ? "is-mine" : "is-theirs"}">${esc(t.text)}<small>${t.mine ? "Du" : esc(t.from)} · ${timeAgo(t.at)}${t.mine ? ` · <button type="button" class="underline" data-act="thanks-delete" data-id="${esc(t.id)}">Löschen</button>` : ` · <button type="button" class="underline" data-act="thanks-report" data-id="${esc(t.id)}" data-text="${esc(t.text)}">Melden</button>`}</small></div>`).join("") : ""}</div>
 
     <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="image"></i> Foto-Wand</h3>
     <form id="photo-form" class="flex flex-wrap gap-2 items-center">
