@@ -318,9 +318,11 @@ router.post("/p/:token/thanks", async (req, res) => {
     };
   }, 201);
   if (!done) return;
-  // The person's secret santa hears about it (still anonymous to the sender).
-  const santa = giverOf(done.group, done.me.id);
-  if (santa) notify("thanks", { group: done.group, p: santa, by: done.me, text }).catch(() => {});
+  // Everybody else in the round hears about the new group chat message.
+  for (const other of activeParticipants(done.group)) {
+    if (other.id === done.me.id) continue;
+    notify("thanks", { group: done.group, p: other, by: done.me, text }).catch(() => {});
+  }
 });
 
 router.delete("/p/:token/thanks/:thanksId", async (req, res) => {

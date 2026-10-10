@@ -366,7 +366,7 @@ test("Wichteln: neue Wünsche, Hinweise und Geschenk-Schritte lösen Push und E-
 
 test("Wichteln: ein neues Foto an der Foto-Wand benachrichtigt alle anderen per Push und E-Mail", async (t) => {
   const h = await startApp();
-  const { call, mails, pushed, db, base } = h;
+  const { call, anon, mails, pushed, db, base } = h;
   t.after(h.stop);
   let r = await call("POST", "/api/wichteln/groups", { title: "Team", organizerName: "Stefan", inviteMode: "email", organizerParticipates: true });
   const gid = r.d.id;
@@ -395,6 +395,15 @@ test("Wichteln: ein neues Foto an der Foto-Wand benachrichtigt alle anderen per 
   assert.ok(mails[0].text.includes("Anna") && mails[0].text.includes("Prost!"));
   assert.equal(pushed.length, 1, "Ben has a push subscription");
   assert.ok(pushed[0].payload.body.includes("Anna"));
+  // Group chat: everybody else gets push and mail too
+  mails.length = 0; pushed.length = 0;
+  const rc = await anon("POST", `/api/wichteln/p/${anna.token}/thanks`, { acceptTerms: true, text: "Danke euch allen!" });
+  assert.equal(rc.status, 201);
+  await wait(150);
+  assert.deepEqual(mails.map((m) => m.to).sort(), toMail, "same recipients as the photo wall");
+  assert.ok(mails[0].subject.includes("Gruppenchat"), mails[0].subject);
+  assert.equal(pushed.length, 1);
+  assert.ok(pushed[0].payload.body.includes("Danke euch allen"));
   // Clean up the uploaded file
   const fs = require("fs");
   const config = require(path.join(SRC, "config"));
