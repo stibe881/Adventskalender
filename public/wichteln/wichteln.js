@@ -304,16 +304,100 @@ const IDEA_RULES = [
   [/auto|motorrad|oldtimer/i, "Pflege-Set fürs Fahrzeug oder ein Modell"],
   [/kinder|baby|familie/i, "Ein Erlebnis für die ganze Familie"],
 ];
+// A pool of more than a hundred ideas for every budget. Four at a time;
+// "Neue Ideen" deals four fresh ones until the pool is used up.
+const IDEA_POOL = [
+  // Genuss
+  "Gute Schokolade aus einer kleinen Manufaktur", "Kaffee von einer lokalen Rösterei", "Feine Tee-Auswahl mit Sieb", "Ein Glas selbstgemachte Konfitüre",
+  "Olivenöl, Balsamico oder ein Gewürz-Set", "Honig vom Imker aus der Region", "Eine Flasche Wein mit persönlicher Notiz", "Craft-Bier-Probierpaket",
+  "Gin oder Likör in der kleinen Flasche", "Handgemachte Pralinen", "Ein Käse-Paket vom Hofladen", "Hot-Chocolate-Set mit Marshmallows",
+  "Knabbereien für den Filmabend", "Frühstücks-Paket: Granola, Nussmus, Konfitüre", "Gewürzmischung fürs Lieblingsgericht", "Chili-Sauce oder Senf vom Markt",
+  "Ein Dutzend Guetzli, selbst gebacken", "Trockenfrüchte und Nüsse in der hübschen Dose", "Sirup oder Limonade aus der Region", "Eine Tafel Weihnachtsschokolade mit Namen",
+  // Erlebnis & Zeit
+  "Gutschein für ein gemeinsames Erlebnis", "Kino-Gutschein mit Popcorn", "Eintritt in ein Museum oder eine Ausstellung", "Gutschein für ein Kaffee-Date",
+  "Konzert- oder Theater-Gutschein", "Ein Nachmittag im Thermalbad", "Kletterhalle, Bowling oder Minigolf", "Ein Kochkurs oder Backkurs",
+  "Escape-Room zu zweit", "Gutschein für die Lieblingsbäckerei", "Eine Schlittelfahrt mit Fondue", "Ein Picknick-Gutschein für den Frühling",
+  "Eine Stunde Zeit: Hilfe beim Umzug, Garten oder Basteln", "Ein selbst gemachter Gutschein für ein Nachtessen", "Eintritt in den Zoo oder Tierpark", "Gutschein für die Eisbahn",
+  // Zuhause
+  "Eine Duftkerze aus Sojawachs", "Schöne Kaffeetasse mit Spruch", "Ein kuscheliges Plaid", "Pflanze im hübschen Topf",
+  "Hübsche Servietten mit Kerzen", "Ein Puzzle mit 500 Teilen", "Schneidebrett aus Holz", "Ein Kalender fürs neue Jahr",
+  "Thermosbecher für unterwegs", "Ein gutes Küchenmesser", "Bettsocken oder Hausfinken", "Teelicht-Halter aus Glas oder Keramik",
+  "Ein Fotorahmen mit gemeinsamem Bild", "Schöne Vase für den Frühling", "Wärmekissen mit Kirschkernen", "Tee-Ei oder Teekanne",
+  "Kräutertopf fürs Fensterbrett", "Ein Türkranz oder Adventsschmuck", "Kissenbezug in der Lieblingsfarbe", "Gewürz-Mühle für Salz oder Pfeffer",
+  // Wohlfühlen
+  "Badezusatz oder Badebombe", "Handcreme und Lippenpflege für den Winter", "Massage-Gutschein", "Ein gutes Stück Seife, handgemacht",
+  "Raumduft oder Duftstäbchen", "Wärmflasche mit Strickbezug", "Schlafmaske und Tee für den Abend", "Ein Meditations- oder Yoga-Kurs",
+  "Augenkissen mit Lavendel", "Ein Trockenshampoo-Set für Reisen", "Gesichtsmaske und Gurkenwasser", "Fussbad-Salz mit Rosmarin",
+  // Lesen, Schreiben, Spielen
+  "Ein Buch aus dem Lieblingsgenre", "Lesezeichen aus Leder oder Metall", "Notizbuch und schöner Stift", "Ein Kartenspiel für den Abend",
+  "Ein kleines Brettspiel für zwei", "Rätsel- oder Sudoku-Heft", "Ein Comic oder Graphic Novel", "Ein Kochbuch mit Weltküche",
+  "Hörbuch-Gutschein", "Tagebuch mit Fragen für jeden Tag", "Ein Magazin-Abo für drei Monate", "Postkarten-Set für Lieblingsmenschen",
+  // Draussen & Sport
+  "Warme Wollsocken", "Mütze oder Stirnband", "Handschuhe mit Touchscreen-Fingern", "Thermosflasche für die Wanderung",
+  "Wanderkarte der Region", "Stirnlampe für den Winterabend", "Trinkflasche aus Edelstahl", "Sportsocken oder Schweissband",
+  "Ein Velo-Licht oder Flickzeug", "Taschenwärmer für kalte Tage", "Gutschein für die Kletterhalle", "Eine Yogamatte oder ein Yoga-Gurt",
+  "Ein Sitzkissen für draussen", "Regenschirm in Lieblingsfarbe", "Sonnenbrille fürs Skifahren", "Ein Picknick-Besteck für unterwegs",
+  // Technik & Nützliches
+  "Eine Powerbank", "Kabel-Organizer für die Tasche", "Bluetooth-Tracker für den Schlüssel", "Schöne Handyhülle",
+  "Kopfhörer-Etui oder Kabelbox", "Ein USB-Stick in Holzoptik", "Smarte Steckdose oder Lichterkette", "Ein Bildschirm-Reinigungsset",
+  "Kleines Multitool oder Taschenmesser", "Lesebrille mit Etui", "Schlüsselanhänger mit Gravur", "Portemonnaie-Karte aus Metall",
+  // Selbstgemacht & Persönlich
+  "Selbstgemachtes: Marmelade, Granola, Likör oder Guetzli", "Ein Fotobuch mit gemeinsamen Erinnerungen", "Eine Playlist mit handgeschriebenem Cover", "Ein Glas voller Komplimente",
+  "Backmischung im Glas", "Gestrickte Mütze oder Schal", "Ein selbst gemaltes Bild oder Lettering", "Badesalz, selbst gemischt",
+  "Ein Rezeptbuch mit Lieblingsrezepten", "Samenbomben für den Balkon", "Ein gerahmtes Lieblingszitat", "Selbstgegossene Kerze",
+  // Für Haustiere, Kinder, Familie
+  "Leckerli oder Spielzeug für den Vierbeiner", "Ein Erlebnis für die ganze Familie", "Ein Bilderbuch oder Vorlesebuch", "Bastel-Set für den Winterabend",
+  // Kurios & Spass
+  "Lustige Socken mit Motiv", "Ein Mini-Zimmerpflanzen-Set", "Ein Wackel-Dackel fürs Büro", "Keksausstecher in Weihnachtsform",
+  "Ein Glücksspiel-Set: Rubbellose", "Ein Wachstums-Kristall-Set", "Eine Bürotasse mit Anti-Montag-Spruch", "Ein Retro-Süssigkeiten-Paket",
+  "Ein Mini-Zen-Garten", "Pflanz-dein-eigenes-Chili-Set", "Ein Dankeschön-Set: Tee, Guetzli, Karte", "Ein Spiel für die Firmen-Pause",
+];
+
+let ideaSeen = [];
 function giftIdeas(r) {
   const text = [r.hints?.hobbies, r.hints?.favorites, r.hints?.notes].filter(Boolean).join(" ");
-  const ideas = [];
-  for (const [re, idea] of IDEA_RULES) if (re.test(text) && !ideas.includes(idea)) ideas.push(idea);
   const motto = data.group.motto || "";
-  if (/selbstgemacht|diy|handmade/i.test(motto)) ideas.unshift("Selbstgemachtes: Marmelade, Granola, Likör oder Guetzli");
-  if (/schrott|weisser elefant|white elephant/i.test(motto)) ideas.unshift("Das kurioseste Ding aus dem eigenen Keller");
-  if (/regional|lokal/i.test(motto)) ideas.unshift("Etwas vom Wochenmarkt oder aus dem Hofladen");
-  if (!ideas.length) ideas.push("Gutschein für ein gemeinsames Erlebnis", "Etwas Regionales vom Wochenmarkt", "Eine Duftkerze oder gute Schokolade");
-  return ideas.slice(0, 4);
+  const first = [];
+  if (/selbstgemacht|diy|handmade/i.test(motto)) first.push("Selbstgemachtes: Marmelade, Granola, Likör oder Guetzli");
+  if (/schrott|weisser elefant|white elephant/i.test(motto)) first.push("Das kurioseste Ding aus dem eigenen Keller");
+  if (/regional|lokal/i.test(motto)) first.push("Etwas vom Wochenmarkt oder aus dem Hofladen");
+  for (const [re, idea] of IDEA_RULES) if (re.test(text) && !first.includes(idea)) first.push(idea);
+  // Matching ideas first (in random order), then random ones from the pool,
+  // without repeating what was shown until everything has been dealt.
+  const fresh = (list) => shuffle(list.filter((i) => !ideaSeen.includes(i)));
+  let pick = fresh(first).slice(0, 4);
+  let pool = fresh(IDEA_POOL.filter((i) => !pick.includes(i)));
+  if (pick.length + pool.length < 4) { ideaSeen = []; pool = shuffle(IDEA_POOL.filter((i) => !pick.includes(i))); }
+  pick = pick.concat(pool.slice(0, 4 - pick.length));
+  ideaSeen = ideaSeen.concat(pick);
+  return pick;
+}
+
+function bindIdeas() {
+  const btn = document.querySelector("[data-act='new-ideas']");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const box = document.getElementById("ideas");
+    box.innerHTML = ideasBlock(data.recipient);
+    haptic("light");
+    bindIdeas();
+  });
+}
+
+function shuffle(list) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function ideasBlock(r) {
+  const ideas = giftIdeas(r);
+  const hinted = ideas.some((i) => IDEA_RULES.some(([, idea]) => idea === i));
+  return `<div class="flex items-center justify-between gap-2 mt-5 mb-2">
+      <h3 class="font-semibold text-white"><i data-icon="lightbulb"></i> Ideen${hinted ? " aus den Hinweisen" : ""}</h3>
+      <button type="button" class="w-btn w-btn--ghost w-btn--sm" data-act="new-ideas"><i data-icon="shuffle"></i> Neue Ideen</button>
+    </div>
+    <div class="flex flex-wrap gap-2">${ideas.map((i) => `<span class="w-chip w-chip--idea">${esc(i)}</span>`).join("")}</div>`;
 }
 
 function emptyState(iconName, text) {
@@ -571,7 +655,6 @@ function recipientCard() {
   const gs = data.me.giftStatus;
   const b = budgetInfo();
   const inBudget = b ? r.wishlist.filter((w) => { const p = parseAmount(w.price); return p !== null && p <= b.max; }).length : 0;
-  const ideas = giftIdeas(r);
   return `<div class="w-card w-card--gift">
     <p class="text-xs text-emerald-300 uppercase tracking-widest font-semibold">Du beschenkst</p>
     <div class="w-big-name mt-1"><i data-icon="gift"></i> ${esc(r.name)}</div>
@@ -585,8 +668,7 @@ function recipientCard() {
     ${feat().hints ? `<h3 class="font-semibold text-white mt-5 mb-2">Hinweise</h3>
     ${hintsBlock(r.hints)}` : ""}
 
-    <h3 class="font-semibold text-white mt-5 mb-2"><i data-icon="lightbulb"></i> Ideen${r.hints?.hobbies || r.hints?.favorites ? " aus den Hinweisen" : ""}</h3>
-    <div class="flex flex-wrap gap-2">${ideas.map((i) => `<span class="w-chip w-chip--idea">${esc(i)}</span>`).join("")}</div>
+    <div id="ideas">${ideasBlock(r)}</div>
 
     <h3 class="font-semibold text-white mt-5 mb-1">Dein Geschenk-Status</h3>
     <p class="text-xs text-slate-400 mb-2">Persönliche Übergabe oder Versand per Post – hak ab, wie weit du bist. ${esc(r.name)} sieht nur die Vorfreude-Anzeige, nie von wem sie kommt.</p>
@@ -992,6 +1074,7 @@ function bindEvents() {
     }
   }));
   bindSafety();
+  bindIdeas();
   document.querySelectorAll("button[data-act='remove-photo']").forEach((b) => b.addEventListener("click", async () => {
     if (!(await UI.confirm({ title: "Foto löschen?", text: "Das Foto verschwindet für alle aus der Foto-Wand.", ok: "Löschen", danger: true }))) return;
     try {
