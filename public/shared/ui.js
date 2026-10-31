@@ -139,12 +139,14 @@
   // The same "what do I get" dialog for calendars, Wichteln and Wichteltür.
   // points: [[icon, text], …]; resolves true when the person wants to pay.
   function proDialog({ title = "PRO freischalten", scope = "", price = "", points = [], ok = "Weiter zur Bezahlung" } = {}) {
+    if (window.__NATIVE_APP) return Promise.resolve(false); // no external payment in the store apps (App Store 3.1.1)
     const body = `<p class="ui-dialog__text">Einmalig${price ? ` ${esc(price)}` : ""}${scope ? ` für ${esc(scope)}` : ""} – alle Funktionen zusammen, nicht je Funktion.</p>
       <ul class="w-pro-list">${points.map(([ic, t]) => `<li><i data-icon="${esc(ic)}"></i><span>${esc(t)}</span></li>`).join("")}</ul>`;
     return openDialog({ title, body, ok: price ? `${ok} – ${price}` : ok }).then((r) => r !== null);
   }
   // Hands the Stripe page to the app (browser sheet that comes back) or navigates.
   function openCheckout(url) {
+    if (window.__NATIVE_APP) return; // purchases are not offered inside the store apps
     if (window.__NATIVE_APP && typeof window.nativeCheckout === "function") window.nativeCheckout(url);
     else window.location.href = url;
   }
