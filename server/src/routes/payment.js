@@ -57,6 +57,8 @@ router.post("/checkout", express.json(), requireAuth, async (req, res) => {
     // From the iOS/Android app: Stripe runs in a browser sheet, the return
     // page then hands the user back to the app instead of the web version.
     const inApp = Boolean(body.app);
+    // App Store 3.1.1: no purchases outside In-App Purchase inside the store apps.
+    if (inApp) return res.status(403).json({ error: "PRO kann in der App nicht gekauft werden." });
     const kind = body.kind || (body.calendarId ? "calendar" : "");
     const id = body.id || body.calendarId;
     const def = KINDS[kind];

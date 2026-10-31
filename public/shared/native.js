@@ -20,6 +20,8 @@
     html.is-native-app #digital-pet { bottom: calc(env(safe-area-inset-bottom) + 16px) !important; }
     html.is-native-app .w-toast, html.is-native-app .toast { bottom: calc(env(safe-area-inset-bottom) + 24px) !important; }
     html.is-native-app a { -webkit-touch-callout: none; }
+    /* App Store 3.1.1: no purchase flow outside In-App Purchase – PRO is bought on the web only. */
+    html.is-native-app #upgrade-btn, html.is-native-app .btn-pro, html.is-native-app .w-btn--pro, html.is-native-app .ui-btn--pro, html.is-native-app [data-act="upgrade"] { display: none !important; }
     html.is-native-app * { -webkit-tap-highlight-color: transparent; }
   `;
   document.head.appendChild(style);
