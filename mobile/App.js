@@ -62,6 +62,15 @@ function pathFromDeepLink(url) {
   return null;
 }
 
+// Push payloads may carry a relative path or a full URL; always return a path on our server.
+function pathFromPush(url) {
+  if (typeof url !== "string" || !url) return null;
+  if (/^https?:\/\//i.test(url)) {
+    try { const u = new URL(url); return u.origin === SERVER_ORIGIN ? u.pathname + u.search + u.hash : null; } catch (_) { return null; }
+  }
+  return url.startsWith("/") && !url.startsWith("//") ? url : `/${url}`;
+}
+
 async function registerForPush() {
   if (!Device.isDevice || !Notifications) return null;
   try {
@@ -105,7 +114,7 @@ function Shell() {
       const launchUrl = await Linking.getInitialURL();
       const lastNotification = Notifications ? await Notifications.getLastNotificationResponseAsync().catch(() => null) : null;
       const fromNotification = lastNotification?.notification?.request?.content?.data?.url;
-      setInitialPath(pathFromDeepLink(launchUrl) || (typeof fromNotification === "string" ? fromNotification : null) || "/");
+      setInitialPath(pathFromDeepLink(launchUrl) || pathFromPush(fromNotification) || "/");
     })();
   }, []);
 
@@ -122,8 +131,8 @@ function Shell() {
   useEffect(() => {
     if (!Notifications) return undefined;
     const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
-      const url = resp.notification.request.content.data?.url;
-      if (typeof url === "string") navigateTo(url);
+      const path = pathFromPush(resp.notification.request.content.data?.url);
+      if (path) navigateTo(path);
     });
     return () => sub.remove();
   }, [navigateTo]);
