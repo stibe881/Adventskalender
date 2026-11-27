@@ -37,9 +37,13 @@ if (!IN_EXPO_GO) {
   }
 }
 
+// expo-print (AirPrint) only exists in builds that ship it; older builds fall back to an in-page preview.
+let Print = null;
+try { Print = require("expo-print"); } catch (_) { Print = null; }
+
 // Runs inside the page before anything else: tells native.js it lives in the app.
 const INJECTED_BEFORE_LOAD = `
-  window.__NATIVE_APP = { platform: ${JSON.stringify(Platform.OS)}, runtime: "expo" };
+  window.__NATIVE_APP = { platform: ${JSON.stringify(Platform.OS)}, runtime: "expo", print: ${Print ? "true" : "false"} };
   true;
 `;
 
@@ -202,6 +206,10 @@ function Shell() {
       case "download":
         // ICS / PDF: hand over to the system so the OS offers the right app.
         if (typeof msg.url === "string") Linking.openURL(msg.url).catch(() => WebBrowser.openBrowserAsync(msg.url));
+        break;
+      case "print":
+        // Letters, plans, shopping lists: the system print dialog (AirPrint / PDF share).
+        if (Print && typeof msg.html === "string") Print.printAsync({ html: msg.html }).catch(() => {});
         break;
       case "requestPushToken": {
         if (!pushToken.current) pushToken.current = await registerForPush();

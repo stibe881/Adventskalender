@@ -78,10 +78,46 @@
     setTimeout(() => { window.removeEventListener("native-message", onMsg); resolve(null); }, 15000);
   });
 
-  // Print views can't open pop-ups in the WebView: open them as normal navigation instead.
+  // Print views write their HTML into window.open("") – a pop-up the WebView can't show
+  // (blank page). Collect the HTML instead: the app prints it natively (expo-print),
+  // older builds show it in an in-page preview with a share button.
+  function showPrintPreview(html) {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)";
+    const bar = document.createElement("div");
+    bar.style.cssText = "display:flex;gap:8px;justify-content:space-between;padding:10px 12px;background:#0b1120;border-bottom:1px solid #1e293b";
+    const mk = (label, fn) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.style.cssText = "background:#334155;color:#fff;border:0;border-radius:10px;padding:10px 16px;font:600 15px system-ui"; b.onclick = fn; return b; };
+    const frame = document.createElement("iframe");
+    frame.setAttribute("sandbox", ""); // no scripts: the auto-print script of the page must not run
+    frame.style.cssText = "flex:1;border:0;width:100%;background:#fff";
+    const fit = '<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:14px!important}.letter,.letter--big{width:auto!important;max-width:100%!important;box-sizing:border-box}table{display:block;overflow-x:auto}img{max-width:100%}</style>';
+    frame.srcdoc = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<\/head>/i, fit + "</head>");
+    const close = mk("Schließen", () => wrap.remove());
+    const share = mk("Teilen", () => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      send({ type: "share", title: doc.title || "Advently", text: (doc.body.innerText || doc.body.textContent || "").trim() });
+    });
+    bar.append(close, share);
+    wrap.append(bar, frame);
+    document.body.appendChild(wrap);
+  }
+  function printWindowStub() {
+    let html = "";
+    const stub = {
+      document: { open() {}, write(h) { html += String(h); }, writeln(h) { html += String(h) + "\n"; }, close() {
+        if (!html) return;
+        const out = html; html = "";
+        if (native.print) send({ type: "print", html: out }); else showPrintPreview(out);
+      } },
+      focus() {}, print() {}, close() {}, closed: false,
+    };
+    return stub;
+  }
+
+  // Other pop-ups: open them as normal navigation instead.
   const origOpen = window.open;
   window.open = function (url, target, features) {
-    if (!url || url === "" || url === "about:blank") return origOpen.call(window, url, target, features);
+    if (!url || url === "" || url === "about:blank") return printWindowStub();
     try {
       const u = new URL(url, window.location.href);
       if (u.origin === window.location.origin) { window.location.href = u.href; return null; }

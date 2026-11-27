@@ -729,11 +729,21 @@ async function planIdea(ideaId) {
 async function autoplanDialog() {
   await loadLibrary();
   const list = sets || [{ id: "klassik", title: "Klassischer Dezember", desc: "" }];
+  // The kids' ages always steer the picks; the set is only the style. Pre-select what fits.
+  const ages = data.children.map((c) => c.age).filter((a) => a !== null && a !== undefined);
+  const has = (id) => list.some((x) => x.id === id);
+  let preset = "klassik";
+  if (ages.length && Math.max(...ages) <= 5 && has("kleinkinder")) preset = "kleinkinder";
+  else if (ages.length && Math.min(...ages) >= 6 && has("schulkinder")) preset = "schulkinder";
+  const mixed = ages.length > 1 && Math.max(...ages) - Math.min(...ages) >= 3;
+  const ageHint = mixed
+    ? "Das Alter der Kinder wird immer berücksichtigt. Bei Kindern verschiedenen Alters passt „Klassischer Dezember“ am besten."
+    : "Das Alter der Kinder wird immer berücksichtigt.";
   const r = await UI.form({
     title: data.stats.planned ? "Lücken automatisch füllen" : "Alle 24 Nächte automatisch planen",
     text: "Passend zum Alter der Kinder, mit Abwechslung, aufwendigen Ideen am Wochenende und einem Ruhetag pro Woche. Du kannst danach alles ändern.",
     ok: "Planen",
-    fields: [{ name: "set", type: "select", label: "Welcher Monat soll es werden?", options: list.map((s) => ({ value: s.id, label: s.desc ? `${s.title} – ${s.desc}` : s.title })), value: "klassik" }],
+    fields: [{ name: "set", type: "select", label: "Welcher Monat soll es werden?", hint: ageHint, options: list.map((s) => ({ value: s.id, label: s.desc ? `${s.title} – ${s.desc}` : s.title })), value: preset }],
   });
   if (!r) return;
   await update("POST", "/autoplan", { set: r.set });
