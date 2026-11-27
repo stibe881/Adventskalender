@@ -21,6 +21,9 @@
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
       }
     }
   },
