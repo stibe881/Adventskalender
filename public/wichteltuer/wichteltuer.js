@@ -684,7 +684,7 @@ async function newIdea() {
 }
 
 async function pickTemplate(date, childId) {
-  if (!feat().letters) { toast("Briefe schreiben gibt es in der PRO-Version.", true); return null; }
+  if (!feat().letters) { toast("Briefe schreiben ist in dieser Wichteltür nicht verfügbar.", true); return null; }
   await loadLibrary();
   const r = await UI.form({
     title: "Briefvorlage",

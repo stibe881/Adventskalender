@@ -322,7 +322,7 @@ let currentChart = null;
 
 window.showAnalytics = async (id, calIsPro = false) => {
   if (!isProUser && !calIsPro) {
-    alert("Diese Funktion ist nur für PRO-Kalender verfügbar.");
+    alert("Diese Funktion ist für diesen Kalender nicht verfügbar.");
     return;
   }
   try {
