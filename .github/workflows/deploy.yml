@@ -1,0 +1,42 @@
+# Deployt den Server auf das Hetzner-Webhosting (Passenger), sobald der Standard-Branch aktualisiert wird.
+# Benötigte GitHub-Secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST      Hostname des Webhostings, z. B. www123.your-server.de
+#   DEPLOY_USER      SSH-Benutzer des Webhostings
+#   DEPLOY_PATH      Projektordner auf dem Server (Git-Checkout dieses Repositories)
+#   DEPLOY_SSH_KEY   privater SSH-Schlüssel (nur für diesen Zweck angelegt)
+#   DEPLOY_KNOWN_HOSTS  Ausgabe von: ssh-keyscan -t ed25519 <DEPLOY_HOST>
+name: Deploy
+
+on:
+  push:
+    branches: [claude/advent-calendar-app-r25zbx]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH vorbereiten
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Auf dem Server aktualisieren und neu starten
+        run: |
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "set -e; cd '${{ secrets.DEPLOY_PATH }}' && git pull --ff-only && npm ci --omit=dev && npm run build:css && mkdir -p tmp && touch tmp/restart.txt"
