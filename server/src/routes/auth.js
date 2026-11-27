@@ -147,7 +147,7 @@ router.get("/me", requireAuth, async (req, res) => {
   if (req.user.app && Date.now() / 1000 - (req.user.iat || 0) > 24 * 60 * 60) {
     setAuthCookie(res, signUserToken(user, { remember: true, app: true }));
   }
-  res.json({ ok: true, email: user.email, isPro: user.isPro, proPrice: require("../utils/pro").proPriceLabel(), username: user.username, company: user.company, defaultApp: normalizeDefaultApp(user.defaultApp), currency: require("../utils/currency").normCurrency(user.currency) });
+  res.json({ ok: true, email: user.email, isPro: require("../utils/pro").effectivePro(user.isPro), proPrice: require("../utils/pro").proPriceLabel(), username: user.username, company: user.company, defaultApp: normalizeDefaultApp(user.defaultApp), currency: require("../utils/currency").normCurrency(user.currency) });
 });
 
 // Which app opens after login: calendar, Wichteln (Secret Santa) or Wichteltür (elf planner).

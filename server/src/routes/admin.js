@@ -1,4 +1,5 @@
 const express = require("express");
+const { effectivePro } = require("../utils/pro");
 const path = require("path");
 const crypto = require("crypto");
 const multer = require("multer");
@@ -423,7 +424,7 @@ function toSummary(cal) {
     swissMode: Boolean(cal.swissMode),
     collaborators: cal.collaborators || [],
     sentTo: cal.sentTo || [],
-    isPro: Boolean(cal.isPro),
+    isPro: effectivePro(cal.isPro),
     bonusUnlock: bonusRule(cal),
     referrals: cal.referrals || 0,
     period: cal.period || null,
@@ -770,7 +771,7 @@ router.put("/calendars/:id", async (req, res) => {
     if (customConfig !== undefined) {
       cal.customConfig = customConfig;
       // Strip PRO features if user and calendar are not PRO
-      if (!req.user.isPro && !cal.isPro && cal.customConfig) {
+      if (!effectivePro(req.user.isPro) && !cal.isPro && cal.customConfig) {
         delete cal.customConfig.logo;
         delete cal.customConfig.logoUrl;
         delete cal.customConfig.firmaColor;

@@ -36,6 +36,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(require("./utils/pro").nativeAppMiddleware);
 
 // Payment routes must be mounted AFTER cookieParser (so requireAuth has cookies)
 // but BEFORE express.json (so Stripe Webhook can read the raw body)
