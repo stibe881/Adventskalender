@@ -825,11 +825,15 @@ function openPrint(kind) {
   w.document.write(printShell(title, body));
   w.document.close();
 }
-function printLetterText(text, footer, title) {
+// Ein einzelner Brief (A6): erst die drei Vorlagen mit Live-Vorschau, dann Druck.
+async function printLetterText(text, datum, title, kinder) {
   if (!String(text || "").trim()) return toast("Der Brief ist noch leer.", true);
+  const ctx = { text, datum, wichtel: data.elf.name, kinder: kinder || data.children.map((c) => c.name) };
+  const tpl = await window.LetterTemplates.choose(ctx);
+  if (!tpl) return;
   const w = window.open("", "_blank");
   if (!w) return toast("Pop-up blockiert – bitte Pop-ups für diese Seite erlauben.", true);
-  w.document.write(printShell(title, `<div class="letter letter--big">${esc(text)}<small>${esc(footer)}</small></div><p class="fold">Tipp: Zweimal falten, dann passt der Brief unter die Wichteltür. Für das Mini-Format „Alle Briefe“ im Tab Wichtel drucken.</p>`));
+  w.document.write(window.LetterTemplates.render(tpl, ctx, { print: true }));
   w.document.close();
 }
 function printLetter(date) {
@@ -840,7 +844,7 @@ function printLetter(date) {
 function printPost(id) {
   const l = data.post.find((p) => p.id === id);
   if (!l) return;
-  printLetterText(l.text, `${data.elf.name}${l.childName ? ` an ${l.childName}` : ""} · ${formatDate(l.at.slice(0, 10))}`, `Brief von ${data.elf.name}`);
+  printLetterText(l.text, formatDate(l.at.slice(0, 10)), `Brief von ${data.elf.name}`, l.childName ? [l.childName] : null);
 }
 
 // ── Events ──────────────────────────────────────────────────────────────────
