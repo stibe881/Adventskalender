@@ -121,7 +121,7 @@ function photoView(group, ph, me) {
 // organizer can take part without knowing the draw.
 const { proPriceLabel } = require("../../utils/pro");
 
-function organizerView(group, pro = Boolean(group.isPro)) {
+function organizerView(group, pro = require("../../utils/pro").effectivePro(group.isPro)) {
   const revealed = group.status === "revealed";
   return {
     id: group.id,
@@ -175,7 +175,7 @@ function organizerView(group, pro = Boolean(group.isPro)) {
   };
 }
 
-function participantView(group, me, pro = Boolean(group.isPro)) {
+function participantView(group, me, pro = require("../../utils/pro").effectivePro(group.isPro)) {
   const drawn = isDrawn(group);
   const target = drawn ? findParticipant(group, me.assignedTo) : null;
   const santa = drawn ? giverOf(group, me.id) : null;

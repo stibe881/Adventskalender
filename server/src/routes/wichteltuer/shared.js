@@ -352,7 +352,7 @@ function libraryFor(plan, list) {
   return plan.swissMode ? convertContent(list, true) : list;
 }
 
-function planView(plan, { owner = false, now = new Date(), pro = Boolean(plan.isPro) } = {}) {
+function planView(plan, { owner = false, now = new Date(), pro = require("../../utils/pro").effectivePro(plan.isPro) } = {}) {
   const today = todayIso(now);
   const features = proFeatures(pro);
   const dates = seasonDates(plan.year);

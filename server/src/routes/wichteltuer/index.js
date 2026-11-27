@@ -16,7 +16,7 @@ const { requireAuth, COOKIE_NAME } = require("../../middleware/auth");
 const { generateToken, generateId } = require("../../utils/token");
 const { cleanText } = require("../../utils/wichtel");
 const { convertText } = require("../../utils/swiss");
-const { isProItem, proOrDeny } = require("../../utils/pro");
+const { isProItem, proOrDeny, effectivePro } = require("../../utils/pro");
 const { IDEAS } = require("../../wichteltuer/ideas");
 const { TEMPLATES, render: renderLetter } = require("../../wichteltuer/letters");
 const SETS = require("../../wichteltuer/sets");
@@ -47,7 +47,7 @@ router.get("/plans", requireAuth, async (req, res) => {
 router.post("/plans", requireAuth, async (req, res) => {
   const owner = await db.getUserById(req.user.id);
   const plan = S.newPlan({ ...req.user, username: owner?.username || req.user.username, currency: owner?.currency }, req.body || {});
-  const pro = Boolean(owner?.isPro);
+  const pro = effectivePro(owner?.isPro);
   // The automatic plan draws on the idea library, which is a PRO feature.
   if (req.body?.autoplan && pro) S.autoplan(plan);
   await db.createElfPlan(plan);
@@ -76,7 +76,7 @@ router.post("/plans/:id/rollover", requireAuth, async (req, res) => {
   const plan = await loadOwned(req, res);
   if (!plan) return;
   const owner = await db.getUserById(req.user.id);
-  const pro = Boolean(owner?.isPro) || Boolean(plan.isPro);
+  const pro = effectivePro(owner?.isPro) || Boolean(plan.isPro);
   const b = req.body || {};
   const next = S.rolloverPlan(plan, { ...req.user, username: owner?.username || req.user.username }, { year: b.year, autoplan: Boolean(b.autoplan) && pro, set: b.set });
   await db.createElfPlan(next);

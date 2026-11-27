@@ -1,8 +1,21 @@
 /* PRO status for Wichteln rounds and Wichteltür plans. Mirrors the calendar:
  * the item was upgraded (Stripe) or its owner has a PRO account. */
+const { AsyncLocalStorage } = require("async_hooks");
 const db = require("../db");
 
+/* The store apps (identified by their user agent) show every feature to everyone:
+ * App Store rules forbid selling PRO outside In-App Purchase, so inside the app
+ * there is no difference between PRO and free. On the web PRO stays purchasable. */
+const requestCtx = new AsyncLocalStorage();
+const nativeAppMiddleware = (req, _res, next) => {
+  const app = /AdventskalenderApp\//.test(String(req.headers["user-agent"] || ""));
+  requestCtx.run({ app }, next);
+};
+const inNativeApp = () => Boolean(requestCtx.getStore()?.app);
+const effectivePro = (isPro) => Boolean(isPro) || inNativeApp();
+
 async function ownerIsPro(ownerId) {
+  if (inNativeApp()) return true;
   if (!ownerId) return false;
   try {
     const owner = await db.getUserById(ownerId);
@@ -13,6 +26,7 @@ async function ownerIsPro(ownerId) {
 }
 
 async function isProItem(item) {
+  if (inNativeApp()) return true;
   if (!item) return false;
   if (item.isPro) return true;
   return ownerIsPro(item.ownerId);
@@ -31,4 +45,4 @@ function proOrDeny(pro, res, feature) {
   return false;
 }
 
-module.exports = { isProItem, ownerIsPro, proOrDeny, proPriceLabel };
+module.exports = { nativeAppMiddleware, inNativeApp, effectivePro, isProItem, ownerIsPro, proOrDeny, proPriceLabel };
