@@ -21,6 +21,9 @@
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
       }
     }
   },
@@ -28,7 +31,8 @@
     "production": {
       "ios": {
         "appleId": "stefan.gross@gross-ict.ch",
-        "appleTeamId": "QF59FHQ44R"
+        "appleTeamId": "QF59FHQ44R",
+        "ascAppId": "6813926796"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-key.json",
