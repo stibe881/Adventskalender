@@ -39,4 +39,4 @@ jobs:
       - name: Auf dem Server aktualisieren und neu starten
         run: |
           ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "set -e; cd '${{ secrets.DEPLOY_PATH }}' && git pull --ff-only && npm ci --omit=dev && npm run build:css && mkdir -p tmp && touch tmp/restart.txt"
+            "set -e; cd '${{ secrets.DEPLOY_PATH }}' && git pull --ff-only && npm ci && npm run build:css && mkdir -p tmp && touch tmp/restart.txt"
