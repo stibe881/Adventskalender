@@ -28,7 +28,8 @@
     "production": {
       "ios": {
         "appleId": "stefan.gross@gross-ict.ch",
-        "appleTeamId": "QF59FHQ44R"
+        "appleTeamId": "QF59FHQ44R",
+        "ascAppId": "6813926796"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-key.json",
